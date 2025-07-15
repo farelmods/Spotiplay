@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spotifplay 🎧 - Download & Streaming Lagu Spotify</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --spotify-green: #1DB;
+            --spotify-dark: #191414;
+            --spotify-light: #FFFFFF;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f8fafc;
+            padding-bottom: 120px;
+        }
+        .spotify-bg {
+            background: var(--spotify-green);
+        }
+        .spotify-dark-bg {
+            background: var(--spotify-dark);
+        }
+        .spotify-text {
+            color: var(--spotify-green);
+        }
+        .track-card {
+            transition: all 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .lazy-show {
+            animation: fadeInUp 0.5s ease-out forwards;
+        }
+        @keyframes fadeInUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .scroll-container {
+            scrollbar-width: thin;
+            scrollbar-color: var(--spotify-green) transparent;
+        }
+        .scroll-container::-webkit-scrollbar {
+            height: 6px;
+        }
+        .scroll-container::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .scroll-container::-webkit-scrollbar-thumb {
+            background-color: var(--spotify-green);
+            border-radius: 20px;
+        }
+        .slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        @keyframes slideIn {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .animated-gradient {
+            background: linear-gradient(270deg, #15803d, #191414, #15803d);
+            background-size: 600% 600%;
+            animation: gradientMove 8s ease infinite;
+        }
+        .pagination-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 0.5rem;
+            background-color: var(--spotify-green);
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .pagination-btn:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+        .pagination-btn:disabled {
+            background-color: #d1d5db;
+            cursor: not-allowed;
+        }
+        /* Player Styles */
+        .player-container {
+            position: fixed;
+            bottom: 60px; /* Di atas bottom-nav */
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 40;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+        }
+        .player-container.active {
+            transform: translateY(0);
+        }
+        .progress-bar {
+            height: 3px;
+            background-color: #e2e8f0;
+            cursor: pointer;
+        }
+        .progress {
+            height: 100%;
+            background-color: var(--spotify-green);
+            width: 0%;
+        }
+        /* Full Player Styles */
+        .full-player {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(to bottom, #191414, #000000);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            color: white;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            padding: 20px;
+        }
+        .full-player.active {
+            transform: translateY(0);
+        }
+        .full-player-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        .full-player-cover {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 40px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+        }
+        .full-player-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .full-player-info {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        .full-player-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .full-player-artist {
+            font-size: 16px;
+            color: #b3b3b3;
+        }
+        .full-player-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        .full-player-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .full-player-btn.play {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: var(--spotify-green);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 30px;
+        }
+        .full-player-progress {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .full-player-time {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #b3b3b3;
+        }
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            z-index: 50;
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            height: 60px;
+        }
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0 10px;
+            color: #6b7280;
+            text-decoration: none;
+            font-size: 0.75rem;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .nav-item.active {
+            color: var(--spotify-green);
+        }
+        .nav-item i {
+            font-size: 1.25rem;
+            margin-bottom: 0.25rem;
+        }
+        .nav-circle {
+            position: absolute;
+            top: -5px;
+            width: 6px;
+            height: 6px;
+            background-color: var(--spotify-green);
+            border-radius: 50%;
+            transition: all 0.3s;
+            opacity: 0;
+        }
+        .nav-item.active .nav-circle {
+            opacity: 1;
+            transform: translateY(-3px);
+        }
+        /* Header Styles */
+        .app-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 50px;
+            background: var(--spotify-dark);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        .app-header h1 {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+        .app-header i {
+            margin-right: 8px;
+            color: var(--spotify-green);
+        }
+        /* Search Results Styles */
+        .search-results-container {
+            display: none;
+            margin-top: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .search-results-container.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(10px); opacity: 0.8; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .search-result-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f1f1f1;
+            transition: background-color 0.2s;
+        }
+        .search-result-item:hover {
+            background-color: #f8f8f8;
+        }
+        .search-result-item:last-child {
+            border-bottom: none;
+        }
+        .search-result-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+        .search-result-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .search-result-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .search-result-artist {
+            font-size: 13px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .search-result-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .search-result-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #555;
+            font-size: 16px;
+            transition: color 0.2s;
+        }
+        .search-result-btn:hover {
+            color: var(--spotify-green);
+        }
+        .favorite-btn {
+            transition: all 0.3s;
+        }
+        .favorite-btn.active {
+            color: #ff0000;
+            transform: scale(1.1);
+        }
+        /* Recently Played */
+        .recently-played {
+            margin-top: 30px;
+        }
+        .recently-played-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: white;
+        }
+        .recently-played-container {
+            display: flex;
+            gap: 15px;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        .recently-played-item {
+            min-width: 150px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+            transition: transform 0.3s;
+        }
+        .recently-played-item:hover {
+            transform: scale(1.05);
+        }
+        .recently-played-item img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+        }
+        .recently-played-info {
+            padding: 10px;
+        }
+        .recently-played-name {
+            font-size: 14px;
+            font-weight: bold;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .recently-played-artist {
+            font-size: 12px;
+            color: #b3b3b3;
+        }
+        /* Favorites Section */
+        .favorites-container {
+            display: none;
+        }
+        .favorites-container.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        .no-favorites-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        .favorite-track {
+            display: flex;
+            align-items: center;
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            transition: background-color 0.2s;
+        }
+        .favorite-track:hover {
+            background-color: #f8f8f8;
+        }
+        .favorite-track-img {
+            width: 50px;
+            height: 50px;
+            border-radius: 5px;
+            object-fit: cover;
+            margin-right: 15px;
+        }
+        .favorite-track-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .favorite-track-title {
+            font-weight: 600;
+            font-size: 15px;
+            margin-bottom: 3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .favorite-track-artist {
+            font-size: 13px;
+            color: #666;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .favorite-track-date {
+            font-size: 11px;
+            color: #999;
+        }
+        .favorite-track-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        /* Direct Download Section */
+        .direct-download-container {
+            display: none;
+        }
+        .direct-download-container.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        /* About Section */
+        .about-container {
+            display: none;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .about-container.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        .about-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: var(--spotify-dark);
+        }
+        .about-content {
+            color: #666;
+            line-height: 1.6;
+        }
+        .about-link {
+            color: var(--spotify-green);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        .about-link:hover {
+            text-decoration: underline;
+        }
+        /* Top Global Section */
+        .trending-container {
+            display: none;
+        }
+        .trending-container.active {
+            display: block;
+            animation: slideUp 0.3s ease-out;
+        }
+        .trending-track {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s;
+        }
+        .trending-track:hover {
+            transform: translateY(-5px);
+        }
+        .trending-track img {
+            width: 100%;
+            height: 120px;
+            object-fit: cover;
+        }
+        .trending-track-info {
+            padding: 12px;
+        }
+        .trending-track-title {
+            font-weight: 600;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .trending-track-artist {
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header Baru -->
+    <header class="app-header">
+        <i class="fab fa-spotify"></i>
+        <h1>SPOTIPLAY</h1>
+    </header>
+
+    <!-- Main Content -->
+    <main class="pt-16 pb-24"> <!-- Adjusted padding for header and player -->
+        <!-- Home Section -->
+        <section id="home" class="relative py-16 spotify-dark-bg text-white overflow-hidden">
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-0 left-0 w-64 h-64 rounded-full bg-green-500 filter blur-3xl opacity-20"></div>
+                <div class="absolute bottom-0 right-0 w-64 h-64 rounded-full bg-black filter blur-3xl opacity-20"></div>
+            </div>
+            <div class="container mx-auto px-4 relative z-10 text-center">
+                <div class="max-w-2xl mx-auto">
+                    <div class="inline-flex items-center bg-green-100 text-green-800 px-4 py-1 rounded-full text-sm font-medium mb-4">
+                        <span class="pulse mr-2">🔥</span> TRENDING NOW
+                    </div>
+                    <h1 class="text-4xl md:text-5xl font-bold mb-6">
+                        Streaming & Download <span class="spotiplay-text">Spotiplay</span> Tracks
+                    </h1>
+                    <p class="text-lg text-gray-300 mb-8">
+                        Dengarkan dan download lagu favorit lo langsung dari Spotiplay,<br>
+                        <span class="font-semibold spotify-text">GRATIS & NO RIBAET!</span>
+                    </p>
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <a href="#search" class="spotify-bg text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all">
+                            <i class="fas fa-search mr-2"></i> Search Track
+                        </a>
+                        <a href="#direct" class="bg-white text-gray-800 font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all">
+                            <i class="fas fa-link mr-2"></i> Direct Link
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recently Played Section -->
+            <div class="container mx-auto px-4 mt-16 recently-played">
+                <h2 class="recently-played-title">Terakhir Didengar</h2>
+                <div class="recently-played-container" id="recentlyPlayedContainer">
+                    <!-- Recently played items will be loaded here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Search Section -->
+        <section id="search" class="py-16 bg-white">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <div class="bg-gray-50 p-6 rounded-xl shadow-sm">
+                    <form id="searchForm" class="space-y-4">
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">Cari Lagu di Spotiplay</h3>
+                            <p class="text-gray-500">Masukkan judul lagu atau nama artist</p>
+                        </div>
+                        
+                        <div class="relative">
+                            <input
+                                type="text"
+                                id="query"
+                                name="query"
+                                class="w-full p-4 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="Lagu, artist, atau album..."
+                                required
+                                autocomplete="off"
+                            >
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fas fa-music"></i>
+                            </div>
+                        </div>
+                        
+                        <button
+                            type="submit"
+                            class="w-full spotify-bg text-white py-3 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all flex items-center justify-center gap-2"
+                        >
+                            <i class="fas fa-search"></i> Search
+                        </button>
+                    </form>
+                    
+                    <div id="loading" class="mt-8 hidden">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                            <p class="text-gray-600 font-medium">Searching Spotiplay...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Search Results -->
+                <div id="searchResultsContainer" class="search-results-container mt-6">
+                    <div id="searchResultsList" class="divide-y divide-gray-100">
+                        <!-- Results will be inserted here -->
+                    </div>
+                    
+                    <!-- Pagination Controls -->
+                    <div id="paginationControls" class="flex justify-center p-4 gap-4">
+                        <button id="prevPage" class="pagination-btn" disabled>
+                            <i class="fas fa-chevron-left mr-2"></i> Previous
+                        </button>
+                        <span id="pageInfo" class="px-4 py-2">Page 1</span>
+                        <button id="nextPage" class="pagination-btn">
+                            Next <i class="fas fa-chevron-right ml-2"></i> 
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Direct Download Section -->
+        <section id="direct" class="py-16 bg-gray-50 direct-download-container">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <div class="bg-white p-6 rounded-xl shadow-sm">
+                    <form id="directForm" class="space-y-4">
+                        <div class="text-center">
+                            <h3 class="text-2xl font-bold text-gray-800 mb-2">Direct Spotiplay Link</h3>
+                            <p class="text-gray-500">Paste link track Spotiplay langsung</p>
+                        </div>
+                        
+                        <div class="relative">
+                            <input
+                                type="url"
+                                id="directUrl"
+                                name="directUrl"
+                                class="w-full p-4 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                                placeholder="https://open.spotify.com/track/..."
+                                required
+                            >
+                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
+                                <i class="fab fa-spotify text-xl"></i>
+                            </div>
+                        </div>
+                        
+                        <button
+                            type="submit"
+                            class="w-full spotify-bg text-white py-3 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all flex items-center justify-center gap-2"
+                        >
+                            <i class="fas fa-download"></i> Download
+                        </button>
+                    </form>
+                    
+                    <div id="directLoading" class="mt-8 hidden">
+                        <div class="flex flex-col items-center">
+                            <div class="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                            <p class="text-gray-600 font-medium">Processing your link...</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Direct Download Results -->
+                <div id="directResultContainer" class="mt-12 hidden slide-in">
+                    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-lg">
+                        <div class="spotify-bg p-4 text-white">
+                            <h3 class="text-xl font-bold flex items-center gap-2">
+                                <i class="fas fa-download"></i> Download Ready!
+                            </h3>
+                        </div>
+                        
+                        <div id="directDownloadDetails" class="p-6">
+                            <!-- Download details will be inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Favorites Section -->
+        <section id="favorites" class="py-16 bg-white favorites-container">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-800">Lagu Favorit</h2>
+                    <p class="text-gray-600">Koleksi lagu favorit kamu</p>
+                </div>
+
+                <div id="favoritesList" class="divide-y divide-gray-100">
+                    <!-- Favorites will be loaded here -->
+                </div>
+                
+                <div id="noFavoritesMessage" class="no-favorites-message">
+                    <i class="fas fa-heart text-4xl text-gray-300 mb-4"></i>
+                    <p class="text-gray-500">Belum ada lagu favorit</p>
+                    <p class="text-sm text-gray-400 mt-2">Tambahkan lagu favorit dengan menekan tombol hati</p>
+                </div>
+
+                <div class="mt-8 flex justify-center gap-4">
+                    <button id="playFavoritesSequential" class="spotify-bg text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-play mr-2"></i> Putar Berurutan
+                    </button>
+                    <button id="playFavoritesRandom" class="bg-gray-800 text-white px-4 py-2 rounded-lg">
+                        <i class="fas fa-random mr-2"></i> Putar Acak
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top Global Section -->
+        <section id="trending" class="py-16 bg-gray-50 trending-container">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <div class="text-center mb-8">
+                    <h2 class="text-3xl font-bold text-gray-800">🌍 Top Global</h2>
+                    <p class="text-gray-600">Lagu paling populer di dunia sekarang</p>
+                </div>
+
+                <div id="trendingList" class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                    <!-- Data akan dimuat via JS -->
+                </div>
+
+                <div class="mt-8 text-center">
+                    <button id="loadTopGlobal" class="spotify-bg text-white px-6 py-2 rounded-full">
+                        <i class="fas fa-sync-alt mr-2"></i> Muat Chart
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- About Section -->
+        <section id="about" class="py-16 bg-gray-50">
+            <div class="container mx-auto px-4 max-w-4xl">
+                <div class="about-container">
+                    <h2 class="about-title">Tentang Spotiplay</h2>
+                    <div class="about-content">
+                        <p class="mb-4">
+                            Spotiplay adalah aplikasi untuk streaming dan download lagu dari Spotiplay secara gratis. Aplikasi ini dibuat untuk memudahkan pengguna menikmati musik favorit mereka tanpa batasan.
+                        </p>
+                        <p class="mb-4">
+                            Versi saat ini: <strong>V1.0</strong>
+                        </p>
+                        <p class="mb-4">
+                            Dukung pengembangan aplikasi ini melalui:
+                        </p>
+                        <div class="mb-4">
+                            <a href="https://github.com/farelmods" target="_blank" class="about-link">
+                                <i class="fas fa-heart mr-1"></i> Githab farel
+                            </a>
+                        </div>
+                        <p class="mb-4">
+                            Hubungi saya di Telegram:
+                        </p>
+                        <div>
+                            <a href="https://t.me/EXCITED505" target="_blank" class="about-link">
+                                <i class="fab fa-telegram mr-1"></i> @farel
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Player Baru (di atas bottom nav) -->
+    <div id="player" class="player-container">
+        <div class="progress-bar" id="miniProgressBar">
+            <div class="progress" id="miniProgress"></div>
+        </div>
+        <div class="container mx-auto px-4 py-2 flex items-center">
+            <div class="flex-shrink-0 mr-3">
+                <img id="playerThumbnail" src="https://via.placeholder.com/40x40" alt="Track" class="w-10 h-10 rounded">
+            </div>
+            <div class="flex-grow min-w-0">
+                <h4 id="playerTitle" class="text-sm font-bold truncate">No track selected</h4>
+                <p id="playerArtist" class="text-xs text-gray-600 truncate">Select a track</p>
+            </div>
+            <div class="flex-shrink-0 ml-3 flex items-center gap-2">
+                <button id="playPauseBtn" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button id="expandPlayerBtn" class="text-gray-500 hover:text-gray-700 text-sm">
+                    <i class="fas fa-expand"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Full Player -->
+    <div id="fullPlayer" class="full-player">
+        <div class="full-player-header">
+            <button id="closeFullPlayerBtn" class="full-player-btn">
+                <i class="fas fa-chevron-down"></i>
+            </button>
+            <h3 class="full-player-title">Now Playing</h3>
+            <button id="favoriteBtn" class="full-player-btn favorite-btn">
+                <i class="far fa-heart"></i>
+            </button>
+        </div>
+        
+        <div class="full-player-cover">
+            <img id="fullPlayerThumbnail" src="https://via.placeholder.com/300x300" alt="Track Cover">
+        </div>
+        
+        <div class="full-player-info">
+            <h2 id="fullPlayerTitle" class="full-player-title">No track selected</h2>
+            <p id="fullPlayerArtist" class="full-player-artist">Select a track to play</p>
+        </div>
+        
+        <div class="full-player-progress">
+            <div class="progress-bar" id="fullProgressBar">
+                <div class="progress" id="fullProgress"></div>
+            </div>
+            <div class="full-player-time">
+                <span id="currentTime">0:00</span>
+                <span id="duration">0:00</span>
+            </div>
+        </div>
+        
+        <div class="full-player-controls">
+            <button id="prevTrackBtn" class="full-player-btn">
+                <i class="fas fa-step-backward"></i>
+            </button>
+            <button id="fullPlayPauseBtn" class="full-player-btn play">
+                <i class="fas fa-play"></i>
+            </button>
+            <button id="nextTrackBtn" class="full-player-btn">
+                <i class="fas fa-step-forward"></i>
+            </button>
+        </div>
+        
+        <div class="mt-auto flex justify-center gap-4">
+            <button id="repeatBtn" class="play-mode-btn" title="Repeat">
+                <i class="fas fa-redo"></i>
+            </button>
+            <button id="downloadFromPlayerBtn" class="full-player-btn">
+                <i class="fas fa-download"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="bottom-nav">
+        <a href="#home" class="nav-item active" data-section="home">
+            <i class="fas fa-home"></i>
+            <span>Home</span>
+            <div class="nav-circle"></div>
+        </a>
+        <a href="#search" class="nav-item" data-section="search">
+            <i class="fas fa-search"></i>
+            <span>Search</span>
+            <div class="nav-circle"></div>
+        </a>
+        <a href="#favorites" class="nav-item" data-section="favorites">
+            <i class="fas fa-heart"></i>
+            <span>Favorites</span>
+            <div class="nav-circle"></div>
+        </a>
+        <a href="#trending" class="nav-item" data-section="trending">
+            <i class="fas fa-fire"></i>
+            <span>Top Global</span>
+            <div class="nav-circle"></div>
+        </a>
+        <a href="#about" class="nav-item" data-section="about">
+            <i class="fas fa-info-circle"></i>
+            <span>About</span>
+            <div class="nav-circle"></div>
+        </a>
+    </div>
+
+    <!-- Audio Element -->
+    <audio id="audioPlayer" preload="auto"></audio>
+
+    <script>
+// DOM Elements
+const searchForm = document.getElementById("searchForm");
+const directForm = document.getElementById("directForm");
+const searchResultsContainer = document.getElementById("searchResultsContainer");
+const searchResultsList = document.getElementById("searchResultsList");
+const loading = document.getElementById("loading");
+const directLoading = document.getElementById("directLoading");
+const directResultContainer = document.getElementById("directResultContainer");
+const directDownloadDetails = document.getElementById("directDownloadDetails");
+const prevPageBtn = document.getElementById("prevPage");
+const nextPageBtn = document.getElementById("nextPage");
+const pageInfo = document.getElementById("pageInfo");
+const paginationControls = document.getElementById("paginationControls");
+const favoritesList = document.getElementById("favoritesList");
+const noFavoritesMessage = document.getElementById("noFavoritesMessage");
+const playFavoritesSequential = document.getElementById("playFavoritesSequential");
+const playFavoritesRandom = document.getElementById("playFavoritesRandom");
+const player = document.getElementById("player");
+const playerThumbnail = document.getElementById("playerThumbnail");
+const playerTitle = document.getElementById("playerTitle");
+const playerArtist = document.getElementById("playerArtist");
+const playPauseBtn = document.getElementById("playPauseBtn");
+const expandPlayerBtn = document.getElementById("expandPlayerBtn");
+const miniProgress = document.getElementById("miniProgress");
+const fullPlayer = document.getElementById("fullPlayer");
+const fullPlayerThumbnail = document.getElementById("fullPlayerThumbnail");
+const fullPlayerTitle = document.getElementById("fullPlayerTitle");
+const fullPlayerArtist = document.getElementById("fullPlayerArtist");
+const fullPlayPauseBtn = document.getElementById("fullPlayPauseBtn");
+const closeFullPlayerBtn = document.getElementById("closeFullPlayerBtn");
+const favoriteBtn = document.getElementById("favoriteBtn");
+const prevTrackBtn = document.getElementById("prevTrackBtn");
+const nextTrackBtn = document.getElementById("nextTrackBtn");
+const repeatBtn = document.getElementById("repeatBtn");
+const downloadFromPlayerBtn = document.getElementById("downloadFromPlayerBtn");
+const audioPlayer = document.getElementById("audioPlayer");
+const navItems = document.querySelectorAll('.nav-item');
+const recentlyPlayedContainer = document.getElementById("recentlyPlayedContainer");
+const searchSection = document.getElementById("search");
+const directSection = document.getElementById("direct");
+const favoritesSection = document.getElementById("favorites");
+const trendingSection = document.getElementById("trending");
+const aboutSection = document.getElementById("about");
+const aboutContainer = document.querySelector('.about-container');
+const currentTimeEl = document.getElementById("currentTime");
+const durationEl = document.getElementById("duration");
+const fullProgress = document.getElementById("fullProgress");
+const trendingList = document.getElementById("trendingList");
+const loadTopGlobalBtn = document.getElementById("loadTopGlobal");
+
+// State variables
+let currentPage = 1;
+let totalResults = 0;
+let currentQuery = '';
+let hasMorePages = false;
+let allResults = [];
+const itemsPerPage = 10;
+let currentTrack = null;
+let isPlaying = false;
+let currentSection = 'home';
+let recentlyPlayed = [];
+let currentQueue = [];
+let currentQueueIndex = 0;
+let historyQueue = [];
+let repeatMode = false;
+
+// Initialize Intersection Observer for lazy effect
+const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+        if (entry.isIntersecting) {
+            entry.target.classList.add("lazy-show");
+            observer.unobserve(entry.target);
+        }
+    });
+}, { threshold: 0.1 });
+
+// Search form submission
+searchForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const query = document.getElementById("query").value.trim();
+    currentQuery = query;
+    currentPage = 1;
+    allResults = [];
+    
+    if (!query) {
+        alert("Masukkan pencarian dulu dong!");
+        return;
+    }
+    
+    try {
+        loading.classList.remove("hidden");
+        searchResultsContainer.classList.remove("active");
+        searchResultsList.innerHTML = '';
+        
+        const searchUrl = `https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}&page=${currentPage}&limit=${itemsPerPage}`;
+        const response = await fetch(searchUrl);
+        const data = await response.json();
+        
+        if (data.status && data.data && data.data.length > 0) {
+            totalResults = data.total_results || data.data.length;
+            hasMorePages = data.has_more || false;
+            allResults = data.data;
+            
+            displaySearchResults(allResults);
+            updatePaginationControls();
+            
+            searchResultsContainer.classList.add("active");
+            
+            // Scroll to results
+            setTimeout(() => {
+                searchSection.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        } else {
+            throw new Error("No results found");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Gak ketemu nih, coba kata kunci lain mungkin?");
+    } finally {
+        loading.classList.add("hidden");
+    }
+});
+
+// Display search results
+function displaySearchResults(results) {
+    searchResultsList.innerHTML = '';
+    
+    results.forEach((track, index) => {
+        const isFavorited = isTrackFavorited(track.track_url);
+        
+        const trackElement = document.createElement('div');
+        trackElement.className = 'search-result-item track-card';
+        trackElement.innerHTML = `
+            <img src="${track.thumbnail}" alt="${track.title}" 
+                 class="search-result-img lazy-load"
+                 data-src="${track.thumbnail}"
+                 onerror="this.src='https://via.placeholder.com/50x50?text=No+Image'">
+            <div class="search-result-info">
+                <div class="search-result-title">${track.title}</div>
+                <div class="search-result-artist">${track.artist}</div>
+            </div>
+            <div class="search-result-actions">
+                <button class="search-result-btn" onclick="playTrackFromSearch('${track.track_url}', '${track.title}', '${track.artist}', '${track.thumbnail}', ${index})">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="favorite-btn ${isFavorited ? 'active' : ''}" 
+                        onclick="toggleFavorite(event, '${track.track_url}', '${track.title}', '${track.artist}', '${track.thumbnail}')">
+                    <i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>
+                </button>
+            </div>
+        `;
+        
+        searchResultsList.appendChild(trackElement);
+        observer.observe(trackElement);
+    });
+    
+    // Lazy load images
+    document.querySelectorAll('.lazy-load').forEach(img => {
+        img.src = img.getAttribute('data-src');
+    });
+}
+
+// Play track from search results
+window.playTrackFromSearch = function(trackUrl, title, artist, thumbnail, index) {
+    currentQueue = [...allResults];
+    currentQueueIndex = index;
+    playTrack(trackUrl, title, artist, thumbnail, index, true);
+};
+
+// Update pagination controls
+function updatePaginationControls() {
+    pageInfo.textContent = `Page ${currentPage}`;
+    prevPageBtn.disabled = currentPage <= 1;
+    nextPageBtn.disabled = !hasMorePages;
+    
+    if (totalResults > 0) {
+        paginationControls.classList.remove("hidden");
+    } else {
+        paginationControls.classList.add("hidden");
+    }
+}
+
+// Load next page
+nextPageBtn.addEventListener("click", async () => {
+    if (!currentQuery || !hasMorePages) return;
+    
+    try {
+        loading.classList.remove("hidden");
+        currentPage++;
+        
+        searchResultsList.innerHTML = '';
+        
+        const searchUrl = `https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(currentQuery)}&page=${currentPage}&limit=${itemsPerPage}`;
+        const response = await fetch(searchUrl);
+        const data = await response.json();
+        
+        if (data.status && data.data && data.data.length > 0) {
+            hasMorePages = data.has_more || false;
+            allResults = [...allResults, ...data.data];
+            
+            displaySearchResults(data.data);
+            updatePaginationControls();
+        } else {
+            throw new Error("No more results");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        currentPage--;
+        alert("Gagal memuat halaman berikutnya");
+    } finally {
+        loading.classList.add("hidden");
+    }
+});
+
+// Load previous page
+prevPageBtn.addEventListener("click", async () => {
+    if (!currentQuery || currentPage <= 1) return;
+    
+    try {
+        loading.classList.remove("hidden");
+        currentPage--;
+        
+        searchResultsList.innerHTML = '';
+        
+        const searchUrl = `https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(currentQuery)}&page=${currentPage}&limit=${itemsPerPage}`;
+        const response = await fetch(searchUrl);
+        const data = await response.json();
+        
+        if (data.status && data.data && data.data.length > 0) {
+            hasMorePages = data.has_more || false;
+            
+            // Calculate which results to show
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = startIndex + itemsPerPage;
+            const resultsToShow = allResults.slice(startIndex, endIndex);
+            
+            displaySearchResults(resultsToShow);
+            updatePaginationControls();
+        } else {
+            throw new Error("No results found");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        currentPage++;
+        alert("Gagal memuat halaman sebelumnya");
+    } finally {
+        loading.classList.add("hidden");
+    }
+});
+
+// Direct download form submission
+directForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const trackUrl = document.getElementById("directUrl").value.trim();
+    
+    if (!trackUrl || !trackUrl.includes("spotify.com")) {
+        alert("Masukkan link Spotify yang valid dong!");
+        return;
+    }
+    
+    try {
+        directLoading.classList.remove("hidden");
+        directResultContainer.classList.add("hidden");
+        
+        const downloadUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(trackUrl)}`;
+        const response = await fetch(downloadUrl);
+        const data = await response.json();
+        
+        if (data.status && data.data) {
+            displayDownloadDetails(data.data, directDownloadDetails);
+            directResultContainer.classList.remove("hidden");
+            
+            setTimeout(() => {
+                directSection.scrollIntoView({ behavior: 'smooth' });
+            }, 300);
+        } else {
+            throw new Error("Download failed");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Yah gagal download nih, coba lagi ya!");
+    } finally {
+        directLoading.classList.add("hidden");
+    }
+});
+
+// Global function to show track details
+window.showTrackDetails = async (trackUrl, targetElementId) => {
+    try {
+        loading.classList.remove("hidden");
+        
+        const downloadUrl = `https://api.siputzx.my.id/api/d/spotify?url=${trackUrl}`;
+        const response = await fetch(downloadUrl);
+        const data = await response.json();
+        
+        if (data.status && data.data) {
+            const targetElement = document.getElementById(targetElementId);
+            displayDownloadDetails(data.data, targetElement);
+            
+            if (targetElementId === 'directDownloadDetails') {
+                directResultContainer.classList.remove("hidden");
+                directSection.scrollIntoView({ behavior: 'smooth' });
+            }
+        } else {
+            throw new Error("Download failed");
+        }
+    } catch (error) {
+        console.error("Error:", error);
+        alert("Yah gagal download nih, coba lagi ya!");
+    } finally {
+        loading.classList.add("hidden");
+    }
+};
+
+// Display download details
+function displayDownloadDetails(track, container) {
+    const isFavorited = isTrackFavorited(track.track_url);
+    
+    container.innerHTML = `
+        <div class="flex flex-col md:flex-row gap-6">
+            <div class="flex-shrink-0">
+                <img src="${track.image}" alt="${track.title}" 
+                     class="w-48 h-48 rounded-lg object-cover shadow-md"
+                     onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'">
+            </div>
+            <div class="flex-grow">
+                <div class="flex justify-between items-start">
+                    <h3 class="text-2xl font-bold">${track.title}</h3>
+                    <button class="favorite-btn ${isFavorited ? 'active' : ''}" 
+                            onclick="toggleFavorite(event, '${track.track_url}', '${track.title}', '${track.artis}', '${track.image}')">
+                        <i class="${isFavorited ? 'fas' : 'far'} fa-heart text-2xl"></i>
+                    </button>
+                </div>
+                <p class="text-lg text-gray-600">${track.artis}</p>
+                <div class="mt-4 space-y-2">
+                    <p><strong>Type:</strong> ${track.type}</p>
+                    <p><strong>Duration:</strong> ${track.durasi}</p>
+                </div>
+                <div class="mt-6 flex flex-wrap gap-3">
+                    <button onclick="playTrackFromDetails('${track.track_url}', '${track.title}', '${track.artis}', '${track.image}')" 
+                        class="spotify-bg text-white py-2 px-4 rounded-lg font-medium inline-flex items-center gap-2 hover:opacity-90 transition">
+                        <i class="fas fa-play"></i> Play Now
+                    </button>
+                    <a href="${track.download}" download="${track.title} - ${track.artis}.mp3" 
+                       class="bg-gray-800 text-white py-2 px-4 rounded-lg font-medium inline-flex items-center gap-2 hover:opacity-90 transition">
+                       <i class="fas fa-download"></i> Download
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// Play track from details page
+window.playTrackFromDetails = function(trackUrl, title, artist, thumbnail) {
+    // Create a temporary track object
+    const tempTrack = {
+        track_url: trackUrl,
+        title: title,
+        artist: artist,
+        thumbnail: thumbnail
+    };
+    currentQueue = [tempTrack];
+    playTrack(trackUrl, title, artist, thumbnail, 0, true);
+};
+
+// Favorite Tracks Management
+function getFavorites() {
+    return JSON.parse(localStorage.getItem('favoriteTracks') || '[]');
+}
+
+function saveFavorites(favorites) {
+    localStorage.setItem('favoriteTracks', JSON.stringify(favorites));
+}
+
+function isTrackFavorited(trackUrl) {
+    const favorites = getFavorites();
+    return favorites.some(track => track.track_url === trackUrl);
+}
+
+window.toggleFavorite = function(event, trackUrl, title, artist, thumbnail) {
+    event.stopPropagation();
+    
+    const favorites = getFavorites();
+    const existingIndex = favorites.findIndex(track => track.track_url === trackUrl);
+    
+    if (existingIndex >= 0) {
+        // Remove from favorites
+        favorites.splice(existingIndex, 1);
+        event.target.classList.remove('active');
+        event.target.innerHTML = '<i class="far fa-heart"></i>';
+        showToast('Removed from favorites', 'success');
+    } else {
+        // Add to favorites
+        favorites.push({
+            track_url: trackUrl,
+            title: title,
+            artist: artist,
+            thumbnail: thumbnail,
+            addedAt: new Date().toISOString()
+        });
+        event.target.classList.add('active');
+        event.target.innerHTML = '<i class="fas fa-heart"></i>';
+        showToast('Added to favorites', 'success');
+    }
+    
+    saveFavorites(favorites);
+    renderFavorites();
+    
+    // Update favorite button in full player if current track is this one
+    if (currentTrack && currentTrack.track_url === trackUrl) {
+        const isFavorited = existingIndex < 0; // If it was not favorited before
+        favoriteBtn.innerHTML = `<i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>`;
+        favoriteBtn.classList.toggle('active', isFavorited);
+    }
+};
+
+function renderFavorites() {
+    const favorites = getFavorites();
+    
+    if (favorites.length === 0) {
+        noFavoritesMessage.classList.remove('hidden');
+        favoritesList.innerHTML = '';
+        return;
+    }
+    
+    noFavoritesMessage.classList.add('hidden');
+    favoritesList.innerHTML = '';
+    
+    favorites.forEach((track, index) => {
+        const trackElement = document.createElement('div');
+        trackElement.className = 'favorite-track';
+        trackElement.innerHTML = `
+            <img src="${track.thumbnail}" alt="${track.title}" 
+                 class="favorite-track-img"
+                 onerror="this.src='https://via.placeholder.com/50x50?text=No+Image'">
+            <div class="favorite-track-info">
+                <div class="favorite-track-title">${track.title}</div>
+                <div class="favorite-track-artist">${track.artist}</div>
+                <div class="favorite-track-date">${new Date(track.addedAt).toLocaleDateString()}</div>
+            </div>
+            <div class="favorite-track-actions">
+                <button class="search-result-btn" onclick="playFavoriteTrack('${track.track_url}', ${index})">
+                    <i class="fas fa-play"></i>
+                </button>
+                <button class="search-result-btn" onclick="removeFavorite('${track.track_url}')">
+                    <i class="fas fa-trash"></i>
+                </button>
+            </div>
+        `;
+        
+        favoritesList.appendChild(trackElement);
+    });
+}
+
+window.playFavoriteTrack = function(trackUrl, index) {
+    const favorites = getFavorites();
+    const track = favorites[index];
+    
+    if (track) {
+        currentQueue = [...favorites];
+        currentQueueIndex = index;
+        playTrack(track.track_url, track.title, track.artist, track.thumbnail, index, true);
+        showToast(`Playing: ${track.title}`, 'success');
+    }
+};
+
+window.removeFavorite = function(trackUrl) {
+    if (confirm('Remove this track from favorites?')) {
+        const favorites = getFavorites();
+        const updatedFavorites = favorites.filter(track => track.track_url !== trackUrl);
+        saveFavorites(updatedFavorites);
+        renderFavorites();
+        showToast('Removed from favorites', 'success');
+        
+        // Update favorite button if current track is this one
+        if (currentTrack && currentTrack.track_url === trackUrl) {
+            favoriteBtn.innerHTML = '<i class="far fa-heart"></i>';
+            favoriteBtn.classList.remove('active');
+        }
+    }
+};
+
+playFavoritesSequential.addEventListener('click', () => {
+    const favorites = getFavorites();
+    if (favorites.length === 0) {
+        showToast('No favorite tracks', 'error');
+        return;
+    }
+    
+    currentQueue = [...favorites];
+    currentQueueIndex = 0;
+    const firstTrack = favorites[0];
+    playTrack(firstTrack.track_url, firstTrack.title, firstTrack.artist, firstTrack.thumbnail, 0, true);
+    showToast('Playing favorites sequentially', 'success');
+});
+
+playFavoritesRandom.addEventListener('click', () => {
+    const favorites = getFavorites();
+    if (favorites.length === 0) {
+        showToast('No favorite tracks', 'error');
+        return;
+    }
+    
+    // Shuffle favorites
+    const shuffled = [...favorites];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    
+    currentQueue = shuffled;
+    currentQueueIndex = 0;
+    const firstTrack = shuffled[0];
+    playTrack(firstTrack.track_url, firstTrack.title, firstTrack.artist, firstTrack.thumbnail, 0, true);
+    showToast('Playing favorites randomly', 'success');
+});
+
+// Load Top Global Tracks
+async function loadTopGlobal() {
+    trendingList.innerHTML = '<div class="col-span-3 text-center py-10"><i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i></div>';
+    
+    try {
+        // Try popular queries that might return trending tracks
+        const queries = ['top global', 'viral 2024', 'pop hits', 'trending now'];
+        const randomQuery = queries[Math.floor(Math.random() * queries.length)];
+        
+        const response = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(randomQuery)}&limit=6`);
+        const data = await response.json();
+        
+        if (data.status && data.data.length > 0) {
+            renderTrendingTracks(data.data);
+        } else {
+            throw new Error("No results");
+        }
+    } catch (error) {
+        trendingList.innerHTML = `
+            <div class="col-span-3 text-center py-10 text-red-500">
+                <i class="fas fa-exclamation-circle"></i> Gagal muat chart. Coba lagi nanti.
+            </div>
+        `;
+    }
+}
+
+function renderTrendingTracks(tracks) {
+    trendingList.innerHTML = '';
+    
+    tracks.forEach(track => {
+        const trackEl = document.createElement('div');
+        trackEl.className = 'trending-track';
+        trackEl.innerHTML = `
+            <img src="${track.thumbnail}" alt="${track.title}" 
+                 onerror="this.src='https://via.placeholder.com/150x150?text=No+Image'">
+            <div class="trending-track-info">
+                <div class="trending-track-title">${track.title}</div>
+                <div class="trending-track-artist">${track.artist}</div>
+            </div>
+        `;
+        
+        trackEl.addEventListener('click', () => {
+            playTrack(track.track_url, track.title, track.artist, track.thumbnail, 0, true);
+        });
+        
+        trendingList.appendChild(trackEl);
+    });
+}
+
+// Audio Player Functions
+function playTrack(trackUrl, title, artist, thumbnail, index = 0, isManual = false) {
+    // Jika dipanggil manual (bukan dari next/prev), reset history
+    if (isManual) {
+        historyQueue = [];
+    }
+
+    // Update current track
+    currentTrack = {
+        track_url: trackUrl,
+        title: title,
+        artist: artist,
+        thumbnail: thumbnail
+    };
+
+    // Update player UI
+    updatePlayerUI(title, artist, thumbnail);
+    
+    // Update favorite button
+    favoriteBtn.innerHTML = `<i class="${isTrackFavorited(trackUrl) ? 'fas' : 'far'} fa-heart"></i>`;
+    favoriteBtn.classList.toggle('active', isTrackFavorited(trackUrl));
+    
+    // Set audio source (using the download URL as the stream source)
+    const downloadUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(trackUrl)}`;
+    
+    // First fetch the download details to get the actual download URL
+    fetch(downloadUrl)
+        .then(response => response.json())
+        .then(data => {
+            if (data.status && data.data) {
+                audioPlayer.src = data.data.download;
+                audioPlayer.play();
+                
+                isPlaying = true;
+                player.classList.add('active');
+                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                fullPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+                
+                // Add to recently played
+                addToRecentlyPlayed(currentTrack);
+                
+                showToast(`Now playing: ${title}`, 'success');
+            } else {
+                throw new Error("Failed to get download URL");
+            }
+        })
+        .catch(error => {
+            console.error("Error:", error);
+            showToast("Failed to play track", 'error');
+        });
+}
+
+function updatePlayerUI(title, artist, thumbnail) {
+    // Update mini player
+    playerThumbnail.src = thumbnail || 'https://via.placeholder.com/40x40';
+    playerThumbnail.alt = title;
+    playerTitle.textContent = title;
+    playerArtist.textContent = artist;
+    
+    // Update full player
+    fullPlayerThumbnail.src = thumbnail || 'https://via.placeholder.com/300x300';
+    fullPlayerTitle.textContent = title;
+    fullPlayerArtist.textContent = artist;
+}
+
+function addToRecentlyPlayed(track) {
+    // Get current recently played from localStorage
+    let recentlyPlayed = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
+    if (typeof recentlyPlayed === 'string') {
+        recentlyPlayed = JSON.parse(recentlyPlayed);
+    }
+    
+    // Remove if already exists
+    recentlyPlayed = recentlyPlayed.filter(t => t.track_url !== track.track_url);
+    
+    // Add to beginning
+    recentlyPlayed.unshift(track);
+    
+    // Keep only last 5 items
+    if (recentlyPlayed.length > 5) {
+        recentlyPlayed = recentlyPlayed.slice(0, 5);
+    }
+    
+    // Save to localStorage
+    localStorage.setItem('recentlyPlayed', JSON.stringify(recentlyPlayed));
+    
+    // Update UI
+    renderRecentlyPlayed();
+}
+
+function renderRecentlyPlayed() {
+    let recentlyPlayed = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
+    if (typeof recentlyPlayed === 'string') {
+        recentlyPlayed = JSON.parse(recentlyPlayed);
+    }
+    
+    recentlyPlayedContainer.innerHTML = '';
+    
+    if (recentlyPlayed.length === 0) {
+        recentlyPlayedContainer.innerHTML = '<p class="text-gray-400">No recently played tracks</p>';
+        return;
+    }
+    
+    recentlyPlayed.forEach(track => {
+        const item = document.createElement('div');
+        item.className = 'recently-played-item';
+        item.innerHTML = `
+            <img src="${track.thumbnail}" alt="${track.title}" class="w-full h-32 object-cover">
+            <div class="recently-played-info">
+                <p class="recently-played-name">${track.title}</p>
+                <p class="recently-played-artist">${track.artist}</p>
+            </div>
+        `;
+        
+        item.addEventListener('click', () => {
+            // Find the track in currentQueue or add it
+            const trackIndex = currentQueue.findIndex(t => t.track_url === track.track_url);
+            if (trackIndex !== -1) {
+                playTrack(track.track_url, track.title, track.artist, track.thumbnail, trackIndex, true);
+            } else {
+                currentQueue = [track];
+                playTrack(track.track_url, track.title, track.artist, track.thumbnail, 0, true);
+            }
+        });
+        
+        recentlyPlayedContainer.appendChild(item);
+    });
+}
+
+function playNextTrack() {
+    if (currentQueue.length > 0 && currentQueueIndex < currentQueue.length - 1) {
+        // Tambahkan ke history
+        historyQueue.push(currentQueue[currentQueueIndex]);
+        
+        const nextIndex = currentQueueIndex + 1;
+        const nextTrack = currentQueue[nextIndex];
+        playTrack(nextTrack.track_url, nextTrack.title, nextTrack.artist, nextTrack.thumbnail, nextIndex);
+    } else if (repeatMode) {
+        // Jika repeat mode aktif, mulai dari awal
+        currentQueueIndex = 0;
+        const nextTrack = currentQueue[0];
+        playTrack(nextTrack.track_url, nextTrack.title, nextTrack.artist, nextTrack.thumbnail, 0);
+    } else {
+        showToast("No more tracks in queue", 'info');
+    }
+}
+
+function playPrevTrack() {
+    if (historyQueue.length > 0) {
+        const prevTrack = historyQueue.pop();
+        const prevIndex = currentQueue.findIndex(t => t.track_url === prevTrack.track_url);
+        
+        if (prevIndex >= 0) {
+            playTrack(prevTrack.track_url, prevTrack.title, prevTrack.artist, prevTrack.thumbnail, prevIndex);
+        } else {
+            // Jika tidak ada di queue saat ini, tambahkan
+            currentQueue.unshift(prevTrack);
+            playTrack(prevTrack.track_url, prevTrack.title, prevTrack.artist, prevTrack.thumbnail, 0);
+        }
+    } else {
+        showToast("No previous tracks", 'info');
+    }
+}
+
+// Player controls
+playPauseBtn.addEventListener('click', () => {
+    if (!currentTrack) return;
+    
+    if (isPlaying) {
+        audioPlayer.pause();
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        fullPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+    } else {
+        audioPlayer.play();
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        fullPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+    }
+    
+    isPlaying = !isPlaying;
+});
+
+fullPlayPauseBtn.addEventListener('click', () => {
+    if (!currentTrack) return;
+    
+    if (isPlaying) {
+        audioPlayer.pause();
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+        fullPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+    } else {
+        audioPlayer.play();
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        fullPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+    }
+    
+    isPlaying = !isPlaying;
+});
+
+expandPlayerBtn.addEventListener('click', () => {
+    fullPlayer.classList.add('active');
+});
+
+closeFullPlayerBtn.addEventListener('click', () => {
+    fullPlayer.classList.remove('active');
+});
+
+favoriteBtn.addEventListener('click', () => {
+    if (!currentTrack) return;
+    
+    const isFavorited = isTrackFavorited(currentTrack.track_url);
+    const favorites = getFavorites();
+    
+    if (isFavorited) {
+        // Remove from favorites
+        const updatedFavorites = favorites.filter(track => track.track_url !== currentTrack.track_url);
+        saveFavorites(updatedFavorites);
+        favoriteBtn.innerHTML = '<i class="far fa-heart"></i>';
+        favoriteBtn.classList.remove('active');
+        showToast('Removed from favorites', 'success');
+    } else {
+        // Add to favorites
+        favorites.push({
+            track_url: currentTrack.track_url,
+            title: currentTrack.title,
+            artist: currentTrack.artist,
+            thumbnail: currentTrack.thumbnail,
+            addedAt: new Date().toISOString()
+        });
+        saveFavorites(favorites);
+        favoriteBtn.innerHTML = '<i class="fas fa-heart"></i>';
+        favoriteBtn.classList.add('active');
+        showToast('Added to favorites', 'success');
+    }
+    
+    renderFavorites();
+});
+
+prevTrackBtn.addEventListener('click', playPrevTrack);
+nextTrackBtn.addEventListener('click', playNextTrack);
+
+repeatBtn.addEventListener('click', () => {
+    repeatMode = !repeatMode;
+    repeatBtn.classList.toggle('active', repeatMode);
+    showToast(`Repeat ${repeatMode ? 'ON' : 'OFF'}`, 'info');
+});
+
+downloadFromPlayerBtn.addEventListener('click', () => {
+    if (currentTrack) {
+        showTrackDetails(currentTrack.track_url, 'directDownloadDetails');
+        fullPlayer.classList.remove('active');
+    }
+});
+
+// Audio progress updates
+audioPlayer.addEventListener('timeupdate', () => {
+    const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+    miniProgress.style.width = `${progressPercent}%`;
+    fullProgress.style.width = `${progressPercent}%`;
+    
+    // Update time displays
+    currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
+    durationEl.textContent = formatTime(audioPlayer.duration);
+});
+
+function formatTime(seconds) {
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
+}
+
+// Progress bar click
+document.querySelectorAll('.progress-bar').forEach(progressBar => {
+    progressBar.addEventListener('click', (e) => {
+        if (!currentTrack) return;
+        
+        const clickPosition = e.clientX - progressBar.getBoundingClientRect().left;
+        const progressBarWidth = progressBar.clientWidth;
+        const clickPercentage = clickPosition / progressBarWidth;
+        audioPlayer.currentTime = clickPercentage * audioPlayer.duration;
+    });
+});
+
+// Audio ended event
+audioPlayer.addEventListener('ended', () => {
+    if (repeatMode) {
+        // Jika repeat mode aktif, ulangi lagu yang sama
+        audioPlayer.currentTime = 0;
+        audioPlayer.play();
+    } else {
+        // Auto play next track if available
+        playNextTrack();
+    }
+});
+
+// Bottom Navigation
+navItems.forEach(item => {
+    item.addEventListener('click', (e) => {
+        e.preventDefault();
+        const section = item.getAttribute('data-section');
+        currentSection = section;
+        
+        // Hide all sections
+        searchResultsContainer.classList.remove('active');
+        directSection.classList.remove('active');
+        favoritesSection.classList.remove('active');
+        trendingSection.classList.remove('active');
+        aboutContainer.classList.remove('active');
+        
+        // Show active section
+        if (section === 'home') {
+            document.getElementById('home').scrollIntoView({ behavior: 'smooth' });
+        } else if (section === 'search') {
+            searchResultsContainer.classList.add('active');
+            document.getElementById('search').scrollIntoView({ behavior: 'smooth' });
+        } else if (section === 'favorites') {
+            favoritesSection.classList.add('active');
+            document.getElementById('favorites').scrollIntoView({ behavior: 'smooth' });
+            renderFavorites();
+        } else if (section === 'trending') {
+            trendingSection.classList.add('active');
+            document.getElementById('trending').scrollIntoView({ behavior: 'smooth' });
+            loadTopGlobal();
+        } else if (section === 'about') {
+            aboutContainer.classList.add('active');
+            document.getElementById('about').scrollIntoView({ behavior: 'smooth' });
+        }
+        
+        // Update active nav item
+        navItems.forEach(navItem => {
+            if (navItem.getAttribute('data-section') === section) {
+                navItem.classList.add('active');
+            } else {
+                navItem.classList.remove('active');
+            }
+        });
+    });
+});
+
+// Load Top Global on button click
+loadTopGlobalBtn?.addEventListener('click', loadTopGlobal);
+
+// Toast notification
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `fixed bottom-20 right-4 px-4 py-2 rounded shadow-lg text-white ${
+        type === 'success' ? 'bg-green-500' : 
+        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+    }`;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    renderFavorites();
+    renderRecentlyPlayed();
+    
+    // Hide all sections except home initially
+    searchResultsContainer.classList.remove('active');
+    directSection.classList.remove('active');
+    favoritesSection.classList.remove('active');
+    trendingSection.classList.remove('active');
+    aboutContainer.classList.remove('active');
+    
+    // Add smooth scrolling for all anchor links
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            if (targetId === '#') return;
+            
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+                
+                // Update navigation
+                const section = targetId.substring(1);
+                if (['home', 'search', 'favorites', 'trending', 'about'].includes(section)) {
+                    currentSection = section;
+                    
+                    // Hide all sections
+                    searchResultsContainer.classList.remove('active');
+                    directSection.classList.remove('active');
+                    favoritesSection.classList.remove('active');
+                    trendingSection.classList.remove('active');
+                    aboutContainer.classList.remove('active');
+                    
+                    // Show active section
+                    if (section === 'search') {
+                        searchResultsContainer.classList.add('active');
+                    } else if (section === 'favorites') {
+                        favoritesSection.classList.add('active');
+                        renderFavorites();
+                    } else if (section === 'trending') {
+                        trendingSection.classList.add('active');
+                        loadTopGlobal();
+                    } else if (section === 'about') {
+                        aboutContainer.classList.add('active');
+                    }
+                    
+                    // Update active nav item
+                    navItems.forEach(navItem => {
+                        if (navItem.getAttribute('data-section') === section) {
+                            navItem.classList.add('active');
+                        } else {
+                            navItem.classList.remove('active');
+                        }
+                    });
+                }
+            }
+        });
+    });
+});
+    </script>
+</body>
+</html>
