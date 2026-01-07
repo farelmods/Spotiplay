@@ -557,22 +557,31 @@
 
                 // If not, fetch it
                 if (!streamUrl) {
-                    const apiUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`;
+                    // Use v2 endpoint
+                    const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`;
                     const res = await fetch(apiUrl);
                     const data = await res.json();
 
-                    if (!data.status || !data.data || !data.data.download) {
+                    if (!data.status || !data.data || !data.data.mp3DownloadLink) {
                         if (data.status === false && data.code === 500) {
                              throw new Error('RESTRICTED');
                         }
                         throw new Error('FAILED');
                     }
-                    streamUrl = data.data.download;
+
+                    streamUrl = data.data.mp3DownloadLink;
+
                     // Cache it in the queue object to avoid re-fetching
                     state.queue[state.currentIndex].download = streamUrl;
 
                     // Update metadata if available from detailed response
-                    if(data.data.image) state.queue[state.currentIndex].thumbnail = data.data.image;
+                    // V2 response keys: coverImage, artist, songTitle
+                    if(data.data.coverImage) state.queue[state.currentIndex].thumbnail = data.data.coverImage;
+                    if(data.data.artist) state.queue[state.currentIndex].artist = data.data.artist;
+                    if(data.data.songTitle) state.queue[state.currentIndex].title = data.data.songTitle;
+
+                    // Re-update info in case metadata improved
+                    updatePlayerInfo(normalizeTrack(state.queue[state.currentIndex]));
                 }
 
                 // Play
@@ -607,9 +616,9 @@
             }
             return {
                 ...track,
-                title: track.title,
+                title: track.title || track.songTitle, // Handle v2
                 artist: track.artist || track.artis || 'Unknown Artist',
-                thumbnail: track.thumbnail || track.image || 'https://via.placeholder.com/400',
+                thumbnail: track.thumbnail || track.image || track.coverImage || 'https://via.placeholder.com/400', // Handle v2
                 track_url: track.track_url || track.url,
                 duration: duration
             };
@@ -1121,12 +1130,13 @@
                  window.open(track.download, '_blank');
              } else {
                  showToast('Mengambil Link...', 'info');
-                 const apiUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(track.track_url)}`;
+                 // Use v2 endpoint
+                 const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`;
                  fetch(apiUrl).then(res => res.json()).then(data => {
-                     if (data.status && data.data && data.data.download) {
+                     if (data.status && data.data && data.data.mp3DownloadLink) {
                          // Update cache
-                         if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = data.data.download;
-                         window.open(data.data.download, '_blank');
+                         if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = data.data.mp3DownloadLink;
+                         window.open(data.data.mp3DownloadLink, '_blank');
                      } else {
                          showToast('Gagal', 'error', 'Tidak dapat mengunduh.');
                      }
