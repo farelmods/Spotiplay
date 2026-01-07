@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Spotiplay - Premium Music Experience</title>
+    <title>Spotiplay v2 - Premium Music Experience</title>
     <meta name="description" content="Streaming dan download lagu Spotify gratis dengan kualitas terbaik.">
 
     <!-- Fonts -->
@@ -98,6 +98,7 @@
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
             transition: all 0.3s ease;
+            will-change: transform, background-color;
         }
 
         .glass-card:hover {
@@ -111,6 +112,7 @@
         .player-disk {
             animation: spin 10s linear infinite;
             animation-play-state: paused;
+            will-change: transform;
         }
         .player-disk.playing {
             animation-play-state: running;
@@ -153,30 +155,43 @@
         input[type="range"]:focus {
             outline: none;
         }
+
+        /* Smooth transitions for sections */
+        .fade-in-section {
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
+        }
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 <body class="bg-dark-bg text-gray-200 antialiased overflow-x-hidden pb-24 selection:bg-brand-500 selection:text-white">
 
     <!-- Background Elements -->
-    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none transform-gpu">
         <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob"></div>
         <div class="absolute top-0 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
         <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-pink-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
     </div>
 
     <!-- Header -->
-    <header class="fixed top-0 w-full z-40 glass border-b-0 border-white/5 px-4 py-3">
+    <header class="fixed top-0 w-full z-40 glass border-b-0 border-white/5 px-4 py-3 transition-all duration-300">
         <div class="container mx-auto flex items-center justify-between">
             <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-black font-bold text-lg">
+                <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-black font-bold text-lg shadow-lg shadow-brand-500/20">
                     <i class="fab fa-spotify"></i>
                 </div>
                 <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                    Spotiplay
+                    Spotiplay v2
                 </h1>
             </div>
 
-            <button id="searchToggleBtn" class="p-2 text-gray-400 hover:text-white transition-colors md:hidden">
+            <button id="searchToggleBtn" class="p-2 text-gray-400 hover:text-white transition-colors md:hidden active:scale-95 transform">
                 <i class="fas fa-search text-xl"></i>
             </button>
 
@@ -201,7 +216,7 @@
                         class="w-full bg-dark-surface text-white p-4 pl-12 rounded-xl focus:outline-none placeholder-gray-500 shadow-xl"
                         placeholder="What do you want to listen to?" autocomplete="off">
                     <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-brand-600 hover:bg-brand-500 text-white p-2 rounded-lg transition-colors">
+                    <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-brand-600 hover:bg-brand-500 text-white p-2 rounded-lg transition-colors shadow-lg">
                         <i class="fas fa-arrow-right"></i>
                     </button>
                 </form>
@@ -212,17 +227,17 @@
         <div id="contentArea" class="min-h-[60vh]">
 
             <!-- Home View -->
-            <div id="homeView" class="space-y-8 animate-fade-in">
+            <div id="homeView" class="space-y-8 animate-fade-in fade-in-section">
                 <!-- Welcome Banner -->
-                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-900 to-black p-8 shadow-2xl">
+                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-900 to-black p-8 shadow-2xl transform transition-transform hover:scale-[1.01] duration-500">
                     <div class="relative z-10">
                         <h2 class="text-3xl font-bold mb-2">Welcome Back</h2>
                         <p class="text-gray-400 mb-6">Discover new music or play your favorites directly.</p>
                         <div class="flex gap-4">
-                            <button onclick="document.getElementById('searchInput').focus()" class="px-6 py-2 bg-brand-500 hover:bg-brand-400 text-black font-semibold rounded-full transition-transform hover:scale-105">
+                            <button onclick="document.getElementById('searchInput').focus()" class="px-6 py-2 bg-brand-500 hover:bg-brand-400 text-black font-semibold rounded-full transition-all hover:scale-105 shadow-lg shadow-brand-500/20">
                                 Start Listening
                             </button>
-                            <button onclick="loadTopGlobal()" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-full backdrop-blur transition-transform hover:scale-105">
+                            <button onclick="loadTopGlobal()" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-full backdrop-blur transition-all hover:scale-105">
                                 Top Global
                             </button>
                         </div>
@@ -236,7 +251,7 @@
                 <section>
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="text-xl font-bold">Recently Played</h3>
-                        <button class="text-xs text-brand-400 font-semibold hover:underline">SEE ALL</button>
+                        <button class="text-xs text-brand-400 font-semibold hover:underline" onclick="showLibrary()">SEE ALL</button>
                     </div>
                     <div id="recentlyPlayedGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                         <!-- Items injected here -->
@@ -265,10 +280,10 @@
             </div>
 
             <!-- Search Results View -->
-            <div id="searchResultsView" class="hidden space-y-6">
+            <div id="searchResultsView" class="hidden space-y-6 fade-in-section">
                 <div class="flex items-center justify-between">
                     <h3 class="text-xl font-bold">Search Results</h3>
-                    <button onclick="showHome()" class="text-sm text-gray-400 hover:text-white">
+                    <button onclick="showHome()" class="text-sm text-gray-400 hover:text-white transition-colors">
                         <i class="fas fa-times mr-1"></i> Clear
                     </button>
                 </div>
@@ -283,11 +298,11 @@
             </div>
 
             <!-- Library View -->
-            <div id="libraryView" class="hidden space-y-6">
+            <div id="libraryView" class="hidden space-y-6 fade-in-section">
                  <h3 class="text-xl font-bold">Your Library</h3>
                  <div class="glass p-1 rounded-xl flex gap-2 w-fit mb-6">
-                     <button onclick="switchLibraryTab('favorites')" id="tabFavorites" class="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium transition-all">Favorites</button>
-                     <button onclick="switchLibraryTab('downloads')" id="tabDownloads" class="px-4 py-2 rounded-lg hover:bg-white/10 text-gray-400 text-sm font-medium transition-all">Downloads</button>
+                     <button onclick="switchLibraryTab('favorites')" id="tabFavorites" class="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium transition-all duration-300">Favorites</button>
+                     <button onclick="switchLibraryTab('downloads')" id="tabDownloads" class="px-4 py-2 rounded-lg hover:bg-white/10 text-gray-400 text-sm font-medium transition-all duration-300">Downloads</button>
                  </div>
 
                  <div id="favoritesList" class="space-y-2">
@@ -297,7 +312,7 @@
                      <!-- Downloads injected here -->
                  </div>
                  <div class="flex justify-end mt-4">
-                     <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-300">Clear History</button>
+                     <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-300 transition-colors">Clear History</button>
                  </div>
             </div>
 
@@ -305,36 +320,36 @@
     </main>
 
     <!-- Mini Player (Fixed Bottom) -->
-    <div id="miniPlayer" class="fixed bottom-[60px] md:bottom-0 left-0 right-0 z-50 transform translate-y-[120%] transition-transform duration-300 ease-out">
+    <div id="miniPlayer" class="fixed bottom-[60px] md:bottom-0 left-0 right-0 z-50 transform translate-y-[120%] transition-transform duration-300 ease-out will-change-transform">
         <div class="container mx-auto max-w-screen-xl md:px-4 md:mb-4">
             <div class="bg-dark-surface/95 backdrop-blur-xl border border-white/10 rounded-none md:rounded-2xl p-3 shadow-2xl flex items-center justify-between gap-4 relative overflow-hidden">
                 
                 <!-- Progress Bar -->
                 <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-800 cursor-pointer" id="miniProgressBarContainer">
-                    <div id="miniProgressBar" class="h-full bg-brand-500 w-0 transition-all duration-100"></div>
+                    <div id="miniProgressBar" class="h-full bg-brand-500 w-0 transition-all duration-100 ease-linear"></div>
                 </div>
 
                 <!-- Track Info -->
-                <div class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer" onclick="openFullPlayer()">
-                    <img id="miniCover" src="https://via.placeholder.com/50" class="w-12 h-12 rounded-lg object-cover bg-gray-800 shadow-lg">
+                <div class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group" onclick="openFullPlayer()">
+                    <img id="miniCover" src="https://via.placeholder.com/50" class="w-12 h-12 rounded-lg object-cover bg-gray-800 shadow-lg group-hover:scale-105 transition-transform duration-300" loading="lazy">
                     <div class="flex flex-col justify-center overflow-hidden">
-                        <h4 id="miniTitle" class="font-bold text-sm text-white truncate">Select a song</h4>
+                        <h4 id="miniTitle" class="font-bold text-sm text-white truncate group-hover:text-brand-400 transition-colors">Select a song</h4>
                         <p id="miniArtist" class="text-xs text-gray-400 truncate">Spotiplay</p>
                     </div>
                 </div>
 
                 <!-- Controls -->
                 <div class="flex items-center gap-4 mb-1">
-                    <button id="miniLikeBtn" class="text-gray-400 hover:text-brand-500 transition-colors hidden sm:block">
+                    <button id="miniLikeBtn" class="text-gray-400 hover:text-brand-500 transition-colors hidden sm:block p-2 active:scale-95">
                         <i class="far fa-heart"></i>
                     </button>
-                    <button onclick="playPrev()" class="text-gray-300 hover:text-white transition-colors hidden sm:block">
+                    <button onclick="playPrev()" class="text-gray-300 hover:text-white transition-colors hidden sm:block p-2 active:scale-95">
                         <i class="fas fa-step-backward text-lg"></i>
                     </button>
-                    <button id="miniPlayBtn" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform">
+                    <button id="miniPlayBtn" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg">
                         <i class="fas fa-play ml-1"></i>
                     </button>
-                    <button onclick="playNext()" class="text-gray-300 hover:text-white transition-colors">
+                    <button onclick="playNext()" class="text-gray-300 hover:text-white transition-colors p-2 active:scale-95">
                         <i class="fas fa-step-forward text-lg"></i>
                     </button>
                 </div>
@@ -343,17 +358,17 @@
     </div>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="md:hidden fixed bottom-0 w-full z-50 bg-black/90 backdrop-blur-lg border-t border-white/5 pb-safe">
+    <nav class="md:hidden fixed bottom-0 w-full z-50 bg-black/90 backdrop-blur-lg border-t border-white/5 pb-safe transition-all duration-300">
         <div class="flex justify-around items-center h-[60px]">
-            <button onclick="showHome()" class="nav-item active flex flex-col items-center gap-1 text-xs text-brand-500 w-full h-full justify-center">
+            <button onclick="showHome()" class="nav-item active flex flex-col items-center gap-1 text-xs text-brand-500 w-full h-full justify-center active:scale-95 transition-transform">
                 <i class="fas fa-home text-xl mb-0.5"></i>
                 Home
             </button>
-            <button onclick="toggleSearchMobile()" class="nav-item flex flex-col items-center gap-1 text-xs text-gray-500 w-full h-full justify-center">
+            <button onclick="toggleSearchMobile()" class="nav-item flex flex-col items-center gap-1 text-xs text-gray-500 w-full h-full justify-center active:scale-95 transition-transform">
                 <i class="fas fa-search text-xl mb-0.5"></i>
                 Search
             </button>
-            <button onclick="showLibrary()" class="nav-item flex flex-col items-center gap-1 text-xs text-gray-500 w-full h-full justify-center">
+            <button onclick="showLibrary()" class="nav-item flex flex-col items-center gap-1 text-xs text-gray-500 w-full h-full justify-center active:scale-95 transition-transform">
                 <i class="fas fa-book text-xl mb-0.5"></i>
                 Library
             </button>
@@ -361,16 +376,16 @@
     </nav>
 
     <!-- Full Screen Player Overlay -->
-    <div id="fullPlayer" class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-3xl transform translate-y-full transition-transform duration-500 flex flex-col">
+    <div id="fullPlayer" class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-3xl transform translate-y-full transition-transform duration-500 flex flex-col will-change-transform">
         <!-- Background Blur Image -->
         <div class="absolute inset-0 z-[-1] opacity-30">
-            <img id="playerBgImage" src="" class="w-full h-full object-cover filter blur-3xl">
+            <img id="playerBgImage" src="" class="w-full h-full object-cover filter blur-3xl transform scale-110">
             <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-black/80 to-black"></div>
         </div>
 
         <!-- Header -->
         <div class="flex items-center justify-between p-6">
-            <button onclick="closeFullPlayer()" class="text-white hover:text-gray-300 p-2">
+            <button onclick="closeFullPlayer()" class="text-white hover:text-gray-300 p-2 active:scale-90 transition-transform">
                 <i class="fas fa-chevron-down text-2xl"></i>
             </button>
             <span class="text-xs font-bold tracking-widest uppercase text-gray-400">Now Playing</span>
@@ -385,7 +400,7 @@
             <div class="w-full max-w-sm aspect-square relative mb-8 group">
                 <div class="absolute inset-0 bg-brand-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-50"></div>
                 <img id="fullCover" src="https://via.placeholder.com/400"
-                     class="relative w-full h-full object-cover rounded-2xl shadow-2xl transform transition-transform duration-500 scale-100 player-disk">
+                     class="relative w-full h-full object-cover rounded-2xl shadow-2xl transform transition-transform duration-500 scale-100 player-disk" loading="lazy">
             </div>
 
             <!-- Meta -->
@@ -394,14 +409,14 @@
                     <h2 id="fullTitle" class="text-2xl font-bold text-white leading-tight truncate">No Track Selected</h2>
                     <p id="fullArtist" class="text-lg text-gray-400 truncate">Spotiplay</p>
                 </div>
-                <button id="fullLikeBtn" class="text-2xl text-gray-400 hover:text-brand-500 transition-colors p-2">
+                <button id="fullLikeBtn" class="text-2xl text-gray-400 hover:text-brand-500 transition-colors p-2 active:scale-110 transform">
                     <i class="far fa-heart"></i>
                 </button>
             </div>
 
             <!-- Progress -->
             <div class="w-full max-w-md mb-8">
-                <input type="range" id="progressBar" min="0" max="100" value="0" class="w-full mb-2">
+                <input type="range" id="progressBar" min="0" max="100" value="0" class="w-full mb-2 cursor-pointer">
                 <div class="flex justify-between text-xs text-gray-400 font-medium">
                     <span id="currentTime">0:00</span>
                     <span id="duration">0:00</span>
@@ -410,19 +425,19 @@
 
             <!-- Controls -->
             <div class="w-full max-w-md flex items-center justify-between">
-                <button onclick="toggleShuffle()" id="shuffleBtn" class="text-gray-400 hover:text-white transition-colors p-2">
+                <button onclick="toggleShuffle()" id="shuffleBtn" class="text-gray-400 hover:text-white transition-colors p-2 active:scale-95">
                     <i class="fas fa-shuffle text-xl"></i>
                 </button>
-                <button onclick="playPrev()" class="text-white hover:text-brand-400 transition-colors p-2">
+                <button onclick="playPrev()" class="text-white hover:text-brand-400 transition-colors p-2 active:scale-90 transform">
                     <i class="fas fa-backward-step text-3xl"></i>
                 </button>
-                <button id="fullPlayBtn" class="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                <button id="fullPlayBtn" class="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]">
                     <i class="fas fa-play text-2xl ml-1"></i>
                 </button>
-                <button onclick="playNext()" class="text-white hover:text-brand-400 transition-colors p-2">
+                <button onclick="playNext()" class="text-white hover:text-brand-400 transition-colors p-2 active:scale-90 transform">
                     <i class="fas fa-forward-step text-3xl"></i>
                 </button>
-                <button onclick="toggleRepeat()" id="repeatBtn" class="text-gray-400 hover:text-white transition-colors p-2">
+                <button onclick="toggleRepeat()" id="repeatBtn" class="text-gray-400 hover:text-white transition-colors p-2 active:scale-95">
                     <i class="fas fa-repeat text-xl"></i>
                 </button>
             </div>
@@ -430,7 +445,7 @@
 
         <!-- Footer Actions -->
         <div class="p-8 flex justify-center gap-6">
-            <button onclick="downloadCurrentTrack()" class="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+            <button onclick="downloadCurrentTrack()" class="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-colors active:scale-95 transform">
                 <i class="fas fa-download"></i> Download
             </button>
         </div>
@@ -440,7 +455,7 @@
     <audio id="audioPlayer" preload="auto"></audio>
 
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-24 right-4 z-[70] transform translate-x-full transition-transform duration-300">
+    <div id="toast" class="fixed top-24 right-4 z-[70] transform translate-x-full transition-transform duration-300 will-change-transform">
         <div class="bg-dark-surface border border-white/10 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px]">
             <div id="toastIcon" class="text-brand-500 text-xl">
                 <i class="fas fa-info-circle"></i>
@@ -453,16 +468,29 @@
     </div>
 
     <script>
+        // --- Utility to debounce functions ---
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         // --- State Management ---
         const state = {
             queue: [],
-            originalQueue: [], // For un-shuffle
+            originalQueue: [],
             currentIndex: -1,
             searchResults: [],
             trendingResults: [],
             isPlaying: false,
             isShuffled: false,
-            repeatMode: 0, // 0: off, 1: all, 2: one
+            repeatMode: 0,
             currentSection: 'home',
             favorites: JSON.parse(localStorage.getItem('spotiplay_favorites') || '[]'),
             recent: JSON.parse(localStorage.getItem('spotiplay_recent') || '[]'),
@@ -527,8 +555,8 @@
             // Mobile toggle
             document.getElementById('searchToggleBtn')?.addEventListener('click', toggleSearchMobile);
 
-            // Window resize handler
-            window.addEventListener('resize', () => showSection(state.currentSection));
+            // Window resize handler (debounced)
+            window.addEventListener('resize', debounce(() => showSection(state.currentSection), 100));
         });
 
         // --- Core Audio Logic ---
@@ -575,12 +603,11 @@
                     state.queue[state.currentIndex].download = streamUrl;
 
                     // Update metadata if available from detailed response
-                    // V2 response keys: coverImage, artist, songTitle
                     if(data.data.coverImage) state.queue[state.currentIndex].thumbnail = data.data.coverImage;
                     if(data.data.artist) state.queue[state.currentIndex].artist = data.data.artist;
                     if(data.data.songTitle) state.queue[state.currentIndex].title = data.data.songTitle;
 
-                    // Re-update info in case metadata improved
+                    // Re-update info
                     updatePlayerInfo(normalizeTrack(state.queue[state.currentIndex]));
                 }
 
@@ -616,9 +643,9 @@
             }
             return {
                 ...track,
-                title: track.title || track.songTitle, // Handle v2
+                title: track.title || track.songTitle,
                 artist: track.artist || track.artis || 'Unknown Artist',
-                thumbnail: track.thumbnail || track.image || track.coverImage || 'https://via.placeholder.com/400', // Handle v2
+                thumbnail: track.thumbnail || track.image || track.coverImage || 'https://via.placeholder.com/400',
                 track_url: track.track_url || track.url,
                 duration: duration
             };
@@ -648,13 +675,12 @@
             }
 
             state.currentIndex = nextIndex;
-            playTrack(null); // Play current index from existing queue
+            playTrack(null);
         }
 
         function playPrev() {
             if (state.queue.length === 0) return;
 
-            // If playing more than 3 seconds, restart song
             if (audio.currentTime > 3) {
                 audio.currentTime = 0;
                 return;
@@ -662,7 +688,7 @@
 
             let prevIndex = state.currentIndex - 1;
             if (prevIndex < 0) {
-                prevIndex = 0; // Or loop to end?
+                prevIndex = 0;
             }
 
             state.currentIndex = prevIndex;
@@ -707,7 +733,6 @@
 
             els.currentTime.textContent = formatTime(audio.currentTime);
 
-            // Update CSS variable for range slider fill
             els.progressBar.style.background = `linear-gradient(to right, #22c55e 0%, #22c55e ${percent}%, #404040 ${percent}%, #404040 100%)`;
         }
 
@@ -728,7 +753,6 @@
             els.covers.forEach(el => el.src = cover);
             els.bgImage.src = cover;
 
-            // Update Media Session API
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
                     title: title,
@@ -750,7 +774,6 @@
             const query = els.searchInput.value.trim();
             if (!query) return;
 
-            // Switch to search view
             showSection('search');
             els.resultsList.innerHTML = '';
             els.searchLoading.classList.remove('hidden');
@@ -762,7 +785,7 @@
                 els.searchLoading.classList.add('hidden');
 
                 if (data.status && data.data && data.data.length > 0) {
-                    state.searchResults = data.data; // Store global state
+                    state.searchResults = data.data;
                     renderResults(data.data);
                 } else {
                     els.resultsList.innerHTML = `
@@ -784,7 +807,7 @@
                 return `
                 <div class="glass-card p-3 rounded-xl flex items-center gap-4 cursor-pointer group" onclick="playFromSearch(${index})">
                     <div class="relative w-16 h-16 flex-shrink-0">
-                        <img src="${track.thumbnail}" class="w-full h-full object-cover rounded-md shadow-sm">
+                        <img src="${track.thumbnail}" class="w-full h-full object-cover rounded-md shadow-sm" loading="lazy">
                         <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
                             <i class="fas fa-play text-white"></i>
                         </div>
@@ -796,7 +819,7 @@
                     <div class="flex items-center gap-3">
                         <span class="text-xs text-gray-500">${track.duration || ''}</span>
                         <button onclick="event.stopPropagation(); toggleLikeData('${track.track_url}', '${track.title.replace(/'/g, "\\'")}', '${track.artist.replace(/'/g, "\\'")}', '${track.thumbnail}')"
-                                class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-brand-500 transition-colors">
+                                class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-brand-500 transition-colors active:scale-90">
                             <i class="${isFavorited(track.track_url) ? 'fas text-brand-500' : 'far'} fa-heart"></i>
                         </button>
                     </div>
@@ -827,12 +850,12 @@
 
                 if (data.status && data.data) {
                     const tracks = data.data.slice(0, 6);
-                    state.trendingResults = tracks; // Store global state
+                    state.trendingResults = tracks;
                     grid.innerHTML = tracks.map((track, idx) => `
                         <div class="glass-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-white/5 transition"
                              onclick='playFromTrending(${idx})'>
                              <span class="text-2xl font-bold text-gray-600 w-8 text-center">${idx + 1}</span>
-                             <img src="${track.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover">
+                             <img src="${track.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
                              <div class="overflow-hidden">
                                  <h4 class="font-bold text-sm truncate text-white">${track.title}</h4>
                                  <p class="text-xs text-gray-400 truncate">${track.artist}</p>
@@ -850,29 +873,22 @@
         function showSection(sectionId) {
             state.currentSection = sectionId;
 
-            // Hide all
             Object.values(els.views).forEach(el => el.classList.add('hidden'));
 
-            // Show target
             if (sectionId === 'home') els.views.home.classList.remove('hidden');
             if (sectionId === 'search') els.views.search.classList.remove('hidden');
             if (sectionId === 'library') {
                 els.views.library.classList.remove('hidden');
-                // Default to favorites or currently active tab is handled in HTML/State?
-                // We'll stick to last or default favorites.
                 switchLibraryTab(document.getElementById('tabFavorites').classList.contains('bg-brand-600') ? 'favorites' : 'downloads');
             }
 
-            // Input Visibility Logic
             const isMobile = window.innerWidth < 768;
             let showInput = false;
             if (sectionId === 'search') showInput = true;
             if (sectionId === 'home' && !isMobile) showInput = true;
-            // Library usually has no search bar in this design
 
             els.searchBarContainer.style.display = showInput ? 'block' : 'none';
 
-            // Update nav state (mobile)
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-brand-500'));
 
             const navIndex = sectionId === 'home' ? 0 : sectionId === 'search' ? 1 : 2;
@@ -882,7 +898,6 @@
                  navItems[navIndex].classList.remove('text-gray-500');
             }
 
-            // Scroll to top
             window.scrollTo(0,0);
         }
 
@@ -891,7 +906,6 @@
 
         function toggleSearchMobile() {
             showSection('search');
-            // Slight delay to ensure visibility
             setTimeout(() => els.searchInput.focus(), 100);
         }
 
@@ -922,17 +936,13 @@
             }
             localStorage.setItem('spotiplay_favorites', JSON.stringify(state.favorites));
 
-            // Re-render if in library view
             if (!els.views.library.classList.contains('hidden')) {
-                // Determine active tab
                 if (document.getElementById('tabFavorites').classList.contains('bg-brand-600')) {
                     renderFavorites();
                 }
             }
-            // Update search results buttons
             handleSearchLikeUpdate(url);
 
-            // Update player like button if matches
             const current = normalizeTrack(state.queue[state.currentIndex]);
             if (current && (current.track_url === url)) {
                 updateLikeButtonState(url);
@@ -982,7 +992,7 @@
 
             list.innerHTML = state.favorites.map((track, idx) => `
                 <div class="glass-card p-3 rounded-xl flex items-center gap-4" onclick='playTrack(null, ${JSON.stringify(state.favorites).replace(/'/g, "&#39;")}, ${idx})'>
-                    <img src="${track.thumbnail || track.image}" class="w-12 h-12 rounded bg-gray-800 object-cover">
+                    <img src="${track.thumbnail || track.image}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
                     <div class="flex-1 min-w-0">
                         <h4 class="font-bold text-white truncate text-base">${track.title}</h4>
                         <p class="text-gray-400 text-sm truncate">${track.artist}</p>
@@ -996,13 +1006,11 @@
         
         function addToDownloads(track) {
             const trackUrl = track.track_url || track.url;
-            // Check duplicates
             if (state.downloads.some(t => (t.url || t.track_url) === trackUrl)) return;
 
             state.downloads.unshift(track);
             localStorage.setItem('spotiplay_downloads', JSON.stringify(state.downloads));
 
-            // Re-render if necessary
             if (document.getElementById('tabDownloads').classList.contains('bg-brand-600')) {
                 renderDownloads();
             }
@@ -1023,7 +1031,7 @@
                 const norm = normalizeTrack(track);
                 return `
                 <div class="glass-card p-3 rounded-xl flex items-center gap-4">
-                    <img src="${norm.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover">
+                    <img src="${norm.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
                     <div class="flex-1 min-w-0">
                         <h4 class="font-bold text-white truncate text-base">${norm.title}</h4>
                         <p class="text-gray-400 text-sm truncate">${norm.artist}</p>
@@ -1081,7 +1089,7 @@
             grid.innerHTML = state.recent.slice(0, 6).map((track, idx) => `
                 <div class="group cursor-pointer" onclick='playTrack(null, ${JSON.stringify(state.recent).replace(/'/g, "&#39;")}, ${idx})'>
                     <div class="relative w-full aspect-square mb-2 overflow-hidden rounded-lg">
-                        <img src="${track.thumbnail || track.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                        <img src="${track.thumbnail || track.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy">
                         <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
                         <button class="absolute bottom-2 right-2 w-10 h-10 bg-brand-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-lg text-black">
                             <i class="fas fa-play ml-1"></i>
@@ -1123,18 +1131,15 @@
              const track = normalizeTrack(state.queue[state.currentIndex]);
              if (!track) return;
 
-             // Add to downloads history
              addToDownloads(track);
 
              if (track.download) {
                  window.open(track.download, '_blank');
              } else {
                  showToast('Mengambil Link...', 'info');
-                 // Use v2 endpoint
                  const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`;
                  fetch(apiUrl).then(res => res.json()).then(data => {
                      if (data.status && data.data && data.data.mp3DownloadLink) {
-                         // Update cache
                          if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = data.data.mp3DownloadLink;
                          window.open(data.data.mp3DownloadLink, '_blank');
                      } else {
