@@ -546,7 +546,7 @@
 
                 // UI Loading State
                 updatePlayerInfo(currentTrack);
-                showToast('Loading track...', 'info', 'Please wait');
+                showToast('Memuat lagu...', 'info', 'Mohon tunggu sebentar...');
                 els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
 
                 // Show Mini Player immediately
@@ -563,9 +563,9 @@
 
                     if (!data.status || !data.data || !data.data.download) {
                         if (data.status === false && data.code === 500) {
-                             throw new Error('This track is restricted or unavailable.');
+                             throw new Error('RESTRICTED');
                         }
-                        throw new Error('Failed to retrieve audio stream');
+                        throw new Error('FAILED');
                     }
                     streamUrl = data.data.download;
                     // Cache it in the queue object to avoid re-fetching
@@ -590,8 +590,11 @@
 
             } catch (error) {
                 console.error("Play error:", error);
-                const msg = error.message.includes('restricted') ? error.message : 'Could not play this track. Try another.';
-                showToast('Playback Failed', 'error', msg);
+                let msg = 'Gagal memutar lagu. Silakan coba lagu lain.';
+                if (error.message === 'RESTRICTED') {
+                    msg = 'Maaf, lagu ini bermasalah dari server pusat. Silakan cari versi lain.';
+                }
+                showToast('Gagal Memutar', 'error', msg);
                 updatePlayState(false);
             }
         }
@@ -667,7 +670,7 @@
         }
 
         function handleAudioError() {
-            showToast('Stream Error', 'error', 'Audio source refused connection.');
+            showToast('Stream Error', 'error', 'Koneksi audio terputus.');
             updatePlayState(false);
         }
 
@@ -756,14 +759,14 @@
                     els.resultsList.innerHTML = `
                         <div class="text-center py-10 text-gray-500">
                             <i class="fas fa-ghost text-4xl mb-4 opacity-50"></i>
-                            <p>No results found for "${query}"</p>
+                            <p>Tidak ada hasil untuk "${query}"</p>
                         </div>
                     `;
                 }
             } catch (error) {
                 console.error(error);
                 els.searchLoading.classList.add('hidden');
-                showToast('Search Failed', 'error', 'Could not connect to server.');
+                showToast('Gagal Mencari', 'error', 'Tidak dapat terhubung ke server.');
             }
         }
 
@@ -829,7 +832,7 @@
                     `).join('');
                 }
             } catch (e) {
-                grid.innerHTML = '<p class="text-red-400 text-sm">Failed to load trending.</p>';
+                grid.innerHTML = '<p class="text-red-400 text-sm">Gagal memuat trending.</p>';
             }
         }
 
@@ -894,7 +897,7 @@
         }
 
         function toggleQueue() {
-            showToast('Queue', 'info', 'Queue management coming soon!');
+            showToast('Queue', 'info', 'Fitur antrian segera hadir!');
         }
 
         // --- Favorites & Recent ---
@@ -903,10 +906,10 @@
             const idx = state.favorites.findIndex(t => (t.url || t.track_url) === url);
             if (idx > -1) {
                 state.favorites.splice(idx, 1);
-                showToast('Removed', 'info', 'Track removed from favorites');
+                showToast('Dihapus', 'info', 'Lagu dihapus dari favorit');
             } else {
                 state.favorites.push({ url, track_url: url, title, artist, thumbnail: img, image: img });
-                showToast('Liked', 'success', 'Track added to favorites');
+                showToast('Disukai', 'success', 'Lagu ditambahkan ke favorit');
             }
             localStorage.setItem('spotiplay_favorites', JSON.stringify(state.favorites));
 
@@ -964,7 +967,7 @@
         function renderFavorites() {
             const list = document.getElementById('favoritesList');
             if (state.favorites.length === 0) {
-                list.innerHTML = '<div class="text-center py-10 text-gray-500">No favorites yet.</div>';
+                list.innerHTML = '<div class="text-center py-10 text-gray-500">Belum ada favorit.</div>';
                 return;
             }
 
@@ -1002,7 +1005,7 @@
                 list.innerHTML = `
                     <div class="text-center py-10 text-gray-500">
                         <i class="fas fa-download text-4xl mb-4 opacity-50"></i>
-                        <p>No downloads yet.</p>
+                        <p>Belum ada riwayat download.</p>
                     </div>`;
                 return;
             }
@@ -1025,11 +1028,11 @@
         }
 
         function clearHistory() {
-            if(confirm('Clear download history?')) {
+            if(confirm('Hapus riwayat download?')) {
                 state.downloads = [];
                 localStorage.removeItem('spotiplay_downloads');
                 renderDownloads();
-                showToast('History Cleared', 'success');
+                showToast('Riwayat Dihapus', 'success');
             }
         }
 
@@ -1104,7 +1107,7 @@
             toast.classList.remove('translate-x-full');
             setTimeout(() => {
                 toast.classList.add('translate-x-full');
-            }, 3000);
+            }, 4000);
         }
 
         function downloadCurrentTrack() {
@@ -1117,7 +1120,7 @@
              if (track.download) {
                  window.open(track.download, '_blank');
              } else {
-                 showToast('Fetching Link...', 'info');
+                 showToast('Mengambil Link...', 'info');
                  const apiUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(track.track_url)}`;
                  fetch(apiUrl).then(res => res.json()).then(data => {
                      if (data.status && data.data && data.data.download) {
@@ -1125,7 +1128,7 @@
                          if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = data.data.download;
                          window.open(data.data.download, '_blank');
                      } else {
-                         showToast('Failed', 'error', 'Cannot download.');
+                         showToast('Gagal', 'error', 'Tidak dapat mengunduh.');
                      }
                  });
              }
@@ -1156,7 +1159,7 @@
                     state.currentIndex = indexInOriginal;
                 }
             }
-            showToast('Shuffle ' + (state.isShuffled ? 'On' : 'Off'), 'info');
+            showToast('Shuffle ' + (state.isShuffled ? 'Aktif' : 'Mati'), 'info');
         }
 
         function toggleRepeat() {
@@ -1168,17 +1171,17 @@
                 btn.classList.remove('text-brand-500');
                 btn.classList.add('text-gray-400');
                 icon.className = 'fas fa-repeat text-xl';
-                showToast('Repeat Off', 'info');
+                showToast('Repeat Mati', 'info');
             } else if (state.repeatMode === 1) {
                 btn.classList.add('text-brand-500');
                 btn.classList.remove('text-gray-400');
                 icon.className = 'fas fa-repeat text-xl';
-                showToast('Repeat All', 'info');
+                showToast('Repeat Semua', 'info');
             } else {
                 btn.classList.add('text-brand-500');
                 icon.className = 'fas fa-1 text-xl';
                 icon.innerHTML = '<span class="text-xs absolute -top-1 -right-1 font-bold">1</span>';
-                showToast('Repeat One', 'info');
+                showToast('Repeat Satu', 'info');
             }
         }
     </script>
