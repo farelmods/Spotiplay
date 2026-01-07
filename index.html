@@ -182,9 +182,9 @@
 
             <!-- Desktop Nav -->
             <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
-                <a href="#home" onclick="showHome()" class="text-white hover:text-brand-400 transition-colors">Home</a>
-                <a href="#search" onclick="showSection('search')" class="text-gray-400 hover:text-white transition-colors">Search</a>
-                <a href="#library" onclick="showLibrary()" class="text-gray-400 hover:text-white transition-colors">Library</a>
+                <a href="#home" onclick="showHome()" class="nav-link text-white hover:text-brand-400 transition-colors">Home</a>
+                <a href="#search" onclick="showSection('search')" class="nav-link text-gray-400 hover:text-white transition-colors">Search</a>
+                <a href="#library" onclick="showLibrary()" class="nav-link text-gray-400 hover:text-white transition-colors">Library</a>
             </nav>
         </div>
     </header>
@@ -192,8 +192,8 @@
     <!-- Main Content -->
     <main class="relative z-10 container mx-auto px-4 pt-20">
 
-        <!-- Search Section (Overlay on Mobile, Inline on Desktop) -->
-        <div id="searchSection" class="mb-8 hidden md:block transition-all duration-300">
+        <!-- Search Section -->
+        <div id="searchBarContainer" class="mb-8 transition-all duration-300">
             <div class="relative max-w-2xl mx-auto group">
                 <div class="absolute -inset-0.5 bg-gradient-to-r from-brand-600 to-purple-600 rounded-xl opacity-30 group-hover:opacity-75 blur transition duration-500"></div>
                 <form id="searchForm" class="relative">
@@ -294,10 +294,10 @@
                      <!-- Favorites injected here -->
                  </div>
                  <div id="downloadsList" class="hidden space-y-2">
-                     <div class="text-center py-10 text-gray-500">
-                         <i class="fas fa-download text-4xl mb-4 opacity-50"></i>
-                         <p>Download history is saved locally.</p>
-                     </div>
+                     <!-- Downloads injected here -->
+                 </div>
+                 <div class="flex justify-end mt-4">
+                     <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-300">Clear History</button>
                  </div>
             </div>
 
@@ -307,10 +307,10 @@
     <!-- Mini Player (Fixed Bottom) -->
     <div id="miniPlayer" class="fixed bottom-[60px] md:bottom-0 left-0 right-0 z-50 transform translate-y-[120%] transition-transform duration-300 ease-out">
         <div class="container mx-auto max-w-screen-xl md:px-4 md:mb-4">
-            <div class="bg-dark-surface/95 backdrop-blur-xl border border-white/10 rounded-none md:rounded-2xl p-3 shadow-2xl flex items-center justify-between gap-4">
+            <div class="bg-dark-surface/95 backdrop-blur-xl border border-white/10 rounded-none md:rounded-2xl p-3 shadow-2xl flex items-center justify-between gap-4 relative overflow-hidden">
                 
-                <!-- Progress Bar (Absolute Top for Mobile) -->
-                <div class="absolute top-0 left-0 right-0 h-1 bg-gray-800 md:hidden cursor-pointer" id="miniProgressBarContainer">
+                <!-- Progress Bar -->
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-800 cursor-pointer" id="miniProgressBarContainer">
                     <div id="miniProgressBar" class="h-full bg-brand-500 w-0 transition-all duration-100"></div>
                 </div>
 
@@ -324,7 +324,7 @@
                 </div>
 
                 <!-- Controls -->
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-4 mb-1">
                     <button id="miniLikeBtn" class="text-gray-400 hover:text-brand-500 transition-colors hidden sm:block">
                         <i class="far fa-heart"></i>
                     </button>
@@ -458,11 +458,15 @@
             queue: [],
             originalQueue: [], // For un-shuffle
             currentIndex: -1,
+            searchResults: [],
+            trendingResults: [],
             isPlaying: false,
             isShuffled: false,
             repeatMode: 0, // 0: off, 1: all, 2: one
+            currentSection: 'home',
             favorites: JSON.parse(localStorage.getItem('spotiplay_favorites') || '[]'),
             recent: JSON.parse(localStorage.getItem('spotiplay_recent') || '[]'),
+            downloads: JSON.parse(localStorage.getItem('spotiplay_downloads') || '[]'),
         };
 
         const audio = document.getElementById('audioPlayer');
@@ -486,6 +490,7 @@
                 search: document.getElementById('searchResultsView'),
                 library: document.getElementById('libraryView')
             },
+            searchBarContainer: document.getElementById('searchBarContainer'),
             searchForm: document.getElementById('searchForm'),
             searchInput: document.getElementById('searchInput'),
             resultsList: document.getElementById('resultsList'),
@@ -494,6 +499,7 @@
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
+            showHome();
             loadRecentlyPlayed();
             // Try to load trending on init
             loadTopGlobal();
@@ -518,10 +524,11 @@
             // Like buttons
             els.likeBtns.forEach(btn => btn.addEventListener('click', toggleLike));
 
-            // Search toggles (Mobile)
-            document.getElementById('searchToggleBtn')?.addEventListener('click', () => {
-                toggleSearchMobile();
-            });
+            // Mobile toggle
+            document.getElementById('searchToggleBtn')?.addEventListener('click', toggleSearchMobile);
+
+            // Window resize handler
+            window.addEventListener('resize', () => showSection(state.currentSection));
         });
 
         // --- Core Audio Logic ---
@@ -534,7 +541,7 @@
                     state.currentIndex = index;
                 }
 
-                const currentTrack = state.queue[state.currentIndex];
+                const currentTrack = normalizeTrack(state.queue[state.currentIndex]);
                 if (!currentTrack) return;
 
                 // UI Loading State
@@ -542,21 +549,30 @@
                 showToast('Loading track...', 'info', 'Please wait');
                 els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
 
+                // Show Mini Player immediately
+                els.miniPlayer.style.transform = 'translateY(0)';
+
                 // Check if track object already has a direct download link (optimization)
                 let streamUrl = currentTrack.download;
 
                 // If not, fetch it
                 if (!streamUrl) {
-                    const apiUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.url || currentTrack.track_url)}`;
+                    const apiUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`;
                     const res = await fetch(apiUrl);
                     const data = await res.json();
 
                     if (!data.status || !data.data || !data.data.download) {
+                        if (data.status === false && data.code === 500) {
+                             throw new Error('This track is restricted or unavailable.');
+                        }
                         throw new Error('Failed to retrieve audio stream');
                     }
                     streamUrl = data.data.download;
                     // Cache it in the queue object to avoid re-fetching
                     state.queue[state.currentIndex].download = streamUrl;
+
+                    // Update metadata if available from detailed response
+                    if(data.data.image) state.queue[state.currentIndex].thumbnail = data.data.image;
                 }
 
                 // Play
@@ -569,17 +585,31 @@
                 // Add to recent
                 addToRecent(currentTrack);
 
-                // Show Mini Player
-                els.miniPlayer.style.transform = 'translateY(0)';
-
                 // Update Like Button state
-                updateLikeButtonState(currentTrack.url || currentTrack.track_url);
+                updateLikeButtonState(currentTrack.track_url);
 
             } catch (error) {
                 console.error("Play error:", error);
-                showToast('Playback Failed', 'error', 'Could not play this track. Try another.');
+                const msg = error.message.includes('restricted') ? error.message : 'Could not play this track. Try another.';
+                showToast('Playback Failed', 'error', msg);
                 updatePlayState(false);
             }
+        }
+
+        function normalizeTrack(track) {
+            if (!track) return null;
+            let duration = track.duration;
+            if (!duration && track.durasi) {
+                duration = formatTime(track.durasi / 1000);
+            }
+            return {
+                ...track,
+                title: track.title,
+                artist: track.artist || track.artis || 'Unknown Artist',
+                thumbnail: track.thumbnail || track.image || 'https://via.placeholder.com/400',
+                track_url: track.track_url || track.url,
+                duration: duration
+            };
         }
 
         function togglePlay(e) {
@@ -643,13 +673,12 @@
 
         function updatePlayState(playing) {
             state.isPlaying = playing;
-            const icon = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play ml-1"></i>'; // Adjusted padding for play icon
+            const icon = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play ml-1"></i>';
             els.playBtns.forEach(btn => {
                 btn.innerHTML = icon;
                 if(playing) btn.classList.remove('animate-pulse');
             });
 
-            // Rotate disk animation
             const disk = document.querySelector('.player-disk');
             if(disk) {
                 if(playing) disk.classList.add('playing');
@@ -677,6 +706,7 @@
         }
 
         function updatePlayerInfo(track) {
+            if (!track) return;
             const title = track.title;
             const artist = track.artist || track.artis || 'Unknown Artist';
             const cover = track.thumbnail || track.image || 'https://via.placeholder.com/400';
@@ -720,6 +750,7 @@
                 els.searchLoading.classList.add('hidden');
 
                 if (data.status && data.data && data.data.length > 0) {
+                    state.searchResults = data.data; // Store global state
                     renderResults(data.data);
                 } else {
                     els.resultsList.innerHTML = `
@@ -738,10 +769,8 @@
 
         function renderResults(tracks) {
             const html = tracks.map((track, index) => {
-                // Encode track data to pass to function
-                const trackStr = encodeURIComponent(JSON.stringify(track));
                 return `
-                <div class="glass-card p-3 rounded-xl flex items-center gap-4 cursor-pointer group" onclick="startQueueFromSearch(${index})">
+                <div class="glass-card p-3 rounded-xl flex items-center gap-4 cursor-pointer group" onclick="playFromSearch(${index})">
                     <div class="relative w-16 h-16 flex-shrink-0">
                         <img src="${track.thumbnail}" class="w-full h-full object-cover rounded-md shadow-sm">
                         <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
@@ -764,30 +793,32 @@
             }).join('');
 
             els.resultsList.innerHTML = html;
-
-            // Store current search results in a temp variable for queueing
-            window.lastSearchResults = tracks;
         }
 
-        function startQueueFromSearch(index) {
-            if (window.lastSearchResults) {
-                playTrack(null, window.lastSearchResults, index);
+        function playFromSearch(index) {
+            if (state.searchResults && state.searchResults.length > 0) {
+                playTrack(null, state.searchResults, index);
+            }
+        }
+
+        function playFromTrending(index) {
+            if (state.trendingResults && state.trendingResults.length > 0) {
+                playTrack(null, state.trendingResults, index);
             }
         }
 
         async function loadTopGlobal() {
             const grid = document.getElementById('trendingGrid');
             try {
-                // Using a generic query for now as there is no direct top endpoint in the provided code info,
-                // defaulting to a popular query to simulate "Top Global"
                 const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=top%20hits%20global`);
                 const data = await res.json();
 
                 if (data.status && data.data) {
                     const tracks = data.data.slice(0, 6);
+                    state.trendingResults = tracks; // Store global state
                     grid.innerHTML = tracks.map((track, idx) => `
                         <div class="glass-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-white/5 transition"
-                             onclick='playTrack(null, ${JSON.stringify(tracks).replace(/'/g, "&#39;")}, ${idx})'>
+                             onclick='playFromTrending(${idx})'>
                              <span class="text-2xl font-bold text-gray-600 w-8 text-center">${idx + 1}</span>
                              <img src="${track.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover">
                              <div class="overflow-hidden">
@@ -805,6 +836,8 @@
         // --- View Navigation ---
 
         function showSection(sectionId) {
+            state.currentSection = sectionId;
+
             // Hide all
             Object.values(els.views).forEach(el => el.classList.add('hidden'));
 
@@ -813,13 +846,23 @@
             if (sectionId === 'search') els.views.search.classList.remove('hidden');
             if (sectionId === 'library') {
                 els.views.library.classList.remove('hidden');
-                renderFavorites();
+                // Default to favorites or currently active tab is handled in HTML/State?
+                // We'll stick to last or default favorites.
+                switchLibraryTab(document.getElementById('tabFavorites').classList.contains('bg-brand-600') ? 'favorites' : 'downloads');
             }
+
+            // Input Visibility Logic
+            const isMobile = window.innerWidth < 768;
+            let showInput = false;
+            if (sectionId === 'search') showInput = true;
+            if (sectionId === 'home' && !isMobile) showInput = true;
+            // Library usually has no search bar in this design
+
+            els.searchBarContainer.style.display = showInput ? 'block' : 'none';
 
             // Update nav state (mobile)
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-brand-500'));
 
-            // Simple logic to highlight nav
             const navIndex = sectionId === 'home' ? 0 : sectionId === 'search' ? 1 : 2;
             const navItems = document.querySelectorAll('.nav-item');
             if(navItems[navIndex]) {
@@ -835,11 +878,9 @@
         function showLibrary() { showSection('library'); }
 
         function toggleSearchMobile() {
-            const input = els.searchInput;
-            if (window.innerWidth < 768) {
-               showSection('search');
-               input.focus();
-            }
+            showSection('search');
+            // Slight delay to ensure visibility
+            setTimeout(() => els.searchInput.focus(), 100);
         }
 
         // --- Player UI Toggle ---
@@ -853,7 +894,6 @@
         }
 
         function toggleQueue() {
-            // Placeholder for Queue View functionality
             showToast('Queue', 'info', 'Queue management coming soon!');
         }
 
@@ -872,27 +912,31 @@
 
             // Re-render if in library view
             if (!els.views.library.classList.contains('hidden')) {
-                renderFavorites();
+                // Determine active tab
+                if (document.getElementById('tabFavorites').classList.contains('bg-brand-600')) {
+                    renderFavorites();
+                }
             }
             // Update search results buttons
             handleSearchLikeUpdate(url);
 
             // Update player like button if matches
-            if (state.queue[state.currentIndex] && (state.queue[state.currentIndex].url === url || state.queue[state.currentIndex].track_url === url)) {
+            const current = normalizeTrack(state.queue[state.currentIndex]);
+            if (current && (current.track_url === url)) {
                 updateLikeButtonState(url);
             }
         }
 
         function toggleLike() {
-            const track = state.queue[state.currentIndex];
+            const track = normalizeTrack(state.queue[state.currentIndex]);
             if (!track) return;
-            toggleLikeData(track.url || track.track_url, track.title, track.artist, track.thumbnail || track.image);
+            toggleLikeData(track.track_url, track.title, track.artist, track.thumbnail);
         }
 
         function isFavorited(url) {
             return state.favorites.some(t => (t.url || t.track_url) === url);
         }
-        
+
         function updateLikeButtonState(url) {
             const isLiked = isFavorited(url);
             els.likeBtns.forEach(btn => {
@@ -907,9 +951,6 @@
         }
 
         function handleSearchLikeUpdate(url) {
-             // Find buttons with this url in the DOM and update them
-             // This is a bit complex without a framework, but simple re-rendering is easier or ignoring it
-             // For now, let's just rely on the click handler updating the specific icon
              const btns = document.querySelectorAll(`button[onclick*="${url}"] i`);
              btns.forEach(icon => {
                  if (isFavorited(url)) {
@@ -941,6 +982,57 @@
             `).join('');
         }
         
+        function addToDownloads(track) {
+            const trackUrl = track.track_url || track.url;
+            // Check duplicates
+            if (state.downloads.some(t => (t.url || t.track_url) === trackUrl)) return;
+
+            state.downloads.unshift(track);
+            localStorage.setItem('spotiplay_downloads', JSON.stringify(state.downloads));
+
+            // Re-render if necessary
+            if (document.getElementById('tabDownloads').classList.contains('bg-brand-600')) {
+                renderDownloads();
+            }
+        }
+
+        function renderDownloads() {
+            const list = document.getElementById('downloadsList');
+            if (state.downloads.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-10 text-gray-500">
+                        <i class="fas fa-download text-4xl mb-4 opacity-50"></i>
+                        <p>No downloads yet.</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = state.downloads.map((track, idx) => {
+                const norm = normalizeTrack(track);
+                return `
+                <div class="glass-card p-3 rounded-xl flex items-center gap-4">
+                    <img src="${norm.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-white truncate text-base">${norm.title}</h4>
+                        <p class="text-gray-400 text-sm truncate">${norm.artist}</p>
+                    </div>
+                    <a href="${norm.download || '#'}" target="_blank" class="p-2 text-white hover:text-brand-400">
+                        <i class="fas fa-external-link-alt"></i>
+                    </a>
+                </div>
+                `;
+            }).join('');
+        }
+
+        function clearHistory() {
+            if(confirm('Clear download history?')) {
+                state.downloads = [];
+                localStorage.removeItem('spotiplay_downloads');
+                renderDownloads();
+                showToast('History Cleared', 'success');
+            }
+        }
+
         function switchLibraryTab(tab) {
             if (tab === 'favorites') {
                 document.getElementById('favoritesList').classList.remove('hidden');
@@ -949,8 +1041,7 @@
                 document.getElementById('tabFavorites').classList.remove('text-gray-400', 'hover:bg-white/10');
                 document.getElementById('tabDownloads').classList.remove('bg-brand-600', 'text-white');
                 document.getElementById('tabDownloads').classList.add('text-gray-400', 'hover:bg-white/10');
-                document.getElementById('tabFavorites').classList.remove('bg-brand-600', 'text-white');
-                document.getElementById('tabFavorites').classList.add('text-gray-400', 'hover:bg-white/10');
+                renderFavorites();
             } else {
                 document.getElementById('favoritesList').classList.add('hidden');
                 document.getElementById('downloadsList').classList.remove('hidden');
@@ -958,12 +1049,13 @@
                 document.getElementById('tabDownloads').classList.remove('text-gray-400', 'hover:bg-white/10');
                 document.getElementById('tabFavorites').classList.remove('bg-brand-600', 'text-white');
                 document.getElementById('tabFavorites').classList.add('text-gray-400', 'hover:bg-white/10');
+                renderDownloads();
             }
         }
 
         function addToRecent(track) {
-            // Remove duplicates
-            state.recent = state.recent.filter(t => (t.url || t.track_url) !== (track.url || track.track_url));
+            const trackUrl = track.track_url || track.url;
+            state.recent = state.recent.filter(t => (t.url || t.track_url) !== trackUrl);
             state.recent.unshift(track);
             if (state.recent.length > 10) state.recent.pop();
             localStorage.setItem('spotiplay_recent', JSON.stringify(state.recent));
@@ -972,7 +1064,7 @@
 
         function loadRecentlyPlayed() {
             const grid = document.getElementById('recentlyPlayedGrid');
-            if (state.recent.length === 0) return; // Keep default msg
+            if (state.recent.length === 0) return;
 
             grid.innerHTML = state.recent.slice(0, 6).map((track, idx) => `
                 <div class="group cursor-pointer" onclick='playTrack(null, ${JSON.stringify(state.recent).replace(/'/g, "&#39;")}, ${idx})'>
@@ -992,6 +1084,7 @@
         // --- Utility ---
 
         function formatTime(seconds) {
+            if (typeof seconds === 'string' && seconds.includes(':')) return seconds;
             if (!seconds || isNaN(seconds)) return '0:00';
             const m = Math.floor(seconds / 60);
             const s = Math.floor(seconds % 60);
@@ -1015,40 +1108,27 @@
         }
 
         function downloadCurrentTrack() {
-             const track = state.queue[state.currentIndex];
+             const track = normalizeTrack(state.queue[state.currentIndex]);
              if (!track) return;
 
-             // If we already have the direct link
+             // Add to downloads history
+             addToDownloads(track);
+
              if (track.download) {
                  window.open(track.download, '_blank');
              } else {
                  showToast('Fetching Link...', 'info');
-                 // Fetch logic again
-                 const apiUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(track.url || track.track_url)}`;
+                 const apiUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(track.track_url)}`;
                  fetch(apiUrl).then(res => res.json()).then(data => {
                      if (data.status && data.data && data.data.download) {
+                         // Update cache
+                         if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = data.data.download;
                          window.open(data.data.download, '_blank');
                      } else {
                          showToast('Failed', 'error', 'Cannot download.');
                      }
                  });
              }
-        }
-
-        function shareTrack() {
-            const track = state.queue[state.currentIndex];
-            if (!track) return;
-            const url = track.url || track.track_url;
-            if (navigator.share) {
-                navigator.share({
-                    title: track.title,
-                    text: `Listen to ${track.title} by ${track.artist} on Spotiplay!`,
-                    url: url
-                }).catch(console.error);
-            } else {
-                navigator.clipboard.writeText(url);
-                showToast('Link Copied', 'success', 'Track link copied to clipboard.');
-            }
         }
 
         function toggleShuffle() {
@@ -1058,11 +1138,9 @@
             btn.classList.toggle('text-gray-400', !state.isShuffled);
 
             if (state.isShuffled) {
-                // Shuffle current queue except current track
                 const currentTrack = state.queue[state.currentIndex];
                 const rest = state.queue.filter((_, i) => i !== state.currentIndex);
                 
-                // Fisher-Yates shuffle
                 for (let i = rest.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [rest[i], rest[j]] = [rest[j], rest[i]];
@@ -1071,9 +1149,6 @@
                 state.queue = [currentTrack, ...rest];
                 state.currentIndex = 0;
             } else {
-                // Restore original order (This is basic, in a real app we'd map IDs)
-                // For now, let's just keep the shuffled list as "new" list or implement detailed logic later
-                // Reverting to originalQueue usually means finding the current track in originalQueue
                 const currentTrack = state.queue[state.currentIndex];
                 const indexInOriginal = state.originalQueue.findIndex(t => (t.url || t.track_url) === (currentTrack.url || currentTrack.track_url));
                 if (indexInOriginal > -1) {
@@ -1085,7 +1160,6 @@
         }
 
         function toggleRepeat() {
-            // 0 -> 1 (All) -> 2 (One) -> 0
             state.repeatMode = (state.repeatMode + 1) % 3;
             const btn = document.getElementById('repeatBtn');
             const icon = btn.querySelector('i');
@@ -1102,8 +1176,7 @@
                 showToast('Repeat All', 'info');
             } else {
                 btn.classList.add('text-brand-500');
-                icon.className = 'fas fa-1 text-xl'; // Use a 1 icon or similar
-                // FontAwesome usually uses fa-repeat-1 or similar layered icons, but let's stick to text or standard
+                icon.className = 'fas fa-1 text-xl';
                 icon.innerHTML = '<span class="text-xs absolute -top-1 -right-1 font-bold">1</span>';
                 showToast('Repeat One', 'info');
             }
