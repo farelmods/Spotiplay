@@ -300,13 +300,24 @@
             <!-- Library View -->
             <div id="libraryView" class="hidden space-y-6 fade-in-section">
                  <h3 class="text-xl font-bold">Your Library</h3>
-                 <div class="glass p-1 rounded-xl flex gap-2 w-fit mb-6">
-                     <button onclick="switchLibraryTab('favorites')" id="tabFavorites" class="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium transition-all duration-300">Favorites</button>
-                     <button onclick="switchLibraryTab('downloads')" id="tabDownloads" class="px-4 py-2 rounded-lg hover:bg-white/10 text-gray-400 text-sm font-medium transition-all duration-300">Downloads</button>
+                 <div class="glass p-1 rounded-xl flex gap-2 w-fit mb-6 overflow-x-auto no-scrollbar">
+                     <button onclick="switchLibraryTab('favorites')" id="tabFavorites" class="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium transition-all duration-300 whitespace-nowrap">Favorites</button>
+                     <button onclick="switchLibraryTab('playlists')" id="tabPlaylists" class="px-4 py-2 rounded-lg hover:bg-white/10 text-gray-400 text-sm font-medium transition-all duration-300 whitespace-nowrap">Playlists</button>
+                     <button onclick="switchLibraryTab('downloads')" id="tabDownloads" class="px-4 py-2 rounded-lg hover:bg-white/10 text-gray-400 text-sm font-medium transition-all duration-300 whitespace-nowrap">Downloads</button>
                  </div>
 
                  <div id="favoritesList" class="space-y-2">
                      <!-- Favorites injected here -->
+                 </div>
+                 <div id="playlistsList" class="hidden space-y-2">
+                     <!-- Playlists injected here -->
+                     <button onclick="createNewPlaylistUI()" class="w-full py-4 rounded-xl border border-dashed border-gray-700 hover:border-brand-500 text-gray-400 hover:text-brand-500 transition-all flex items-center justify-center gap-2 group">
+                        <div class="w-8 h-8 rounded-full bg-white/5 group-hover:bg-brand-500/20 flex items-center justify-center transition-colors">
+                            <i class="fas fa-plus"></i>
+                        </div>
+                        <span class="font-medium">Create New Playlist</span>
+                    </button>
+                    <div id="playlistsContainer" class="space-y-2 mt-4"></div>
                  </div>
                  <div id="downloadsList" class="hidden space-y-2">
                      <!-- Downloads injected here -->
@@ -316,6 +327,22 @@
                  </div>
             </div>
 
+            <!-- Playlist Detail View -->
+            <div id="playlistDetailView" class="hidden space-y-6 fade-in-section">
+                <div class="flex items-center gap-4">
+                     <button onclick="showLibrary(); switchLibraryTab('playlists')" class="p-2 -ml-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition"><i class="fas fa-arrow-left text-xl"></i></button>
+                     <div class="flex-1 min-w-0">
+                         <h3 id="playlistDetailTitle" class="text-2xl font-bold truncate">Playlist Name</h3>
+                         <p id="playlistDetailCount" class="text-sm text-gray-400">0 Songs</p>
+                     </div>
+                     <button id="playlistPlayBtn" onclick="playCurrentPlaylist()" class="w-12 h-12 rounded-full bg-brand-500 text-black flex items-center justify-center shadow-lg hover:scale-105 transition active:scale-95"><i class="fas fa-play ml-1"></i></button>
+                     <button id="playlistDeleteBtn" onclick="confirmDeletePlaylist()" class="p-3 text-red-400 hover:bg-red-500/10 rounded-full transition"><i class="fas fa-trash"></i></button>
+                </div>
+                <div id="playlistTracksList" class="space-y-2">
+                    <!-- Playlist tracks -->
+                </div>
+            </div>
+
         </div>
     </main>
 
@@ -323,7 +350,7 @@
     <div id="miniPlayer" class="fixed bottom-[60px] md:bottom-0 left-0 right-0 z-50 transform translate-y-[120%] transition-transform duration-300 ease-out will-change-transform">
         <div class="container mx-auto max-w-screen-xl md:px-4 md:mb-4">
             <div class="bg-dark-surface/95 backdrop-blur-xl border border-white/10 rounded-none md:rounded-2xl p-3 shadow-2xl flex items-center justify-between gap-4 relative overflow-hidden">
-                
+
                 <!-- Progress Bar -->
                 <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-800 cursor-pointer" id="miniProgressBarContainer">
                     <div id="miniProgressBar" class="h-full bg-brand-500 w-0 transition-all duration-100 ease-linear"></div>
@@ -454,8 +481,39 @@
     <!-- Hidden Audio Element -->
     <audio id="audioPlayer" preload="auto"></audio>
 
+    <!-- Add to Playlist Modal -->
+    <div id="addToPlaylistModal" class="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300 opacity-0 pointer-events-none">
+        <div class="bg-dark-surface border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-all duration-300" id="addToPlaylistContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Add to Playlist</h3>
+                <button onclick="closeAddToPlaylistModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            </div>
+
+            <button onclick="createNewPlaylistUI()" class="w-full py-3 mb-4 rounded-xl border border-dashed border-gray-600 hover:border-brand-500 text-gray-400 hover:text-brand-500 transition-all flex items-center justify-center gap-2">
+                <i class="fas fa-plus"></i> Create New Playlist
+            </button>
+
+            <div class="text-xs font-bold text-gray-500 uppercase mb-2">Your Playlists</div>
+            <div id="modalPlaylistsList" class="max-h-[300px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                <!-- Playlists injected here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Create Playlist Modal -->
+    <div id="createPlaylistModal" class="fixed inset-0 z-[90] bg-black/90 hidden flex items-center justify-center p-4">
+        <div class="bg-dark-surface border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">New Playlist</h3>
+            <input type="text" id="newPlaylistName" placeholder="Playlist Name" class="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none mb-6">
+            <div class="flex justify-end gap-3">
+                <button onclick="closeCreatePlaylistModal()" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button onclick="submitCreatePlaylist()" class="px-6 py-2 bg-brand-500 hover:bg-brand-400 text-black font-bold rounded-lg">Create</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification -->
-    <div id="toast" class="fixed top-24 right-4 z-[70] transform translate-x-full transition-transform duration-300 will-change-transform">
+    <div id="toast" class="fixed top-24 right-4 z-[100] transform translate-x-full transition-transform duration-300 will-change-transform">
         <div class="bg-dark-surface border border-white/10 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px]">
             <div id="toastIcon" class="text-brand-500 text-xl">
                 <i class="fas fa-info-circle"></i>
@@ -495,6 +553,9 @@
             favorites: JSON.parse(localStorage.getItem('spotiplay_favorites') || '[]'),
             recent: JSON.parse(localStorage.getItem('spotiplay_recent') || '[]'),
             downloads: JSON.parse(localStorage.getItem('spotiplay_downloads') || '[]'),
+            playlists: JSON.parse(localStorage.getItem('spotiplay_playlists') || '[]'),
+            activePlaylistId: null,
+            trackToAdd: null
         };
 
         const audio = document.getElementById('audioPlayer');
@@ -822,6 +883,10 @@
                                 class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-brand-500 transition-colors active:scale-90">
                             <i class="${isFavorited(track.track_url) ? 'fas text-brand-500' : 'far'} fa-heart"></i>
                         </button>
+                        <button onclick="event.stopPropagation(); openAddToPlaylistModal(${JSON.stringify(track).replace(/"/g, '&quot;')})"
+                                class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors active:scale-90">
+                            <i class="fas fa-plus"></i>
+                        </button>
                     </div>
                 </div>
                 `;
@@ -991,7 +1056,7 @@
             }
 
             list.innerHTML = state.favorites.map((track, idx) => `
-                <div class="glass-card p-3 rounded-xl flex items-center gap-4" onclick='playTrack(null, ${JSON.stringify(state.favorites).replace(/'/g, "&#39;")}, ${idx})'>
+                <div class="glass-card p-3 rounded-xl flex items-center gap-4 group" onclick='playTrack(null, ${JSON.stringify(state.favorites).replace(/'/g, "&#39;")}, ${idx})'>
                     <img src="${track.thumbnail || track.image}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
                     <div class="flex-1 min-w-0">
                         <h4 class="font-bold text-white truncate text-base">${track.title}</h4>
@@ -1000,10 +1065,14 @@
                     <button class="p-2 text-brand-500" onclick="event.stopPropagation(); toggleLikeData('${track.url || track.track_url}')">
                         <i class="fas fa-heart"></i>
                     </button>
+                    <button onclick="event.stopPropagation(); openAddToPlaylistModal(${JSON.stringify(track).replace(/"/g, '&quot;')})"
+                            class="p-2 text-gray-400 hover:text-white">
+                        <i class="fas fa-plus"></i>
+                    </button>
                 </div>
             `).join('');
         }
-        
+
         function addToDownloads(track) {
             const trackUrl = track.track_url || track.url;
             if (state.downloads.some(t => (t.url || t.track_url) === trackUrl)) return;
@@ -1054,22 +1123,37 @@
         }
 
         function switchLibraryTab(tab) {
+            // Hide all lists first
+            document.getElementById('favoritesList').classList.add('hidden');
+            document.getElementById('downloadsList').classList.add('hidden');
+            document.getElementById('playlistsList').classList.add('hidden');
+            document.getElementById('playlistDetailView').classList.add('hidden');
+
+            // Reset buttons
+            ['tabFavorites', 'tabDownloads', 'tabPlaylists'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) {
+                    el.classList.remove('bg-brand-600', 'text-white');
+                    el.classList.add('text-gray-400', 'hover:bg-white/10');
+                }
+            });
+
+            // Activate selected
             if (tab === 'favorites') {
                 document.getElementById('favoritesList').classList.remove('hidden');
-                document.getElementById('downloadsList').classList.add('hidden');
                 document.getElementById('tabFavorites').classList.add('bg-brand-600', 'text-white');
                 document.getElementById('tabFavorites').classList.remove('text-gray-400', 'hover:bg-white/10');
-                document.getElementById('tabDownloads').classList.remove('bg-brand-600', 'text-white');
-                document.getElementById('tabDownloads').classList.add('text-gray-400', 'hover:bg-white/10');
                 renderFavorites();
-            } else {
-                document.getElementById('favoritesList').classList.add('hidden');
+            } else if (tab === 'downloads') {
                 document.getElementById('downloadsList').classList.remove('hidden');
                 document.getElementById('tabDownloads').classList.add('bg-brand-600', 'text-white');
                 document.getElementById('tabDownloads').classList.remove('text-gray-400', 'hover:bg-white/10');
-                document.getElementById('tabFavorites').classList.remove('bg-brand-600', 'text-white');
-                document.getElementById('tabFavorites').classList.add('text-gray-400', 'hover:bg-white/10');
                 renderDownloads();
+            } else if (tab === 'playlists') {
+                document.getElementById('playlistsList').classList.remove('hidden');
+                document.getElementById('tabPlaylists').classList.add('bg-brand-600', 'text-white');
+                document.getElementById('tabPlaylists').classList.remove('text-gray-400', 'hover:bg-white/10');
+                renderPlaylists();
             }
         }
 
@@ -1114,10 +1198,10 @@
         function showToast(title, type, message) {
             const toast = document.getElementById('toast');
             const icon = document.getElementById('toastIcon');
-            
+
             document.getElementById('toastTitle').textContent = title;
             document.getElementById('toastMessage').textContent = message || '';
-            
+
             icon.className = `text-xl ${type === 'success' ? 'text-green-500' : type === 'error' ? 'text-red-500' : 'text-blue-500'}`;
             icon.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>`;
 
@@ -1158,7 +1242,7 @@
             if (state.isShuffled) {
                 const currentTrack = state.queue[state.currentIndex];
                 const rest = state.queue.filter((_, i) => i !== state.currentIndex);
-                
+
                 for (let i = rest.length - 1; i > 0; i--) {
                     const j = Math.floor(Math.random() * (i + 1));
                     [rest[i], rest[j]] = [rest[j], rest[i]];
@@ -1197,6 +1281,210 @@
                 icon.className = 'fas fa-1 text-xl';
                 icon.innerHTML = '<span class="text-xs absolute -top-1 -right-1 font-bold">1</span>';
                 showToast('Repeat Satu', 'info');
+            }
+        }
+
+        // --- Playlist Logic ---
+
+        function renderPlaylists() {
+            const container = document.getElementById('playlistsContainer');
+            if (state.playlists.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-4 text-sm">No playlists yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = state.playlists.map(pl => `
+                <div class="glass-card p-3 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-white/5 transition" onclick="openPlaylistDetail('${pl.id}')">
+                    <div class="w-12 h-12 rounded bg-gradient-to-br from-brand-600 to-purple-700 flex items-center justify-center shadow-lg">
+                        <i class="fas fa-music text-white/50"></i>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-white truncate">${pl.name}</h4>
+                        <p class="text-xs text-gray-400">${pl.tracks.length} Songs</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-600"></i>
+                </div>
+            `).join('');
+        }
+
+        function createNewPlaylistUI() {
+            document.getElementById('createPlaylistModal').classList.remove('hidden');
+            document.getElementById('newPlaylistName').focus();
+        }
+
+        function closeCreatePlaylistModal() {
+            document.getElementById('createPlaylistModal').classList.add('hidden');
+            document.getElementById('newPlaylistName').value = '';
+        }
+
+        function submitCreatePlaylist() {
+            const name = document.getElementById('newPlaylistName').value.trim();
+            if (!name) return;
+
+            const newPlaylist = {
+                id: Date.now().toString(),
+                name: name,
+                tracks: []
+            };
+
+            state.playlists.push(newPlaylist);
+            localStorage.setItem('spotiplay_playlists', JSON.stringify(state.playlists));
+
+            closeCreatePlaylistModal();
+
+            // If we are in "Add to Playlist" mode, refresh that list too
+            if (!document.getElementById('addToPlaylistModal').classList.contains('hidden')) {
+                renderAddToPlaylistModal();
+            }
+
+            // If we are in Library, refresh
+            if (!document.getElementById('libraryView').classList.contains('hidden')) {
+                renderPlaylists();
+            }
+
+            showToast('Playlist Dibuat', 'success', name);
+        }
+
+        function openPlaylistDetail(id) {
+            const playlist = state.playlists.find(p => p.id === id);
+            if (!playlist) return;
+
+            state.activePlaylistId = id;
+
+            document.getElementById('playlistsList').classList.add('hidden');
+            document.getElementById('playlistDetailView').classList.remove('hidden');
+
+            document.getElementById('playlistDetailTitle').textContent = playlist.name;
+            document.getElementById('playlistDetailCount').textContent = `${playlist.tracks.length} Songs`;
+
+            const list = document.getElementById('playlistTracksList');
+            if (playlist.tracks.length === 0) {
+                list.innerHTML = `<div class="text-center py-10 text-gray-500">Playlist kosong.</div>`;
+            } else {
+                list.innerHTML = playlist.tracks.map((track, idx) => `
+                    <div class="glass-card p-3 rounded-xl flex items-center gap-4 group" onclick='playTrack(null, ${JSON.stringify(playlist.tracks).replace(/'/g, "&#39;")}, ${idx})'>
+                        <img src="${track.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-white truncate text-base">${track.title}</h4>
+                            <p class="text-gray-400 text-sm truncate">${track.artist}</p>
+                        </div>
+                        <button onclick="event.stopPropagation(); removeTrackFromPlaylist('${id}', ${idx})" class="p-2 text-gray-500 hover:text-red-400 transition">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function playCurrentPlaylist() {
+            const playlist = state.playlists.find(p => p.id === state.activePlaylistId);
+            if (!playlist || playlist.tracks.length === 0) {
+                showToast('Playlist Kosong', 'error');
+                return;
+            }
+            playTrack(null, playlist.tracks, 0);
+        }
+
+        function confirmDeletePlaylist() {
+            if (confirm('Hapus playlist ini secara permanen?')) {
+                state.playlists = state.playlists.filter(p => p.id !== state.activePlaylistId);
+                localStorage.setItem('spotiplay_playlists', JSON.stringify(state.playlists));
+                showLibrary();
+                switchLibraryTab('playlists');
+                showToast('Playlist Dihapus', 'success');
+            }
+        }
+
+        function removeTrackFromPlaylist(playlistId, trackIndex) {
+            const playlist = state.playlists.find(p => p.id === playlistId);
+            if (!playlist) return;
+
+            playlist.tracks.splice(trackIndex, 1);
+            localStorage.setItem('spotiplay_playlists', JSON.stringify(state.playlists));
+
+            // Re-render
+            openPlaylistDetail(playlistId);
+            showToast('Dihapus dari Playlist', 'info');
+        }
+
+        // --- Add to Playlist Modal Logic ---
+
+        function openAddToPlaylistModal(track) {
+            // Need to handle track objects differently if coming from strings or objects
+            // The JSON.stringify in HTML attributes might be tricky with quotes
+            // So we rely on the object passed.
+            state.trackToAdd = normalizeTrack(track);
+
+            const modal = document.getElementById('addToPlaylistModal');
+            const content = document.getElementById('addToPlaylistContent');
+
+            modal.classList.remove('hidden', 'pointer-events-none', 'opacity-0');
+            modal.classList.add('opacity-100');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+
+            renderAddToPlaylistModal();
+        }
+
+        function closeAddToPlaylistModal() {
+            const modal = document.getElementById('addToPlaylistModal');
+            const content = document.getElementById('addToPlaylistContent');
+
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                state.trackToAdd = null;
+            }, 300);
+        }
+
+        function renderAddToPlaylistModal() {
+            const container = document.getElementById('modalPlaylistsList');
+            if (state.playlists.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-4 text-xs">No playlists found. Create one!</div>`;
+                return;
+            }
+
+            container.innerHTML = state.playlists.map(pl => {
+                const alreadyIn = pl.tracks.some(t => (t.track_url || t.url) === (state.trackToAdd.track_url || state.trackToAdd.url));
+                return `
+                <div class="p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 flex items-center justify-between cursor-pointer transition-colors" onclick="addTrackToPlaylist('${pl.id}')">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-600 to-purple-700 flex items-center justify-center shrink-0">
+                            <i class="fas fa-music text-[10px] text-white/50"></i>
+                        </div>
+                        <span class="font-bold text-sm truncate">${pl.name}</span>
+                        <span class="text-xs text-gray-500 shrink-0">(${pl.tracks.length})</span>
+                    </div>
+                    ${alreadyIn ? '<i class="fas fa-check text-brand-500"></i>' : '<i class="fas fa-plus text-gray-400"></i>'}
+                </div>
+            `}).join('');
+        }
+
+        function addTrackToPlaylist(playlistId) {
+            if (!state.trackToAdd) return;
+
+            const playlist = state.playlists.find(p => p.id === playlistId);
+            if (!playlist) return;
+
+            // Check duplicate
+            if (playlist.tracks.some(t => (t.track_url || t.url) === (state.trackToAdd.track_url || state.trackToAdd.url))) {
+                showToast('Sudah ada', 'info', 'Lagu sudah ada di playlist ini.');
+                return;
+            }
+
+            playlist.tracks.push(state.trackToAdd);
+            localStorage.setItem('spotiplay_playlists', JSON.stringify(state.playlists));
+
+            showToast('Berhasil', 'success', `Ditambahkan ke ${playlist.name}`);
+            closeAddToPlaylistModal();
+
+            // Update library if visible
+            if (!document.getElementById('libraryView').classList.contains('hidden') &&
+                document.getElementById('tabPlaylists').classList.contains('bg-brand-600')) {
+                renderPlaylists();
             }
         }
     </script>
