@@ -38,10 +38,15 @@
                             900: '#14532d',
                             950: '#052e16',
                         },
+                        accent: {
+                            purple: '#a855f7',
+                            cyan: '#06b6d4',
+                            pink: '#ec4899'
+                        },
                         dark: {
-                            bg: '#0a0a0a',
-                            card: '#171717',
-                            surface: '#262626'
+                            bg: '#050505',
+                            card: '#121212',
+                            surface: '#1E1E1E'
                         }
                     },
                     animation: {
@@ -49,6 +54,7 @@
                         'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
                         'slide-up': 'slideUp 0.3s ease-out forwards',
                         'spin-slow': 'spin 3s linear infinite',
+                        'equalizer': 'equalizer 1s infinite ease-in-out',
                     },
                     keyframes: {
                         blob: {
@@ -60,6 +66,10 @@
                         slideUp: {
                             '0%': { transform: 'translateY(100%)' },
                             '100%': { transform: 'translateY(0)' },
+                        },
+                        equalizer: {
+                            '0%, 100%': { height: '10%' },
+                            '50%': { height: '100%' }
                         }
                     }
                 }
@@ -104,9 +114,21 @@
         .glass-card:hover {
             background: rgba(38, 38, 38, 0.6);
             transform: translateY(-2px);
-            border-color: rgba(34, 197, 94, 0.3);
-            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5);
+            border-color: rgba(34, 197, 94, 0.5);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
         }
+
+        /* Visualizer Bars */
+        .bar {
+            width: 4px;
+            background: #22c55e;
+            border-radius: 2px;
+            animation: equalizer 1s infinite ease-in-out;
+        }
+        .bar:nth-child(2) { animation-delay: 0.1s; }
+        .bar:nth-child(3) { animation-delay: 0.2s; }
+        .bar:nth-child(4) { animation-delay: 0.3s; }
+        .bar.paused { animation-play-state: paused; height: 10%; }
 
         /* Player Animation */
         .player-disk {
@@ -173,10 +195,13 @@
 <body class="bg-dark-bg text-gray-200 antialiased overflow-x-hidden pb-24 selection:bg-brand-500 selection:text-white">
 
     <!-- Background Elements -->
-    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none transform-gpu">
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob"></div>
-        <div class="absolute top-0 right-1/4 w-96 h-96 bg-purple-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-2000"></div>
-        <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-pink-600/20 rounded-full mix-blend-screen filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none transform-gpu bg-[#050505]">
+        <!-- Aurora Effect -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-brand-900/20 via-accent-purple/10 to-transparent opacity-50 blur-3xl"></div>
+
+        <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/20 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob"></div>
+        <div class="absolute top-0 right-1/4 w-96 h-96 bg-accent-purple/20 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob animation-delay-2000"></div>
+        <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-accent-pink/20 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob animation-delay-4000"></div>
     </div>
 
     <!-- Header -->
@@ -322,8 +347,11 @@
                  <div id="downloadsList" class="hidden space-y-2">
                      <!-- Downloads injected here -->
                  </div>
-                 <div class="flex justify-end mt-4">
-                     <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-300 transition-colors">Clear History</button>
+                 <div class="mt-8 border-t border-white/5 pt-4 flex justify-between items-center text-xs text-gray-500">
+                     <span>Storage Used: Local</span>
+                     <button onclick="clearHistory()" class="text-red-400 hover:text-red-300 transition-colors hover:underline flex items-center gap-1">
+                         <i class="fas fa-trash"></i> Clear History
+                     </button>
                  </div>
             </div>
 
@@ -416,7 +444,7 @@
                 <i class="fas fa-chevron-down text-2xl"></i>
             </button>
             <span class="text-xs font-bold tracking-widest uppercase text-gray-400">Now Playing</span>
-            <button onclick="toggleQueue()" class="text-white hover:text-gray-300 p-2 opacity-0 pointer-events-none">
+            <button onclick="toggleQueue()" class="text-white hover:text-gray-300 p-2 active:scale-90 transition-transform">
                 <i class="fas fa-list text-xl"></i>
             </button>
         </div>
@@ -428,6 +456,14 @@
                 <div class="absolute inset-0 bg-brand-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-50"></div>
                 <img id="fullCover" src="https://via.placeholder.com/400"
                      class="relative w-full h-full object-cover rounded-2xl shadow-2xl transform transition-transform duration-500 scale-100 player-disk" loading="lazy">
+
+                <!-- Visualizer Overlay -->
+                <div class="absolute bottom-4 right-4 flex gap-1 items-end h-8">
+                    <div class="bar h-full paused" id="vis1"></div>
+                    <div class="bar h-full paused" id="vis2"></div>
+                    <div class="bar h-full paused" id="vis3"></div>
+                    <div class="bar h-full paused" id="vis4"></div>
+                </div>
             </div>
 
             <!-- Meta -->
@@ -509,6 +545,20 @@
                 <button onclick="closeCreatePlaylistModal()" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
                 <button onclick="submitCreatePlaylist()" class="px-6 py-2 bg-brand-500 hover:bg-brand-400 text-black font-bold rounded-lg">Create</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Queue Modal -->
+    <div id="queueModal" class="fixed inset-0 z-[70] bg-black/95 backdrop-blur-xl transform translate-y-full transition-transform duration-300 will-change-transform flex flex-col">
+        <div class="flex items-center justify-between p-6 border-b border-white/10">
+            <h3 class="text-xl font-bold">Current Queue</h3>
+            <button onclick="toggleQueue()" class="p-2 text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div id="queueList" class="flex-1 overflow-y-auto p-4 space-y-2">
+            <!-- Queue items injected here -->
+        </div>
+        <div class="p-4 border-t border-white/10 text-center">
+            <button onclick="clearQueue()" class="text-xs text-red-400 hover:text-red-300">Clear Queue</button>
         </div>
     </div>
 
@@ -783,6 +833,13 @@
                 if(playing) disk.classList.add('playing');
                 else disk.classList.remove('playing');
             }
+
+            // Visualizer
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                if(playing) bar.classList.remove('paused');
+                else bar.classList.add('paused');
+            });
         }
 
         function updateProgress() {
@@ -985,7 +1042,56 @@
         }
 
         function toggleQueue() {
-            showToast('Queue', 'info', 'Fitur antrian segera hadir!');
+            const modal = document.getElementById('queueModal');
+            if (modal.classList.contains('translate-y-full')) {
+                renderQueue();
+                modal.classList.remove('translate-y-full');
+            } else {
+                modal.classList.add('translate-y-full');
+            }
+        }
+
+        function renderQueue() {
+            const list = document.getElementById('queueList');
+            if (state.queue.length === 0) {
+                list.innerHTML = `<div class="text-center py-20 text-gray-500">Queue is empty.</div>`;
+                return;
+            }
+
+            list.innerHTML = state.queue.map((track, idx) => {
+                const isCurrent = idx === state.currentIndex;
+                const norm = normalizeTrack(track);
+                return `
+                <div class="p-3 rounded-xl flex items-center gap-4 ${isCurrent ? 'bg-brand-500/10 border border-brand-500/30' : 'hover:bg-white/5'} transition-colors cursor-pointer group" onclick="playFromQueue(${idx})">
+                    <div class="w-8 text-center text-xs font-bold ${isCurrent ? 'text-brand-500' : 'text-gray-600'}">
+                        ${isCurrent ? '<i class="fas fa-play"></i>' : idx + 1}
+                    </div>
+                    <img src="${norm.thumbnail}" class="w-10 h-10 rounded bg-gray-800 object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-sm ${isCurrent ? 'text-brand-500' : 'text-white'} truncate">${norm.title}</h4>
+                        <p class="text-xs text-gray-400 truncate">${norm.artist}</p>
+                    </div>
+                    ${isCurrent ? '<div class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>' : ''}
+                </div>
+            `}).join('');
+        }
+
+        function playFromQueue(index) {
+            if (index === state.currentIndex) return;
+            state.currentIndex = index;
+            playTrack(null);
+            renderQueue(); // Update UI
+        }
+
+        function clearQueue() {
+            if (state.queue.length <= 1) return;
+            // Keep current track
+            const current = state.queue[state.currentIndex];
+            state.queue = [current];
+            state.originalQueue = [current];
+            state.currentIndex = 0;
+            renderQueue();
+            showToast('Queue Cleared', 'success');
         }
 
         // --- Favorites & Recent ---
