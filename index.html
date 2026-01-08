@@ -78,20 +78,31 @@
     </script>
 
     <style>
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        /* App Reset */
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevent body scroll */
+            overscroll-behavior: none;
         }
-        ::-webkit-scrollbar-track {
-            background: transparent;
+
+        /* Custom Scrollbar - Hidden but scrollable (Native Feel) */
+        .app-scroll {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE 10+ */
         }
-        ::-webkit-scrollbar-thumb {
-            background: #262626;
-            border-radius: 10px;
+        .app-scroll::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #404040;
+
+        /* Horizontal Snap */
+        .snap-x-mandatory {
+            scroll-snap-type: x mandatory;
+        }
+        .snap-center {
+            scroll-snap-align: center;
         }
 
         /* Glassmorphism Utilities */
@@ -144,15 +155,6 @@
             to { transform: rotate(360deg); }
         }
 
-        /* Hide Scrollbar but keep functionality */
-        .no-scrollbar::-webkit-scrollbar {
-            display: none;
-        }
-        .no-scrollbar {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
         /* Input Range Styling */
         input[type="range"] {
             -webkit-appearance: none;
@@ -192,161 +194,159 @@
         }
     </style>
 </head>
-<body class="bg-dark-bg text-gray-200 antialiased overflow-x-hidden pb-24 selection:bg-brand-500 selection:text-white">
+<body class="bg-black text-gray-200 antialiased overflow-hidden selection:bg-brand-500 selection:text-white flex flex-col md:flex-row h-full">
 
     <!-- Background Elements -->
     <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none transform-gpu bg-[#050505]">
         <!-- Aurora Effect -->
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-brand-900/20 via-accent-purple/10 to-transparent opacity-50 blur-3xl"></div>
-
-        <div class="absolute top-0 left-1/4 w-96 h-96 bg-brand-500/20 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob"></div>
-        <div class="absolute top-0 right-1/4 w-96 h-96 bg-accent-purple/20 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob animation-delay-2000"></div>
-        <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-accent-pink/20 rounded-full mix-blend-screen filter blur-[100px] opacity-30 animate-blob animation-delay-4000"></div>
     </div>
 
-    <!-- Header -->
-    <header class="fixed top-0 w-full z-40 glass border-b-0 border-white/5 px-4 py-3 transition-all duration-300">
-        <div class="container mx-auto flex items-center justify-between">
-            <div class="flex items-center gap-3">
-                <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-black font-bold text-lg shadow-lg shadow-brand-500/20">
-                    <i class="fab fa-spotify"></i>
-                </div>
-                <h1 class="text-xl font-bold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-                    Spotiplay v2
-                </h1>
+    <!-- Desktop Sidebar -->
+    <aside class="hidden md:flex flex-col w-64 bg-black/95 border-r border-white/5 h-full z-40 p-6 gap-6 relative">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-black font-bold text-lg shadow-lg">
+                <i class="fab fa-spotify"></i>
             </div>
+            <h1 class="text-xl font-bold text-white">Spotiplay</h1>
+        </div>
 
-            <button id="searchToggleBtn" class="p-2 text-gray-400 hover:text-white transition-colors md:hidden active:scale-95 transform">
-                <i class="fas fa-search text-xl"></i>
+        <nav class="flex flex-col gap-2">
+            <button onclick="showHome()" class="nav-item-desktop flex items-center gap-4 text-gray-400 hover:text-white transition p-3 rounded-lg hover:bg-white/5 active">
+                <i class="fas fa-home text-xl w-6 text-center"></i> <span class="font-medium">Home</span>
             </button>
+            <button onclick="showSection('search'); setTimeout(() => els.searchInput.focus(), 100);" class="nav-item-desktop flex items-center gap-4 text-gray-400 hover:text-white transition p-3 rounded-lg hover:bg-white/5">
+                <i class="fas fa-search text-xl w-6 text-center"></i> <span class="font-medium">Search</span>
+            </button>
+            <button onclick="showLibrary()" class="nav-item-desktop flex items-center gap-4 text-gray-400 hover:text-white transition p-3 rounded-lg hover:bg-white/5">
+                <i class="fas fa-book text-xl w-6 text-center"></i> <span class="font-medium">Library</span>
+            </button>
+        </nav>
 
-            <!-- Desktop Nav -->
-            <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
-                <a href="#home" onclick="showHome()" class="nav-link text-white hover:text-brand-400 transition-colors">Home</a>
-                <a href="#search" onclick="showSection('search')" class="nav-link text-gray-400 hover:text-white transition-colors">Search</a>
-                <a href="#library" onclick="showLibrary()" class="nav-link text-gray-400 hover:text-white transition-colors">Library</a>
-            </nav>
+        <div class="mt-auto">
+             <div class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-wider">Playlists</div>
+             <div class="flex flex-col gap-2 h-40 overflow-y-auto app-scroll" id="desktopPlaylistSidebar">
+                 <!-- Playlists injected here -->
+             </div>
+             <button onclick="createNewPlaylistUI()" class="flex items-center gap-3 text-gray-400 hover:text-white transition mt-4 group">
+                 <div class="w-6 h-6 bg-gray-400 group-hover:bg-white text-black flex items-center justify-center rounded-sm">
+                     <i class="fas fa-plus text-xs"></i>
+                 </div>
+                 <span class="text-sm font-medium">Create Playlist</span>
+             </button>
         </div>
-    </header>
+    </aside>
 
-    <!-- Main Content -->
-    <main class="relative z-10 container mx-auto px-4 pt-20">
+    <!-- Main Content App Container -->
+    <main id="app-container" class="relative z-10 flex-1 h-full overflow-hidden flex flex-col bg-black/50">
 
-        <!-- Search Section -->
-        <div id="searchBarContainer" class="mb-8 transition-all duration-300">
-            <div class="relative max-w-2xl mx-auto group">
-                <div class="absolute -inset-0.5 bg-gradient-to-r from-brand-600 to-purple-600 rounded-xl opacity-30 group-hover:opacity-75 blur transition duration-500"></div>
-                <form id="searchForm" class="relative">
-                    <input type="text" id="searchInput"
-                        class="w-full bg-dark-surface text-white p-4 pl-12 rounded-xl focus:outline-none placeholder-gray-500 shadow-xl"
-                        placeholder="What do you want to listen to?" autocomplete="off">
-                    <i class="fas fa-search absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                    <button type="submit" class="absolute right-2 top-1/2 transform -translate-y-1/2 bg-brand-600 hover:bg-brand-500 text-white p-2 rounded-lg transition-colors shadow-lg">
-                        <i class="fas fa-arrow-right"></i>
-                    </button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Content Area -->
-        <div id="contentArea" class="min-h-[60vh]">
+        <!-- Mobile/Tablet Content Scroll Area -->
+        <div id="contentScroll" class="flex-1 app-scroll pb-[140px] md:pb-[100px] pt-4 px-4 md:px-8">
 
             <!-- Home View -->
-            <div id="homeView" class="space-y-8 animate-fade-in fade-in-section">
-                <!-- Welcome Banner -->
-                <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-brand-900 to-black p-8 shadow-2xl transform transition-transform hover:scale-[1.01] duration-500">
-                    <div class="relative z-10">
-                        <h2 class="text-3xl font-bold mb-2">Welcome Back</h2>
-                        <p class="text-gray-400 mb-6">Discover new music or play your favorites directly.</p>
-                        <div class="flex gap-4">
-                            <button onclick="document.getElementById('searchInput').focus()" class="px-6 py-2 bg-brand-500 hover:bg-brand-400 text-black font-semibold rounded-full transition-all hover:scale-105 shadow-lg shadow-brand-500/20">
-                                Start Listening
-                            </button>
-                            <button onclick="loadTopGlobal()" class="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-semibold rounded-full backdrop-blur transition-all hover:scale-105">
-                                Top Global
-                            </button>
-                        </div>
-                    </div>
-                    <div class="absolute right-0 bottom-0 opacity-20 transform translate-x-10 translate-y-10">
-                        <i class="fab fa-spotify text-9xl"></i>
+            <div id="homeView" class="space-y-8 animate-fade-in fade-in-section pt-4">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-2xl font-bold text-white">Good Evening</h2>
+                    <div class="flex gap-4">
+                         <button onclick="showSection('search')" class="md:hidden text-white"><i class="fas fa-search text-xl"></i></button>
+                         <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-black font-bold">J</div>
                     </div>
                 </div>
 
-                <!-- Recently Played -->
-                <section>
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold">Recently Played</h3>
-                        <button class="text-xs text-brand-400 font-semibold hover:underline" onclick="showLibrary()">SEE ALL</button>
-                    </div>
-                    <div id="recentlyPlayedGrid" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        <!-- Items injected here -->
-                        <div class="col-span-full text-center py-8 text-gray-500 text-sm">
-                            No recent tracks. Start listening!
+                <!-- Featured Horizontal Scroll -->
+                <div class="flex gap-4 overflow-x-auto app-scroll snap-x-mandatory -mx-4 px-4 pb-4">
+                    <!-- Featured Card 1 -->
+                    <div class="snap-center shrink-0 w-[85vw] md:w-[400px] h-[200px] rounded-2xl bg-gradient-to-br from-brand-900 to-black relative overflow-hidden group cursor-pointer border border-white/5" onclick="loadTopGlobal()">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
+                        <div class="absolute bottom-0 left-0 p-6 bg-gradient-to-t from-black via-black/50 to-transparent w-full">
+                            <span class="text-xs font-bold text-brand-400 uppercase tracking-widest mb-1 block">Featured</span>
+                            <h3 class="text-2xl font-bold text-white mb-2">Top Hits Global</h3>
+                            <p class="text-gray-300 text-sm line-clamp-2">The hottest tracks dominating the charts right now.</p>
                         </div>
+                    </div>
+                    <!-- Featured Card 2 -->
+                     <div class="snap-center shrink-0 w-[85vw] md:w-[400px] h-[200px] rounded-2xl bg-gradient-to-br from-purple-900 to-black relative overflow-hidden group cursor-pointer border border-white/5" onclick="showSection('search'); els.searchInput.value='Indonesian Pop'; els.searchForm.dispatchEvent(new Event('submit'));">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1514525253440-b393332569ce?w=800&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
+                        <div class="absolute bottom-0 left-0 p-6 bg-gradient-to-t from-black via-black/50 to-transparent w-full">
+                            <span class="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1 block">Trending</span>
+                            <h3 class="text-2xl font-bold text-white mb-2">Indo Pop</h3>
+                            <p class="text-gray-300 text-sm line-clamp-2">Best of Indonesian Pop Music.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recently Played Horizontal List -->
+                <section>
+                    <h3 class="text-lg font-bold text-white mb-4">Jump Back In</h3>
+                    <div id="recentlyPlayedGrid" class="flex gap-4 overflow-x-auto app-scroll -mx-4 px-4">
+                         <!-- Items injected here -->
+                         <div class="text-gray-500 text-sm p-4">Start listening to see recent tracks.</div>
                     </div>
                 </section>
 
                 <!-- Trending / Suggestions -->
                 <section>
-                    <div class="flex items-center justify-between mb-4">
-                        <h3 class="text-xl font-bold">Trending Now</h3>
-                    </div>
-                    <div id="trendingGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        <!-- Items injected here -->
-                        <div class="glass-card p-4 rounded-xl flex items-center gap-4 animate-pulse">
-                            <div class="w-16 h-16 bg-white/10 rounded-lg"></div>
-                            <div class="flex-1 space-y-2">
-                                <div class="h-4 bg-white/10 rounded w-3/4"></div>
-                                <div class="h-3 bg-white/5 rounded w-1/2"></div>
-                            </div>
-                        </div>
+                    <h3 class="text-lg font-bold text-white mb-4">Recommended for You</h3>
+                    <div id="trendingGrid" class="flex flex-col gap-3">
+                        <!-- Items injected here as vertical list items -->
                     </div>
                 </section>
             </div>
 
-            <!-- Search Results View -->
-            <div id="searchResultsView" class="hidden space-y-6 fade-in-section">
-                <div class="flex items-center justify-between">
-                    <h3 class="text-xl font-bold">Search Results</h3>
-                    <button onclick="showHome()" class="text-sm text-gray-400 hover:text-white transition-colors">
-                        <i class="fas fa-times mr-1"></i> Clear
-                    </button>
+            <!-- Search View -->
+            <div id="searchResultsView" class="hidden space-y-4 animate-fade-in fade-in-section h-full flex flex-col">
+                <div class="sticky top-0 bg-black/80 backdrop-blur-xl z-20 py-4 -mx-4 px-4 border-b border-white/5">
+                    <h2 class="text-2xl font-bold text-white mb-4">Search</h2>
+                    <form id="searchForm" class="relative">
+                        <input type="text" id="searchInput"
+                            class="w-full bg-dark-surface text-white p-3 pl-10 rounded-lg focus:outline-none placeholder-gray-500 border border-transparent focus:border-brand-500/50 transition-colors"
+                            placeholder="Artists, songs, or lyrics" autocomplete="off">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                         <button type="button" onclick="document.getElementById('searchInput').value=''; document.getElementById('searchResultsView').classList.add('hidden'); showHome();" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </form>
                 </div>
-                <div id="resultsList" class="space-y-2">
+
+                <div id="resultsList" class="space-y-1 pb-20">
                     <!-- Results injected here -->
                 </div>
 
                 <!-- Loading Indicator -->
                 <div id="searchLoading" class="hidden flex justify-center py-10">
-                    <div class="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
+                    <div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
             </div>
 
             <!-- Library View -->
-            <div id="libraryView" class="hidden space-y-6 fade-in-section">
-                 <h3 class="text-xl font-bold">Your Library</h3>
-                 <div class="glass p-1 rounded-xl flex gap-2 w-fit mb-6 overflow-x-auto no-scrollbar">
-                     <button onclick="switchLibraryTab('favorites')" id="tabFavorites" class="px-4 py-2 rounded-lg bg-brand-600 text-white text-sm font-medium transition-all duration-300 whitespace-nowrap">Favorites</button>
-                     <button onclick="switchLibraryTab('playlists')" id="tabPlaylists" class="px-4 py-2 rounded-lg hover:bg-white/10 text-gray-400 text-sm font-medium transition-all duration-300 whitespace-nowrap">Playlists</button>
-                     <button onclick="switchLibraryTab('downloads')" id="tabDownloads" class="px-4 py-2 rounded-lg hover:bg-white/10 text-gray-400 text-sm font-medium transition-all duration-300 whitespace-nowrap">Downloads</button>
+            <div id="libraryView" class="hidden space-y-6 animate-fade-in fade-in-section pt-4">
+                 <div class="flex items-center justify-between">
+                     <div class="flex items-center gap-3">
+                         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-black font-bold">L</div>
+                         <h2 class="text-2xl font-bold text-white">Your Library</h2>
+                     </div>
+                     <button onclick="createNewPlaylistUI()" class="text-white text-2xl"><i class="fas fa-plus"></i></button>
                  </div>
 
-                 <div id="favoritesList" class="space-y-2">
+                 <!-- Segmented Control -->
+                 <div class="bg-dark-surface p-1 rounded-lg flex relative">
+                     <div id="tabIndicator" class="absolute top-1 bottom-1 left-1 w-1/3 bg-gray-700 rounded-md transition-all duration-300"></div>
+                     <button onclick="switchLibraryTab('favorites')" id="tabFavorites" class="flex-1 relative z-10 py-1.5 text-sm font-medium text-white transition-colors text-center">Favorites</button>
+                     <button onclick="switchLibraryTab('playlists')" id="tabPlaylists" class="flex-1 relative z-10 py-1.5 text-sm font-medium text-gray-400 transition-colors text-center">Playlists</button>
+                     <button onclick="switchLibraryTab('downloads')" id="tabDownloads" class="flex-1 relative z-10 py-1.5 text-sm font-medium text-gray-400 transition-colors text-center">Downloads</button>
+                 </div>
+
+                 <div id="favoritesList" class="space-y-1">
                      <!-- Favorites injected here -->
                  </div>
-                 <div id="playlistsList" class="hidden space-y-2">
-                     <!-- Playlists injected here -->
-                     <button onclick="createNewPlaylistUI()" class="w-full py-4 rounded-xl border border-dashed border-gray-700 hover:border-brand-500 text-gray-400 hover:text-brand-500 transition-all flex items-center justify-center gap-2 group">
-                        <div class="w-8 h-8 rounded-full bg-white/5 group-hover:bg-brand-500/20 flex items-center justify-center transition-colors">
-                            <i class="fas fa-plus"></i>
-                        </div>
-                        <span class="font-medium">Create New Playlist</span>
-                    </button>
-                    <div id="playlistsContainer" class="space-y-2 mt-4"></div>
+                 <div id="playlistsList" class="hidden space-y-1">
+                    <div id="playlistsContainer" class="grid grid-cols-2 gap-4"></div>
                  </div>
-                 <div id="downloadsList" class="hidden space-y-2">
+                 <div id="downloadsList" class="hidden space-y-1">
                      <!-- Downloads injected here -->
                  </div>
+
                  <div class="mt-8 border-t border-white/5 pt-4 flex justify-between items-center text-xs text-gray-500">
                      <span>Storage Used: Local</span>
                      <button onclick="clearHistory()" class="text-red-400 hover:text-red-300 transition-colors hover:underline flex items-center gap-1">
@@ -356,23 +356,33 @@
             </div>
 
             <!-- Playlist Detail View -->
-            <div id="playlistDetailView" class="hidden space-y-6 fade-in-section">
-                <div class="flex items-center gap-4">
-                     <button onclick="showLibrary(); switchLibraryTab('playlists')" class="p-2 -ml-2 rounded-full hover:bg-white/10 text-gray-400 hover:text-white transition"><i class="fas fa-arrow-left text-xl"></i></button>
-                     <div class="flex-1 min-w-0">
-                         <h3 id="playlistDetailTitle" class="text-2xl font-bold truncate">Playlist Name</h3>
-                         <p id="playlistDetailCount" class="text-sm text-gray-400">0 Songs</p>
+            <div id="playlistDetailView" class="hidden space-y-0 animate-fade-in fade-in-section min-h-full">
+                <!-- Playlist Header -->
+                <div class="relative h-[30vh] -mx-4 -mt-4 mb-6 bg-gradient-to-b from-brand-900 to-black p-6 flex flex-col justify-end">
+                     <button onclick="showLibrary(); switchLibraryTab('playlists')" class="absolute top-8 left-4 p-2 bg-black/20 backdrop-blur rounded-full text-white hover:bg-white/10 transition"><i class="fas fa-arrow-left text-xl"></i></button>
+
+                     <h1 id="playlistDetailTitle" class="text-3xl md:text-5xl font-bold text-white mb-2 truncate">Playlist Name</h1>
+                     <div class="flex items-center gap-2 text-sm text-gray-300">
+                         <span id="playlistDetailCount">0 Songs</span> • <span>Playlist</span>
                      </div>
-                     <button id="playlistPlayBtn" onclick="playCurrentPlaylist()" class="w-12 h-12 rounded-full bg-brand-500 text-black flex items-center justify-center shadow-lg hover:scale-105 transition active:scale-95"><i class="fas fa-play ml-1"></i></button>
+                </div>
+
+                <div class="flex items-center justify-between mb-6 px-2">
+                     <div class="flex gap-4">
+                         <button id="playlistPlayBtn" onclick="playCurrentPlaylist()" class="w-14 h-14 rounded-full bg-brand-500 text-black flex items-center justify-center shadow-lg hover:scale-105 transition active:scale-95"><i class="fas fa-play text-xl ml-1"></i></button>
+                         <button onclick="toggleShuffle()" class="w-10 h-10 rounded-full text-gray-400 hover:text-white flex items-center justify-center"><i class="fas fa-shuffle text-xl"></i></button>
+                     </div>
                      <button id="playlistDeleteBtn" onclick="confirmDeletePlaylist()" class="p-3 text-red-400 hover:bg-red-500/10 rounded-full transition"><i class="fas fa-trash"></i></button>
                 </div>
-                <div id="playlistTracksList" class="space-y-2">
+
+                <div id="playlistTracksList" class="space-y-1 pb-20">
                     <!-- Playlist tracks -->
                 </div>
             </div>
 
         </div>
     </main>
+
 
     <!-- Mini Player (Fixed Bottom) -->
     <div id="miniPlayer" class="fixed bottom-[60px] md:bottom-0 left-0 right-0 z-50 transform translate-y-[120%] transition-transform duration-300 ease-out will-change-transform">
@@ -643,6 +653,9 @@
             // Try to load trending on init
             loadTopGlobal();
 
+            // Init Sidebar
+            renderSidebarPlaylists();
+
             // Setup audio events
             audio.addEventListener('timeupdate', updateProgress);
             audio.addEventListener('ended', handleTrackEnd);
@@ -659,7 +672,7 @@
             
             // Play buttons
             els.playBtns.forEach(btn => btn.addEventListener('click', togglePlay));
-            
+
             // Like buttons
             els.likeBtns.forEach(btn => btn.addEventListener('click', toggleLike));
 
@@ -971,17 +984,18 @@
                 const data = await res.json();
 
                 if (data.status && data.data) {
-                    const tracks = data.data.slice(0, 6);
+                    const tracks = data.data.slice(0, 8); // Show more
                     state.trendingResults = tracks;
                     grid.innerHTML = tracks.map((track, idx) => `
-                        <div class="glass-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-white/5 transition"
-                             onclick='playFromTrending(${idx})'>
-                             <span class="text-2xl font-bold text-gray-600 w-8 text-center">${idx + 1}</span>
-                             <img src="${track.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
-                             <div class="overflow-hidden">
-                                 <h4 class="font-bold text-sm truncate text-white">${track.title}</h4>
+                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition cursor-pointer group" onclick='playFromTrending(${idx})'>
+                             <span class="text-sm font-bold text-gray-600 w-6 text-center group-hover:text-white transition-colors">${idx + 1}</span>
+                             <img src="${track.thumbnail}" class="w-10 h-10 rounded bg-gray-800 object-cover" loading="lazy">
+                             <div class="flex-1 overflow-hidden">
+                                 <h4 class="font-bold text-sm truncate text-white group-hover:text-brand-400 transition-colors">${track.title}</h4>
                                  <p class="text-xs text-gray-400 truncate">${track.artist}</p>
                              </div>
+                             <div class="text-xs text-gray-500">${track.duration || ''}</div>
+                             <button class="text-gray-400 hover:text-white px-2"><i class="fas fa-ellipsis-v"></i></button>
                         </div>
                     `).join('');
                 }
@@ -1001,18 +1015,13 @@
             if (sectionId === 'search') els.views.search.classList.remove('hidden');
             if (sectionId === 'library') {
                 els.views.library.classList.remove('hidden');
-                switchLibraryTab(document.getElementById('tabFavorites').classList.contains('bg-brand-600') ? 'favorites' : 'downloads');
+                // Default to favorites if no tab active or previously active
+                if (!state.activeLibraryTab) switchLibraryTab('favorites');
+                else switchLibraryTab(state.activeLibraryTab);
             }
 
-            const isMobile = window.innerWidth < 768;
-            let showInput = false;
-            if (sectionId === 'search') showInput = true;
-            if (sectionId === 'home' && !isMobile) showInput = true;
-
-            els.searchBarContainer.style.display = showInput ? 'block' : 'none';
-
+            // Mobile Nav Updates
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-brand-500'));
-
             const navIndex = sectionId === 'home' ? 0 : sectionId === 'search' ? 1 : 2;
             const navItems = document.querySelectorAll('.nav-item');
             if(navItems[navIndex]) {
@@ -1020,7 +1029,18 @@
                  navItems[navIndex].classList.remove('text-gray-500');
             }
 
-            window.scrollTo(0,0);
+            // Desktop Nav Updates
+            document.querySelectorAll('.nav-item-desktop').forEach(el => el.classList.remove('active', 'bg-white/5', 'text-white'));
+            const dNavIndex = sectionId === 'home' ? 0 : sectionId === 'search' ? 1 : 2;
+            const dNavItems = document.querySelectorAll('.nav-item-desktop');
+            if(dNavItems[dNavIndex]) {
+                dNavItems[dNavIndex].classList.add('active', 'bg-white/5', 'text-white');
+                dNavItems[dNavIndex].classList.remove('text-gray-400');
+            }
+
+            // Reset scroll
+            const scrollContainer = document.getElementById('contentScroll');
+            if(scrollContainer) scrollContainer.scrollTo(0,0);
         }
 
         function showHome() { showSection('home'); }
@@ -1229,36 +1249,42 @@
         }
 
         function switchLibraryTab(tab) {
+            state.activeLibraryTab = tab;
+
             // Hide all lists first
             document.getElementById('favoritesList').classList.add('hidden');
             document.getElementById('downloadsList').classList.add('hidden');
             document.getElementById('playlistsList').classList.add('hidden');
             document.getElementById('playlistDetailView').classList.add('hidden');
 
-            // Reset buttons
-            ['tabFavorites', 'tabDownloads', 'tabPlaylists'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el) {
-                    el.classList.remove('bg-brand-600', 'text-white');
-                    el.classList.add('text-gray-400', 'hover:bg-white/10');
-                }
-            });
+            // Update Segmented Control
+            const indicator = document.getElementById('tabIndicator');
+            const btns = {
+                'favorites': document.getElementById('tabFavorites'),
+                'playlists': document.getElementById('tabPlaylists'),
+                'downloads': document.getElementById('tabDownloads')
+            };
 
-            // Activate selected
+            // Reset text colors
+            Object.values(btns).forEach(btn => btn.classList.replace('text-white', 'text-gray-400'));
+
+            if (btns[tab]) {
+                btns[tab].classList.replace('text-gray-400', 'text-white');
+                // Move indicator
+                if (tab === 'favorites') indicator.style.transform = 'translateX(0%)';
+                if (tab === 'playlists') indicator.style.transform = 'translateX(100%)';
+                if (tab === 'downloads') indicator.style.transform = 'translateX(200%)';
+            }
+
+            // Show Content
             if (tab === 'favorites') {
                 document.getElementById('favoritesList').classList.remove('hidden');
-                document.getElementById('tabFavorites').classList.add('bg-brand-600', 'text-white');
-                document.getElementById('tabFavorites').classList.remove('text-gray-400', 'hover:bg-white/10');
                 renderFavorites();
             } else if (tab === 'downloads') {
                 document.getElementById('downloadsList').classList.remove('hidden');
-                document.getElementById('tabDownloads').classList.add('bg-brand-600', 'text-white');
-                document.getElementById('tabDownloads').classList.remove('text-gray-400', 'hover:bg-white/10');
                 renderDownloads();
             } else if (tab === 'playlists') {
                 document.getElementById('playlistsList').classList.remove('hidden');
-                document.getElementById('tabPlaylists').classList.add('bg-brand-600', 'text-white');
-                document.getElementById('tabPlaylists').classList.remove('text-gray-400', 'hover:bg-white/10');
                 renderPlaylists();
             }
         }
@@ -1276,17 +1302,16 @@
             const grid = document.getElementById('recentlyPlayedGrid');
             if (state.recent.length === 0) return;
 
-            grid.innerHTML = state.recent.slice(0, 6).map((track, idx) => `
-                <div class="group cursor-pointer" onclick='playTrack(null, ${JSON.stringify(state.recent).replace(/'/g, "&#39;")}, ${idx})'>
-                    <div class="relative w-full aspect-square mb-2 overflow-hidden rounded-lg">
+            grid.innerHTML = state.recent.map((track, idx) => `
+                <div class="shrink-0 w-32 cursor-pointer group" onclick='playTrack(null, ${JSON.stringify(state.recent).replace(/'/g, "&#39;")}, ${idx})'>
+                    <div class="relative w-32 h-32 mb-2 overflow-hidden rounded-lg shadow-lg">
                         <img src="${track.thumbnail || track.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy">
-                        <div class="absolute inset-0 bg-black/20 group-hover:bg-black/40 transition-colors"></div>
-                        <button class="absolute bottom-2 right-2 w-10 h-10 bg-brand-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-lg text-black">
-                            <i class="fas fa-play ml-1"></i>
+                        <button class="absolute bottom-2 right-2 w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-lg text-black">
+                            <i class="fas fa-play text-xs ml-0.5"></i>
                         </button>
                     </div>
-                    <h4 class="font-bold text-sm text-white truncate">${track.title}</h4>
-                    <p class="text-xs text-gray-400 truncate">${track.artist}</p>
+                    <h4 class="font-bold text-xs text-white truncate">${track.title}</h4>
+                    <p class="text-[10px] text-gray-400 truncate">${track.artist}</p>
                 </div>
             `).join('');
         }
@@ -1393,22 +1418,41 @@
         // --- Playlist Logic ---
 
         function renderPlaylists() {
+            renderSidebarPlaylists(); // Update Sidebar too
+
             const container = document.getElementById('playlistsContainer');
+            if (!container) return; // Might be hidden/not applicable
+
             if (state.playlists.length === 0) {
-                container.innerHTML = `<div class="text-center text-gray-500 py-4 text-sm">No playlists yet.</div>`;
+                container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-4 text-sm">No playlists yet.</div>`;
                 return;
             }
 
             container.innerHTML = state.playlists.map(pl => `
-                <div class="glass-card p-3 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-white/5 transition" onclick="openPlaylistDetail('${pl.id}')">
-                    <div class="w-12 h-12 rounded bg-gradient-to-br from-brand-600 to-purple-700 flex items-center justify-center shadow-lg">
-                        <i class="fas fa-music text-white/50"></i>
+                <div class="glass-card p-4 rounded-xl flex flex-col gap-3 cursor-pointer hover:bg-white/5 transition group relative overflow-hidden" onclick="openPlaylistDetail('${pl.id}')">
+                    <div class="w-full aspect-square rounded-lg bg-gradient-to-br from-brand-600 to-purple-700 flex items-center justify-center shadow-lg mb-2">
+                        <i class="fas fa-music text-4xl text-white/50 group-hover:scale-110 transition-transform"></i>
                     </div>
-                    <div class="flex-1 min-w-0">
+                    <div>
                         <h4 class="font-bold text-white truncate">${pl.name}</h4>
                         <p class="text-xs text-gray-400">${pl.tracks.length} Songs</p>
                     </div>
-                    <i class="fas fa-chevron-right text-gray-600"></i>
+                </div>
+            `).join('');
+        }
+
+        function renderSidebarPlaylists() {
+            const sidebar = document.getElementById('desktopPlaylistSidebar');
+            if (!sidebar) return;
+
+            if (state.playlists.length === 0) {
+                sidebar.innerHTML = `<div class="text-gray-600 text-xs px-2">No playlists</div>`;
+                return;
+            }
+
+            sidebar.innerHTML = state.playlists.map(pl => `
+                <div class="px-3 py-2 rounded-md hover:bg-white/5 cursor-pointer text-sm text-gray-400 hover:text-white transition truncate" onclick="openPlaylistDetail('${pl.id}')">
+                    ${pl.name}
                 </div>
             `).join('');
         }
