@@ -202,8 +202,55 @@
         <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-brand-900/20 via-accent-purple/10 to-transparent opacity-50 blur-3xl"></div>
     </div>
 
+    <!-- Auth View (Login/Register) -->
+    <div id="authView" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
+        <div class="w-full max-w-md space-y-8 animate-slide-up">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-brand-500 to-accent-purple mx-auto flex items-center justify-center text-black font-bold text-3xl shadow-[0_0_30px_rgba(34,197,94,0.4)] mb-4">
+                    <i class="fab fa-spotify"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-white tracking-tight">Welcome to Spotiplay</h2>
+                <p class="text-gray-400 mt-2">Sign in to sync your library across devices.</p>
+            </div>
+
+            <div class="glass-card p-8 rounded-2xl border border-white/10 shadow-2xl">
+                <!-- Tabs -->
+                <div class="flex gap-4 mb-6 border-b border-white/10 pb-4">
+                    <button onclick="switchAuthTab('login')" id="tabLogin" class="flex-1 text-center font-bold text-brand-500 pb-2 border-b-2 border-brand-500 transition-colors">Login</button>
+                    <button onclick="switchAuthTab('register')" id="tabRegister" class="flex-1 text-center font-bold text-gray-400 hover:text-white pb-2 border-b-2 border-transparent transition-colors">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Username</label>
+                        <input type="text" id="loginUser" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="Enter username" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Password</label>
+                        <input type="password" id="loginPass" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-400 text-black font-bold rounded-lg transition-transform active:scale-95 shadow-lg shadow-brand-500/20">Sign In</button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Choose Username</label>
+                        <input type="text" id="regUser" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="Unique username" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Password</label>
+                        <input type="password" id="regPass" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="Create password" required>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-accent-purple hover:bg-purple-400 text-white font-bold rounded-lg transition-transform active:scale-95 shadow-lg shadow-purple-500/20">Create Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Desktop Sidebar -->
-    <aside class="hidden md:flex flex-col w-64 bg-black/95 border-r border-white/5 h-full z-40 p-6 gap-6 relative">
+    <aside id="desktopSidebar" class="hidden md:flex flex-col w-64 bg-black/95 border-r border-white/5 h-full z-40 p-6 gap-6 relative hidden">
         <div class="flex items-center gap-3 mb-4">
             <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-black font-bold text-lg shadow-lg">
                 <i class="fab fa-spotify"></i>
@@ -238,7 +285,7 @@
     </aside>
 
     <!-- Main Content App Container -->
-    <main id="app-container" class="relative z-10 flex-1 h-full overflow-hidden flex flex-col bg-black/50">
+    <main id="app-container" class="relative z-10 flex-1 h-full overflow-hidden flex flex-col bg-black/50 hidden">
 
         <!-- Mobile/Tablet Content Scroll Area -->
         <div id="contentScroll" class="flex-1 app-scroll pb-[140px] md:pb-[100px] pt-4 px-4 md:px-8">
@@ -248,9 +295,21 @@
                 <!-- Header -->
                 <div class="flex items-center justify-between mb-2">
                     <h2 class="text-2xl font-bold text-white">Good Evening</h2>
-                    <div class="flex gap-4">
+                    <div class="flex gap-4 items-center">
                          <button onclick="showSection('search')" class="md:hidden text-white"><i class="fas fa-search text-xl"></i></button>
-                         <div class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-black font-bold">J</div>
+                         <!-- Profile Dropdown -->
+                         <div class="relative group">
+                             <button class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-black font-bold shadow-lg ring-2 ring-transparent group-hover:ring-brand-400 transition-all" id="userProfileBtn">U</button>
+                             <div class="absolute right-0 top-10 w-40 bg-dark-card border border-white/10 rounded-xl shadow-2xl overflow-hidden hidden group-hover:block transition-all transform origin-top-right z-50">
+                                 <div class="px-4 py-3 border-b border-white/5">
+                                     <p class="text-xs text-gray-400">Signed in as</p>
+                                     <p class="text-sm font-bold text-white truncate" id="userProfileName">User</p>
+                                 </div>
+                                 <button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-white/5 transition-colors flex items-center gap-2">
+                                     <i class="fas fa-sign-out-alt"></i> Logout
+                                 </button>
+                             </div>
+                         </div>
                     </div>
                 </div>
 
@@ -423,7 +482,7 @@
     </div>
 
     <!-- Mobile Bottom Navigation -->
-    <nav class="md:hidden fixed bottom-0 w-full z-50 bg-black/90 backdrop-blur-lg border-t border-white/5 pb-safe transition-all duration-300">
+    <nav id="mobileNav" class="md:hidden fixed bottom-0 w-full z-50 bg-black/90 backdrop-blur-lg border-t border-white/5 pb-safe transition-all duration-300 hidden">
         <div class="flex justify-around items-center h-[60px]">
             <button onclick="showHome()" class="nav-item active flex flex-col items-center gap-1 text-xs text-brand-500 w-full h-full justify-center active:scale-95 transition-transform">
                 <i class="fas fa-home text-xl mb-0.5"></i>
@@ -601,6 +660,7 @@
 
         // --- State Management ---
         const state = {
+            currentUser: null, // { username: string }
             queue: [],
             originalQueue: [],
             currentIndex: -1,
@@ -610,10 +670,12 @@
             isShuffled: false,
             repeatMode: 0,
             currentSection: 'home',
-            favorites: JSON.parse(localStorage.getItem('spotiplay_favorites') || '[]'),
-            recent: JSON.parse(localStorage.getItem('spotiplay_recent') || '[]'),
-            downloads: JSON.parse(localStorage.getItem('spotiplay_downloads') || '[]'),
-            playlists: JSON.parse(localStorage.getItem('spotiplay_playlists') || '[]'),
+            activeLibraryTab: 'favorites',
+            // User Data (Loaded on Login)
+            favorites: [],
+            recent: [],
+            downloads: [],
+            playlists: [],
             activePlaylistId: null,
             trackToAdd: null
         };
@@ -648,13 +710,7 @@
 
         // --- Initialization ---
         document.addEventListener('DOMContentLoaded', () => {
-            showHome();
-            loadRecentlyPlayed();
-            // Try to load trending on init
-            loadTopGlobal();
-
-            // Init Sidebar
-            renderSidebarPlaylists();
+            auth.init(); // Check session
 
             // Setup audio events
             audio.addEventListener('timeupdate', updateProgress);
@@ -679,9 +735,174 @@
             // Mobile toggle
             document.getElementById('searchToggleBtn')?.addEventListener('click', toggleSearchMobile);
 
+            // Auth Forms
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                auth.login(document.getElementById('loginUser').value, document.getElementById('loginPass').value);
+            });
+            document.getElementById('registerForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                auth.register(document.getElementById('regUser').value, document.getElementById('regPass').value);
+            });
+
             // Window resize handler (debounced)
-            window.addEventListener('resize', debounce(() => showSection(state.currentSection), 100));
+            window.addEventListener('resize', debounce(() => {
+                if(state.currentUser) showSection(state.currentSection);
+            }, 100));
         });
+
+        // --- Authentication & Persistence ---
+        const auth = {
+            init: () => {
+                const sessionUser = localStorage.getItem('spotiplay_session');
+                if (sessionUser) {
+                    try {
+                        const user = JSON.parse(sessionUser);
+                        if (user && user.username) {
+                            // Valid session
+                            state.currentUser = user;
+                            auth.loadUserData(user.username);
+                            auth.showApp();
+                            return;
+                        }
+                    } catch (e) {
+                        localStorage.removeItem('spotiplay_session');
+                    }
+                }
+                // No session
+                auth.showLogin();
+            },
+
+            register: (username, password) => {
+                if (!username || !password) return showToast('Error', 'error', 'Please fill all fields');
+
+                const users = JSON.parse(localStorage.getItem('spotiplay_users') || '{}');
+                if (users[username]) {
+                    showToast('Error', 'error', 'Username already taken');
+                    return;
+                }
+
+                users[username] = { password: password }; // In real app, hash this!
+                localStorage.setItem('spotiplay_users', JSON.stringify(users));
+
+                // Init empty data for new user
+                const userData = { favorites: [], recent: [], downloads: [], playlists: [] };
+                localStorage.setItem(`spotiplay_data_${username}`, JSON.stringify(userData));
+
+                showToast('Success', 'success', 'Account created! Please login.');
+                switchAuthTab('login');
+                document.getElementById('loginUser').value = username;
+                document.getElementById('loginPass').value = '';
+            },
+
+            login: (username, password) => {
+                const users = JSON.parse(localStorage.getItem('spotiplay_users') || '{}');
+                if (!users[username] || users[username].password !== password) {
+                    showToast('Error', 'error', 'Invalid credentials');
+                    return;
+                }
+
+                const user = { username };
+                localStorage.setItem('spotiplay_session', JSON.stringify(user));
+                state.currentUser = user;
+
+                auth.loadUserData(username);
+                auth.showApp();
+                showToast('Welcome', 'success', `Logged in as ${username}`);
+            },
+
+            logout: () => {
+                localStorage.removeItem('spotiplay_session');
+                state.currentUser = null;
+                // Clear state
+                state.favorites = [];
+                state.recent = [];
+                state.downloads = [];
+                state.playlists = [];
+
+                auth.showLogin();
+                showToast('Bye', 'info', 'Logged out successfully');
+            },
+
+            loadUserData: (username) => {
+                const raw = localStorage.getItem(`spotiplay_data_${username}`);
+                const data = raw ? JSON.parse(raw) : { favorites: [], recent: [], downloads: [], playlists: [] };
+
+                state.favorites = data.favorites || [];
+                state.recent = data.recent || [];
+                state.downloads = data.downloads || [];
+                state.playlists = data.playlists || [];
+
+                // Update UI Profile
+                document.getElementById('userProfileBtn').textContent = username.charAt(0).toUpperCase();
+                document.getElementById('userProfileName').textContent = username;
+            },
+
+            saveUserData: () => {
+                if (!state.currentUser) return;
+                const data = {
+                    favorites: state.favorites,
+                    recent: state.recent,
+                    downloads: state.downloads,
+                    playlists: state.playlists
+                };
+                localStorage.setItem(`spotiplay_data_${state.currentUser.username}`, JSON.stringify(data));
+            },
+
+            showApp: () => {
+                document.getElementById('authView').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                if(window.innerWidth >= 768) document.getElementById('desktopSidebar').classList.remove('hidden');
+                else document.getElementById('mobileNav').classList.remove('hidden');
+
+                // Initialize App Views
+                showHome();
+                loadRecentlyPlayed();
+                loadTopGlobal();
+                renderSidebarPlaylists();
+            },
+
+            showLogin: () => {
+                document.getElementById('authView').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+                document.getElementById('desktopSidebar').classList.add('hidden');
+                document.getElementById('mobileNav').classList.add('hidden');
+
+                // Reset inputs
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+            }
+        };
+
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const regForm = document.getElementById('registerForm');
+            const tabLogin = document.getElementById('tabLogin');
+            const tabReg = document.getElementById('tabRegister');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+                tabLogin.classList.replace('text-gray-400', 'text-brand-500');
+                tabLogin.classList.replace('border-transparent', 'border-brand-500');
+                tabReg.classList.replace('text-brand-500', 'text-gray-400'); // Assuming reverse
+                tabReg.classList.remove('text-white'); // Fix hover state logic issues
+                tabReg.classList.replace('border-brand-500', 'border-transparent');
+                // Re-add hover/color classes carefully
+                tabReg.className = "flex-1 text-center font-bold text-gray-400 hover:text-white pb-2 border-b-2 border-transparent transition-colors";
+                tabLogin.className = "flex-1 text-center font-bold text-brand-500 pb-2 border-b-2 border-brand-500 transition-colors";
+            } else {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+
+                tabReg.className = "flex-1 text-center font-bold text-brand-500 pb-2 border-b-2 border-brand-500 transition-colors";
+                tabLogin.className = "flex-1 text-center font-bold text-gray-400 hover:text-white pb-2 border-b-2 border-transparent transition-colors";
+            }
+        }
+
+        function logout() {
+            auth.logout();
+        }
 
         // --- Core Audio Logic ---
 
@@ -1125,7 +1346,7 @@
                 state.favorites.push({ url, track_url: url, title, artist, thumbnail: img, image: img });
                 showToast('Disukai', 'success', 'Lagu ditambahkan ke favorit');
             }
-            localStorage.setItem('spotiplay_favorites', JSON.stringify(state.favorites));
+            auth.saveUserData();
 
             if (!els.views.library.classList.contains('hidden')) {
                 if (document.getElementById('tabFavorites').classList.contains('bg-brand-600')) {
@@ -1204,7 +1425,7 @@
             if (state.downloads.some(t => (t.url || t.track_url) === trackUrl)) return;
 
             state.downloads.unshift(track);
-            localStorage.setItem('spotiplay_downloads', JSON.stringify(state.downloads));
+            auth.saveUserData();
 
             if (document.getElementById('tabDownloads').classList.contains('bg-brand-600')) {
                 renderDownloads();
@@ -1242,7 +1463,7 @@
         function clearHistory() {
             if(confirm('Hapus riwayat download?')) {
                 state.downloads = [];
-                localStorage.removeItem('spotiplay_downloads');
+                auth.saveUserData();
                 renderDownloads();
                 showToast('Riwayat Dihapus', 'success');
             }
@@ -1294,7 +1515,7 @@
             state.recent = state.recent.filter(t => (t.url || t.track_url) !== trackUrl);
             state.recent.unshift(track);
             if (state.recent.length > 10) state.recent.pop();
-            localStorage.setItem('spotiplay_recent', JSON.stringify(state.recent));
+            auth.saveUserData();
             loadRecentlyPlayed();
         }
 
@@ -1478,7 +1699,7 @@
             };
 
             state.playlists.push(newPlaylist);
-            localStorage.setItem('spotiplay_playlists', JSON.stringify(state.playlists));
+            auth.saveUserData();
 
             closeCreatePlaylistModal();
 
@@ -1538,7 +1759,7 @@
         function confirmDeletePlaylist() {
             if (confirm('Hapus playlist ini secara permanen?')) {
                 state.playlists = state.playlists.filter(p => p.id !== state.activePlaylistId);
-                localStorage.setItem('spotiplay_playlists', JSON.stringify(state.playlists));
+                auth.saveUserData();
                 showLibrary();
                 switchLibraryTab('playlists');
                 showToast('Playlist Dihapus', 'success');
@@ -1550,7 +1771,7 @@
             if (!playlist) return;
 
             playlist.tracks.splice(trackIndex, 1);
-            localStorage.setItem('spotiplay_playlists', JSON.stringify(state.playlists));
+            auth.saveUserData();
 
             // Re-render
             openPlaylistDetail(playlistId);
@@ -1626,7 +1847,7 @@
             }
 
             playlist.tracks.push(state.trackToAdd);
-            localStorage.setItem('spotiplay_playlists', JSON.stringify(state.playlists));
+            auth.saveUserData();
 
             showToast('Berhasil', 'success', `Ditambahkan ke ${playlist.name}`);
             closeAddToPlaylistModal();
