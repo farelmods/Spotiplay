@@ -1514,19 +1514,60 @@
 
             list.innerHTML = state.downloads.map((track, idx) => {
                 const norm = normalizeTrack(track);
+                const dlLink = norm.download || '#';
+
                 return `
-                <div class="glass-card p-3 rounded-xl flex items-center gap-4">
-                    <img src="${norm.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
+                <div class="glass-card p-3 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-white/10 active:scale-98 transition-all" onclick="openExternalPlayer('${dlLink}', '${norm.track_url}')">
+                    <div class="relative w-12 h-12 flex-shrink-0">
+                        <img src="${norm.thumbnail}" class="w-full h-full rounded-lg object-cover bg-gray-800" loading="lazy">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg">
+                            <i class="fas fa-external-link-alt text-white text-xs"></i>
+                        </div>
+                    </div>
                     <div class="flex-1 min-w-0">
                         <h4 class="font-bold text-white truncate text-base">${norm.title}</h4>
                         <p class="text-gray-400 text-sm truncate">${norm.artist}</p>
+                        <p class="text-[10px] text-brand-400 mt-0.5">Ketuk untuk putar di aplikasi HP</p>
                     </div>
-                    <a href="${norm.download || '#'}" target="_blank" class="p-2 text-white hover:text-brand-400">
-                        <i class="fas fa-external-link-alt"></i>
-                    </a>
+                    <button class="p-2 text-gray-400 hover:text-white">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
                 </div>
                 `;
             }).join('');
+        }
+
+        async function openExternalPlayer(directLink, trackUrl) {
+            showToast('Membuka...', 'info', 'Mengarahkan ke pemutar eksternal...');
+
+            let targetUrl = directLink;
+
+            // If link is invalid or hash, try to fetch fresh link
+            if (!targetUrl || targetUrl === '#' || targetUrl.includes('undefined')) {
+                 try {
+                     const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(trackUrl)}`;
+                     const res = await fetch(apiUrl);
+                     const data = await res.json();
+                     if (data.status && data.data && data.data.mp3DownloadLink) {
+                         targetUrl = data.data.mp3DownloadLink;
+                         // Update local cache if possible
+                         const idx = state.downloads.findIndex(t => (t.track_url || t.url) === trackUrl);
+                         if(idx > -1) {
+                             state.downloads[idx].download = targetUrl;
+                             auth.saveUserData();
+                         }
+                     }
+                 } catch(e) {
+                     showToast('Gagal', 'error', 'Link kadaluarsa & offline.');
+                     return;
+                 }
+            }
+
+            if(targetUrl && targetUrl !== '#') {
+                window.open(targetUrl, '_blank');
+            } else {
+                showToast('Error', 'error', 'Link tidak tersedia.');
+            }
         }
 
         function clearHistory() {
