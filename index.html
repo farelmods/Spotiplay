@@ -999,27 +999,27 @@
 
                 // If not, fetch it
                 if (!streamUrl) {
-                    // Use v2 endpoint
-                    const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`;
+                    // Use Zell API endpoint
+                    // The API expects a query URL
+                    const apiUrl = `https://apizell.web.id/download/youtubeplaymp3?q=${encodeURIComponent(currentTrack.track_url)}`;
                     const res = await fetch(apiUrl);
                     const data = await res.json();
 
-                    if (!data.status || !data.data || !data.data.mp3DownloadLink) {
-                        if (data.status === false && data.code === 500) {
-                             throw new Error('RESTRICTED');
-                        }
-                        throw new Error('FAILED');
+                    // Check for Zell API response structure (usually result or url)
+                    const downloadLink = data.result || data.url || data.download;
+
+                    if (!data.status && !downloadLink) {
+                         throw new Error('FAILED');
                     }
 
-                    streamUrl = data.data.mp3DownloadLink;
+                    streamUrl = downloadLink;
 
                     // Cache it in the queue object to avoid re-fetching
                     state.queue[state.currentIndex].download = streamUrl;
 
-                    // Update metadata if available from detailed response
-                    if(data.data.coverImage) state.queue[state.currentIndex].thumbnail = data.data.coverImage;
-                    if(data.data.artist) state.queue[state.currentIndex].artist = data.data.artist;
-                    if(data.data.songTitle) state.queue[state.currentIndex].title = data.data.songTitle;
+                    // Update metadata if available (Adapt to potential API response fields)
+                    if(data.thumb) state.queue[state.currentIndex].thumbnail = data.thumb;
+                    if(data.title) state.queue[state.currentIndex].title = data.title;
 
                     // Re-update info
                     updatePlayerInfo(normalizeTrack(state.queue[state.currentIndex]));
@@ -1200,14 +1200,25 @@
             els.searchLoading.classList.remove('hidden');
 
             try {
-                const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}`);
+                const res = await fetch(`https://apizell.web.id/search/youtube?q=${encodeURIComponent(query)}`);
                 const data = await res.json();
 
                 els.searchLoading.classList.add('hidden');
 
-                if (data.status && data.data && data.data.length > 0) {
-                    state.searchResults = data.data;
-                    renderResults(data.data);
+                // Adapter for Zell API (Youtube/Otakudesu structure)
+                // Note: The API currently returns 'otakudesu' key for youtube search, adapting to that.
+                const results = data.otakudesu || data.data || [];
+
+                if (data.status && results.length > 0) {
+                    // Normalize data structure
+                    state.searchResults = results.map(item => ({
+                        title: item.title,
+                        artist: item.status || 'YouTube', // Placeholder as API doesn't give artist
+                        thumbnail: item.image || item.thumbnail,
+                        track_url: item.url,
+                        duration: item.rating || '' // Placeholder
+                    }));
+                    renderResults(state.searchResults);
                 } else {
                     els.resultsList.innerHTML = `
                         <div class="text-center py-10 text-gray-500">
@@ -1270,11 +1281,19 @@
         async function loadTopGlobal() {
             const grid = document.getElementById('trendingGrid');
             try {
-                const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=top%20hits%20global`);
+                // Using search API as placeholder for trending since no dedicated trending endpoint is provided in new API
+                const res = await fetch(`https://apizell.web.id/search/youtube?q=top%20music%20hits`);
                 const data = await res.json();
+                const results = data.otakudesu || data.data || [];
 
-                if (data.status && data.data) {
-                    const tracks = data.data.slice(0, 8); // Show more
+                if (data.status && results.length > 0) {
+                    const tracks = results.slice(0, 8).map(item => ({
+                        title: item.title,
+                        artist: item.status || 'YouTube',
+                        thumbnail: item.image || item.thumbnail,
+                        track_url: item.url,
+                        duration: item.rating || ''
+                    }));
                     state.trendingResults = tracks;
                     grid.innerHTML = tracks.map((track, idx) => `
                         <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition cursor-pointer group" onclick='playFromTrending(${idx})'>
@@ -1683,12 +1702,14 @@
              let downloadUrl = track.download;
 
              if (!downloadUrl) {
-                 const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`;
+                 const apiUrl = `https://apizell.web.id/download/youtubeplaymp3?q=${encodeURIComponent(track.track_url)}`;
                  try {
                      const res = await fetch(apiUrl);
                      const data = await res.json();
-                     if (data.status && data.data && data.data.mp3DownloadLink) {
-                         downloadUrl = data.data.mp3DownloadLink;
+                     const link = data.result || data.url || data.download;
+
+                     if ((data.status || link) && link) {
+                         downloadUrl = link;
                          if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = downloadUrl;
                      } else {
                          throw new Error('No link');
