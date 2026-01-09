@@ -988,63 +988,35 @@
 
                 // UI Loading State
                 updatePlayerInfo(currentTrack);
-                showToast('Memuat lagu...', 'info', 'Mohon tunggu sebentar...');
                 els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
-
-                // Show Mini Player immediately
                 els.miniPlayer.style.transform = 'translateY(0)';
 
-                // Check if track object already has a direct download link (optimization)
+                // MOCK PLAYBACK LOGIC
+                // Since API is disabled, we use a sample audio or just "fake" it
                 let streamUrl = currentTrack.download;
 
-                // If not, fetch it
                 if (!streamUrl) {
-                    // Use Zell API endpoint
-                    // The API expects a query URL
-                    const apiUrl = `https://apizell.web.id/download/youtubeplaymp3?q=${encodeURIComponent(currentTrack.track_url)}`;
-                    const res = await fetch(apiUrl);
-                    const data = await res.json();
-
-                    // Check for Zell API response structure (usually result or url)
-                    const downloadLink = data.result || data.url || data.download;
-
-                    if (!data.status && !downloadLink) {
-                         throw new Error('FAILED');
-                    }
-
-                    streamUrl = downloadLink;
-
-                    // Cache it in the queue object to avoid re-fetching
+                    // Use a generic copyright-free sample for demo purposes
+                    // or just a placeholder that might fail but shows intent
+                    streamUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
                     state.queue[state.currentIndex].download = streamUrl;
-
-                    // Update metadata if available (Adapt to potential API response fields)
-                    if(data.thumb) state.queue[state.currentIndex].thumbnail = data.thumb;
-                    if(data.title) state.queue[state.currentIndex].title = data.title;
-
-                    // Re-update info
-                    updatePlayerInfo(normalizeTrack(state.queue[state.currentIndex]));
+                    showToast('Mode Demo', 'info', 'Memutar sampel audio (API Nonaktif).');
                 }
 
                 // Play
                 audio.src = streamUrl;
-                audio.play().catch(e => {
+                audio.play().then(() => {
+                    addToRecent(currentTrack);
+                    updateLikeButtonState(currentTrack.track_url);
+                }).catch(e => {
                     console.error("Playback failed:", e);
-                    handleAudioError();
+                    // In demo mode, just show playing state even if audio fails
+                    updatePlayState(true);
+                    showToast('Info', 'info', 'Simulasi pemutaran (Audio tidak tersedia).');
                 });
-
-                // Add to recent
-                addToRecent(currentTrack);
-
-                // Update Like Button state
-                updateLikeButtonState(currentTrack.track_url);
 
             } catch (error) {
                 console.error("Play error:", error);
-                let msg = 'Gagal memutar lagu. Silakan coba lagu lain.';
-                if (error.message === 'RESTRICTED') {
-                    msg = 'Maaf, lagu ini bermasalah dari server pusat. Silakan cari versi lain.';
-                }
-                showToast('Gagal Memutar', 'error', msg);
                 updatePlayState(false);
             }
         }
@@ -1188,50 +1160,60 @@
             }
         }
 
-        // --- Search & Data Logic ---
+        // --- Search & Data Logic (MOCK MODE) ---
+
+        const MOCK_DB = [
+            { title: "Faded", artist: "Alan Walker", thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400", duration: "3:32" },
+            { title: "Alone", artist: "Marshmello", thumbnail: "https://images.unsplash.com/photo-1514525253440-b393332569ce?w=400", duration: "3:19" },
+            { title: "Shape of You", artist: "Ed Sheeran", thumbnail: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=400", duration: "4:23" },
+            { title: "Blinding Lights", artist: "The Weeknd", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400", duration: "3:20" },
+            { title: "Levitating", artist: "Dua Lipa", thumbnail: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=400", duration: "3:41" },
+            { title: "Stay", artist: "The Kid LAROI", thumbnail: "https://images.unsplash.com/photo-1459749411177-0473ef71607b?w=400", duration: "2:21" },
+            { title: "Montero", artist: "Lil Nas X", thumbnail: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400", duration: "2:17" },
+            { title: "Peaches", artist: "Justin Bieber", thumbnail: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=400", duration: "3:18" }
+        ];
 
         async function handleSearch(e) {
             e.preventDefault();
-            const query = els.searchInput.value.trim();
+            const query = els.searchInput.value.trim().toLowerCase();
             if (!query) return;
 
             showSection('search');
             els.resultsList.innerHTML = '';
             els.searchLoading.classList.remove('hidden');
 
-            try {
-                const res = await fetch(`https://apizell.web.id/search/youtube?q=${encodeURIComponent(query)}`);
-                const data = await res.json();
-
+            // Simulate API Delay
+            setTimeout(() => {
                 els.searchLoading.classList.add('hidden');
 
-                // Adapter for Zell API (Youtube/Otakudesu structure)
-                // Note: The API currently returns 'otakudesu' key for youtube search, adapting to that.
-                const results = data.otakudesu || data.data || [];
+                // Filter mock data
+                const results = MOCK_DB.filter(item =>
+                    item.title.toLowerCase().includes(query) ||
+                    item.artist.toLowerCase().includes(query)
+                );
 
-                if (data.status && results.length > 0) {
-                    // Normalize data structure
-                    state.searchResults = results.map(item => ({
-                        title: item.title,
-                        artist: item.status || 'YouTube', // Placeholder as API doesn't give artist
-                        thumbnail: item.image || item.thumbnail,
-                        track_url: item.url,
-                        duration: item.rating || '' // Placeholder
-                    }));
-                    renderResults(state.searchResults);
-                } else {
-                    els.resultsList.innerHTML = `
-                        <div class="text-center py-10 text-gray-500">
-                            <i class="fas fa-ghost text-4xl mb-4 opacity-50"></i>
-                            <p>Tidak ada hasil untuk "${query}"</p>
-                        </div>
-                    `;
+                if (results.length === 0) {
+                    // If no match, fake some data based on query
+                    for(let i=1; i<=3; i++) {
+                        results.push({
+                            title: `${query} Remix ${i}`,
+                            artist: "Unknown Artist",
+                            thumbnail: "https://via.placeholder.com/150",
+                            duration: "3:00",
+                            track_url: `mock://${query}-${i}`
+                        });
+                    }
                 }
-            } catch (error) {
-                console.error(error);
-                els.searchLoading.classList.add('hidden');
-                showToast('Gagal Mencari', 'error', 'Tidak dapat terhubung ke server.');
-            }
+
+                state.searchResults = results.map(item => ({
+                    ...item,
+                    track_url: item.track_url || `mock://${item.title.replace(/\s/g,'-')}`,
+                    download: null // Force offline check
+                }));
+
+                renderResults(state.searchResults);
+                showToast('Mode Offline', 'info', 'Menampilkan data demo (API Nonaktif).');
+            }, 800);
         }
 
         function renderResults(tracks) {
@@ -1557,35 +1539,14 @@
         }
 
         async function openExternalPlayer(directLink, trackUrl) {
-            showToast('Membuka...', 'info', 'Mengarahkan ke pemutar eksternal...');
-
             let targetUrl = directLink;
 
-            // If link is invalid or hash, try to fetch fresh link
-            if (!targetUrl || targetUrl === '#' || targetUrl.includes('undefined')) {
-                 try {
-                     const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(trackUrl)}`;
-                     const res = await fetch(apiUrl);
-                     const data = await res.json();
-                     if (data.status && data.data && data.data.mp3DownloadLink) {
-                         targetUrl = data.data.mp3DownloadLink;
-                         // Update local cache if possible
-                         const idx = state.downloads.findIndex(t => (t.track_url || t.url) === trackUrl);
-                         if(idx > -1) {
-                             state.downloads[idx].download = targetUrl;
-                             auth.saveUserData();
-                         }
-                     }
-                 } catch(e) {
-                     showToast('Gagal', 'error', 'Link kadaluarsa & offline.');
-                     return;
-                 }
-            }
-
+            // In Mock mode, we don't refetch
             if(targetUrl && targetUrl !== '#') {
+                showToast('Membuka...', 'info', 'Mengarahkan ke pemutar eksternal...');
                 window.open(targetUrl, '_blank');
             } else {
-                showToast('Error', 'error', 'Link tidak tersedia.');
+                showToast('Error', 'error', 'Link tidak tersedia (Mode Demo).');
             }
         }
 
@@ -1696,50 +1657,8 @@
              const track = normalizeTrack(state.queue[state.currentIndex]);
              if (!track) return;
 
-             addToDownloads(track);
-             showToast('Menyiapkan...', 'info', 'Mengunduh lagu ke perangkat...');
-
-             let downloadUrl = track.download;
-
-             if (!downloadUrl) {
-                 const apiUrl = `https://apizell.web.id/download/youtubeplaymp3?q=${encodeURIComponent(track.track_url)}`;
-                 try {
-                     const res = await fetch(apiUrl);
-                     const data = await res.json();
-                     const link = data.result || data.url || data.download;
-
-                     if ((data.status || link) && link) {
-                         downloadUrl = link;
-                         if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = downloadUrl;
-                     } else {
-                         throw new Error('No link');
-                     }
-                 } catch (e) {
-                     showToast('Gagal', 'error', 'Tidak dapat mengambil link download.');
-                     return;
-                 }
-             }
-
-             // Trigger System Download via Blob Fetch
-             try {
-                 const response = await fetch(downloadUrl);
-                 if(!response.ok) throw new Error('Fetch failed');
-                 const blob = await response.blob();
-                 const url = window.URL.createObjectURL(blob);
-                 const a = document.createElement('a');
-                 a.style.display = 'none';
-                 a.href = url;
-                 a.download = `${track.title} - ${track.artist}.mp3`;
-                 document.body.appendChild(a);
-                 a.click();
-                 window.URL.revokeObjectURL(url);
-                 document.body.removeChild(a);
-                 showToast('Berhasil', 'success', 'Lagu tersimpan di perangkat.');
-             } catch(e) {
-                 // Fallback to direct window open if CORS fails
-                 console.log("Blob fetch failed, falling back to window.open", e);
-                 window.open(downloadUrl, '_blank');
-             }
+             // In Offline/No-API mode, we cannot download real files.
+             showToast('Fitur Terbatas', 'info', 'Download tidak tersedia di mode Offline/Demo.');
         }
 
         function toggleShuffle() {
