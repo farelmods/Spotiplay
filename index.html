@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Spotiplay v2 - Premium Music Experience</title>
-    <meta name="description" content="Streaming dan download lagu Spotify gratis dengan kualitas terbaik.">
+    <title>Spotiplay V5 - Cosmic Glass</title>
+    <meta name="description" content="Next-Gen Music Streaming Experience">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -26,34 +26,25 @@
                     },
                     colors: {
                         brand: {
-                            50: '#f0fdf4',
-                            100: '#dcfce7',
-                            200: '#bbf7d0',
-                            300: '#86efac',
-                            400: '#4ade80',
-                            500: '#22c55e',
-                            600: '#16a34a',
-                            700: '#15803d',
-                            800: '#166534',
-                            900: '#14532d',
-                            950: '#052e16',
+                            500: '#8b5cf6', // Violet
+                            600: '#7c3aed',
+                            400: '#a78bfa'
                         },
                         accent: {
-                            purple: '#a855f7',
-                            cyan: '#06b6d4',
-                            pink: '#ec4899'
+                            pink: '#f472b6',
+                            cyan: '#22d3ee',
+                            rose: '#fb7185'
                         },
                         dark: {
-                            bg: '#050505',
-                            card: '#121212',
-                            surface: '#1E1E1E'
+                            bg: '#020617', // Slate 950
+                            card: '#0f172a', // Slate 900
+                            surface: '#1e293b' // Slate 800
                         }
                     },
                     animation: {
-                        'blob': 'blob 7s infinite',
-                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'slide-up': 'slideUp 0.3s ease-out forwards',
-                        'spin-slow': 'spin 3s linear infinite',
+                        'blob': 'blob 10s infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'slide-up': 'slideUp 0.4s ease-out forwards',
                         'equalizer': 'equalizer 1s infinite ease-in-out',
                     },
                     keyframes: {
@@ -63,12 +54,16 @@
                             '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
                             '100%': { transform: 'translate(0px, 0px) scale(1)' },
                         },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
                         slideUp: {
-                            '0%': { transform: 'translateY(100%)' },
-                            '100%': { transform: 'translateY(0)' },
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
                         },
                         equalizer: {
-                            '0%, 100%': { height: '10%' },
+                            '0%, 100%': { height: '20%' },
                             '50%': { height: '100%' }
                         }
                     }
@@ -78,478 +73,411 @@
     </script>
 
     <style>
-        /* App Reset */
+        /* Modern Reset */
         html, body {
             height: 100%;
             width: 100%;
-            overflow: hidden; /* Prevent body scroll */
+            overflow: hidden;
             overscroll-behavior: none;
+            background-color: #020617;
         }
 
-        /* Custom Scrollbar - Hidden but scrollable (Native Feel) */
+        /* Hide Scrollbar */
         .app-scroll {
             overflow-y: auto;
-            -webkit-overflow-scrolling: touch;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none;  /* IE 10+ */
+            scrollbar-width: none;
         }
         .app-scroll::-webkit-scrollbar {
-            display: none; /* Chrome/Safari */
+            display: none;
         }
 
-        /* Horizontal Snap */
-        .snap-x-mandatory {
-            scroll-snap-type: x mandatory;
-        }
-        .snap-center {
-            scroll-snap-align: center;
-        }
+        .snap-x-mandatory { scroll-snap-type: x mandatory; }
+        .snap-center { scroll-snap-align: center; }
 
-        /* Glassmorphism Utilities */
-        .glass {
-            background: rgba(23, 23, 23, 0.7);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+        /* Glassmorphism V2 */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
 
         .glass-card {
-            background: rgba(38, 38, 38, 0.4);
+            background: rgba(30, 41, 59, 0.4);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            transition: all 0.3s ease;
-            will-change: transform, background-color;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         .glass-card:hover {
-            background: rgba(38, 38, 38, 0.6);
-            transform: translateY(-2px);
-            border-color: rgba(34, 197, 94, 0.5);
-            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
+            background: rgba(30, 41, 59, 0.7);
+            transform: translateY(-5px) scale(1.02);
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 10px 40px -10px rgba(139, 92, 246, 0.3);
         }
 
-        /* Visualizer Bars */
-        .bar {
-            width: 4px;
-            background: #22c55e;
-            border-radius: 2px;
-            animation: equalizer 1s infinite ease-in-out;
-        }
-        .bar:nth-child(2) { animation-delay: 0.1s; }
-        .bar:nth-child(3) { animation-delay: 0.2s; }
-        .bar:nth-child(4) { animation-delay: 0.3s; }
-        .bar.paused { animation-play-state: paused; height: 10%; }
-
-        /* Player Animation */
-        .player-disk {
-            animation: spin 10s linear infinite;
-            animation-play-state: paused;
-            will-change: transform;
-        }
-        .player-disk.playing {
-            animation-play-state: running;
-        }
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
+        .nav-active {
+            color: #8b5cf6;
+            background: rgba(139, 92, 246, 0.15);
+            box-shadow: 0 0 15px rgba(139, 92, 246, 0.2);
         }
 
-        /* Input Range Styling */
+        /* Custom Range Slider */
         input[type="range"] {
             -webkit-appearance: none;
             background: transparent;
         }
         input[type="range"]::-webkit-slider-thumb {
             -webkit-appearance: none;
-            height: 12px;
-            width: 12px;
+            height: 16px;
+            width: 16px;
             border-radius: 50%;
-            background: #22c55e;
-            margin-top: -4px;
+            background: #fff;
+            margin-top: -6px;
             cursor: pointer;
-            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
+            box-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
+            transition: transform 0.1s;
         }
+        input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
         input[type="range"]::-webkit-slider-runnable-track {
             width: 100%;
             height: 4px;
-            background: #404040;
+            background: rgba(255,255,255,0.2);
             border-radius: 2px;
         }
-        input[type="range"]:focus {
-            outline: none;
-        }
 
-        /* Smooth transitions for sections */
-        .fade-in-section {
-            opacity: 0;
-            transform: translateY(20px);
-            animation: fadeInUp 0.5s ease forwards;
-        }
-        @keyframes fadeInUp {
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
+        /* Visualizer */
+        .bar { width: 4px; background: #c084fc; border-radius: 99px; }
+        .bar:nth-child(1) { animation-duration: 0.8s; }
+        .bar:nth-child(2) { animation-duration: 1.2s; }
+        .bar:nth-child(3) { animation-duration: 0.6s; }
+        .bar:nth-child(4) { animation-duration: 1.0s; }
+        .bar.paused { animation: none; height: 10%; }
+
+        .fade-enter { animation: slideUp 0.4s ease-out forwards; }
     </style>
 </head>
-<body class="bg-black text-gray-200 antialiased overflow-hidden selection:bg-brand-500 selection:text-white flex flex-col md:flex-row h-full">
+<body class="text-white selection:bg-brand-500 selection:text-white flex flex-col md:flex-row h-full font-sans">
 
-    <!-- Background Elements -->
-    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none transform-gpu bg-[#050505]">
-        <!-- Aurora Effect -->
-        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-brand-900/20 via-accent-purple/10 to-transparent opacity-50 blur-3xl"></div>
+    <!-- Ambient Background -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-[20%] -left-[10%] w-[70vw] h-[70vw] bg-brand-600/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob"></div>
+        <div class="absolute top-[20%] -right-[10%] w-[60vw] h-[60vw] bg-accent-pink/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob" style="animation-delay: 2s"></div>
+        <div class="absolute -bottom-[20%] left-[20%] w-[60vw] h-[60vw] bg-accent-cyan/20 rounded-full mix-blend-screen filter blur-[100px] animate-blob" style="animation-delay: 4s"></div>
+        <div class="absolute inset-0 bg-dark-bg/80 backdrop-blur-[2px]"></div>
     </div>
 
-    <!-- Auth View (Login/Register) -->
-    <div id="authView" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
-        <div class="w-full max-w-md space-y-8 animate-slide-up">
-            <div class="text-center">
-                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-brand-500 to-accent-purple mx-auto flex items-center justify-center text-black font-bold text-3xl shadow-[0_0_30px_rgba(34,197,94,0.4)] mb-4">
-                    <i class="fab fa-spotify"></i>
+    <!-- Auth View (High Z-Index) -->
+    <div id="authView" class="fixed inset-0 z-[100] flex items-center justify-center p-4 transition-all duration-500">
+        <!-- Blur Backdrop -->
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-md"></div>
+
+        <div class="relative w-full max-w-md glass-panel p-8 rounded-3xl shadow-2xl border border-white/10 animate-slide-up">
+            <div class="text-center mb-8">
+                <div class="w-20 h-20 mx-auto bg-gradient-to-br from-brand-500 to-accent-pink rounded-full flex items-center justify-center mb-4 shadow-lg shadow-brand-500/30 animate-float">
+                    <i class="fas fa-play text-3xl text-white"></i>
                 </div>
-                <h2 class="text-3xl font-bold text-white tracking-tight">Welcome to Spotiplay</h2>
-                <p class="text-gray-400 mt-2">Sign in to sync your library across devices.</p>
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">Spotiplay V5</h1>
+                <p class="text-gray-400 text-sm mt-2">Your universe of music, redefined.</p>
             </div>
 
-            <div class="glass-card p-8 rounded-2xl border border-white/10 shadow-2xl">
-                <!-- Tabs -->
-                <div class="flex gap-4 mb-6 border-b border-white/10 pb-4">
-                    <button onclick="switchAuthTab('login')" id="tabLogin" class="flex-1 text-center font-bold text-brand-500 pb-2 border-b-2 border-brand-500 transition-colors">Login</button>
-                    <button onclick="switchAuthTab('register')" id="tabRegister" class="flex-1 text-center font-bold text-gray-400 hover:text-white pb-2 border-b-2 border-transparent transition-colors">Register</button>
-                </div>
-
-                <!-- Login Form -->
-                <form id="loginForm" class="space-y-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Username</label>
-                        <input type="text" id="loginUser" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="Enter username" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Password</label>
-                        <input type="password" id="loginPass" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="••••••••" required>
-                    </div>
-                    <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-400 text-black font-bold rounded-lg transition-transform active:scale-95 shadow-lg shadow-brand-500/20">Sign In</button>
-                </form>
-
-                <!-- Register Form -->
-                <form id="registerForm" class="space-y-4 hidden">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Choose Username</label>
-                        <input type="text" id="regUser" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="Unique username" required>
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Password</label>
-                        <input type="password" id="regPass" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="Create password" required>
-                    </div>
-                    <button type="submit" class="w-full py-3 bg-accent-purple hover:bg-purple-400 text-white font-bold rounded-lg transition-transform active:scale-95 shadow-lg shadow-purple-500/20">Create Account</button>
-                </form>
+            <!-- Tabs -->
+            <div class="flex p-1 bg-white/5 rounded-xl mb-6">
+                <button onclick="switchAuthTab('login')" id="tabLogin" class="flex-1 py-2 text-sm font-bold rounded-lg transition-all bg-brand-500/20 text-brand-400 shadow-sm">Login</button>
+                <button onclick="switchAuthTab('register')" id="tabRegister" class="flex-1 py-2 text-sm font-bold rounded-lg text-gray-400 hover:text-white transition-all">Register</button>
             </div>
+
+            <!-- Forms -->
+            <form id="loginForm" class="space-y-4">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-500 uppercase ml-1">Username</label>
+                    <input type="text" id="loginUser" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-500 focus:bg-white/10 transition-all text-white placeholder-gray-600" placeholder="Enter your username" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-500 uppercase ml-1">Password</label>
+                    <input type="password" id="loginPass" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-500 focus:bg-white/10 transition-all text-white placeholder-gray-600" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-brand-600 to-accent-pink rounded-xl font-bold text-white shadow-lg shadow-brand-500/25 hover:shadow-brand-500/40 hover:scale-[1.02] active:scale-95 transition-all">
+                    Enter the Vibe
+                </button>
+            </form>
+
+            <form id="registerForm" class="space-y-4 hidden">
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-500 uppercase ml-1">New Username</label>
+                    <input type="text" id="regUser" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent-cyan focus:bg-white/10 transition-all text-white placeholder-gray-600" placeholder="Choose a unique name" required>
+                </div>
+                <div class="space-y-1">
+                    <label class="text-xs font-bold text-gray-500 uppercase ml-1">New Password</label>
+                    <input type="password" id="regPass" class="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 focus:outline-none focus:border-accent-cyan focus:bg-white/10 transition-all text-white placeholder-gray-600" placeholder="Create a strong password" required>
+                </div>
+                <button type="submit" class="w-full py-3.5 bg-gradient-to-r from-accent-cyan to-brand-600 rounded-xl font-bold text-white shadow-lg shadow-cyan-500/25 hover:shadow-cyan-500/40 hover:scale-[1.02] active:scale-95 transition-all">
+                    Create Account
+                </button>
+            </form>
         </div>
     </div>
 
-    <!-- Desktop Sidebar -->
-    <aside id="desktopSidebar" class="hidden md:flex flex-col w-64 bg-black/95 border-r border-white/5 h-full z-40 p-6 gap-6 relative hidden">
-        <div class="flex items-center gap-3 mb-4">
-            <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-black font-bold text-lg shadow-lg">
-                <i class="fab fa-spotify"></i>
+    <!-- Desktop Sidebar (Floating Rail) -->
+    <aside id="desktopSidebar" class="hidden md:flex flex-col w-[260px] m-4 mr-0 rounded-3xl glass-panel z-20 overflow-hidden relative transition-all duration-300">
+        <div class="p-6 pb-2">
+            <div class="flex items-center gap-3 text-white mb-8">
+                <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-500 to-accent-pink flex items-center justify-center shadow-lg">
+                    <i class="fas fa-play text-xs"></i>
+                </div>
+                <span class="font-bold text-lg tracking-wide">Spotiplay</span>
             </div>
-            <h1 class="text-xl font-bold text-white">Spotiplay</h1>
+
+            <nav class="space-y-2">
+                <button onclick="showHome()" class="nav-item-desktop w-full flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all group">
+                    <i class="fas fa-compass text-xl group-hover:scale-110 transition-transform"></i> <span class="font-medium">Discover</span>
+                </button>
+                <button onclick="showSection('search'); setTimeout(() => els.searchInput.focus(), 100);" class="nav-item-desktop w-full flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all group">
+                    <i class="fas fa-search text-xl group-hover:scale-110 transition-transform"></i> <span class="font-medium">Search</span>
+                </button>
+                <button onclick="showLibrary()" class="nav-item-desktop w-full flex items-center gap-4 px-4 py-3 rounded-xl text-gray-400 hover:text-white hover:bg-white/5 transition-all group">
+                    <i class="fas fa-layer-group text-xl group-hover:scale-110 transition-transform"></i> <span class="font-medium">Library</span>
+                </button>
+            </nav>
         </div>
 
-        <nav class="flex flex-col gap-2">
-            <button onclick="showHome()" class="nav-item-desktop flex items-center gap-4 text-gray-400 hover:text-white transition p-3 rounded-lg hover:bg-white/5 active">
-                <i class="fas fa-home text-xl w-6 text-center"></i> <span class="font-medium">Home</span>
-            </button>
-            <button onclick="showSection('search'); setTimeout(() => els.searchInput.focus(), 100);" class="nav-item-desktop flex items-center gap-4 text-gray-400 hover:text-white transition p-3 rounded-lg hover:bg-white/5">
-                <i class="fas fa-search text-xl w-6 text-center"></i> <span class="font-medium">Search</span>
-            </button>
-            <button onclick="showLibrary()" class="nav-item-desktop flex items-center gap-4 text-gray-400 hover:text-white transition p-3 rounded-lg hover:bg-white/5">
-                <i class="fas fa-book text-xl w-6 text-center"></i> <span class="font-medium">Library</span>
-            </button>
-        </nav>
+        <div class="mt-4 px-6 flex-1 flex flex-col min-h-0">
+            <div class="flex items-center justify-between text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">
+                <span>Playlists</span>
+                <button onclick="createNewPlaylistUI()" class="hover:text-brand-400 transition"><i class="fas fa-plus"></i></button>
+            </div>
+            <div id="desktopPlaylistSidebar" class="flex-1 overflow-y-auto app-scroll space-y-1 pb-4">
+                <!-- Playlists injected -->
+            </div>
+        </div>
 
-        <div class="mt-auto">
-             <div class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-wider">Playlists</div>
-             <div class="flex flex-col gap-2 h-40 overflow-y-auto app-scroll" id="desktopPlaylistSidebar">
-                 <!-- Playlists injected here -->
-             </div>
-             <button onclick="createNewPlaylistUI()" class="flex items-center gap-3 text-gray-400 hover:text-white transition mt-4 group">
-                 <div class="w-6 h-6 bg-gray-400 group-hover:bg-white text-black flex items-center justify-center rounded-sm">
-                     <i class="fas fa-plus text-xs"></i>
+        <!-- User Profile (Bottom) -->
+        <div class="p-4 border-t border-white/5">
+             <div class="flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 cursor-pointer transition" onclick="logout()">
+                 <div id="sidebarUserIcon" class="w-9 h-9 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 flex items-center justify-center text-xs font-bold shadow-inner">U</div>
+                 <div class="overflow-hidden">
+                     <p id="sidebarUserName" class="text-sm font-bold truncate">User</p>
+                     <p class="text-[10px] text-gray-400">Click to logout</p>
                  </div>
-                 <span class="text-sm font-medium">Create Playlist</span>
-             </button>
+             </div>
         </div>
     </aside>
 
-    <!-- Main Content App Container -->
-    <main id="app-container" class="relative z-10 flex-1 h-full overflow-hidden flex flex-col bg-black/50 hidden">
+    <!-- Main Content -->
+    <main id="app-container" class="flex-1 relative z-10 flex flex-col h-full overflow-hidden p-0 md:p-4 hidden">
+        <div id="contentScroll" class="flex-1 app-scroll rounded-none md:rounded-3xl relative overflow-x-hidden pb-32 md:pb-0">
 
-        <!-- Mobile/Tablet Content Scroll Area -->
-        <div id="contentScroll" class="flex-1 app-scroll pb-[140px] md:pb-[100px] pt-4 px-4 md:px-8">
+            <!-- Dynamic Header for Mobile -->
+            <header class="md:hidden sticky top-0 z-30 px-4 py-4 flex items-center justify-between bg-dark-bg/80 backdrop-blur-xl border-b border-white/5">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center"><i class="fas fa-play text-xs text-white"></i></div>
+                    <span class="font-bold text-lg">Spotiplay</span>
+                </div>
+                <button onclick="logout()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><i class="fas fa-sign-out-alt text-xs"></i></button>
+            </header>
 
-            <!-- Home View -->
-            <div id="homeView" class="space-y-8 animate-fade-in fade-in-section pt-4">
-                <!-- Header -->
-                <div class="flex items-center justify-between mb-2">
-                    <h2 class="text-2xl font-bold text-white">Good Evening</h2>
-                    <div class="flex gap-4 items-center">
-                         <button onclick="showSection('search')" class="md:hidden text-white"><i class="fas fa-search text-xl"></i></button>
-                         <!-- Profile Dropdown -->
-                         <div class="relative group">
-                             <button class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-black font-bold shadow-lg ring-2 ring-transparent group-hover:ring-brand-400 transition-all" id="userProfileBtn">U</button>
-                             <div class="absolute right-0 top-10 w-40 bg-dark-card border border-white/10 rounded-xl shadow-2xl overflow-hidden hidden group-hover:block transition-all transform origin-top-right z-50">
-                                 <div class="px-4 py-3 border-b border-white/5">
-                                     <p class="text-xs text-gray-400">Signed in as</p>
-                                     <p class="text-sm font-bold text-white truncate" id="userProfileName">User</p>
-                                 </div>
-                                 <button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-white/5 transition-colors flex items-center gap-2">
-                                     <i class="fas fa-sign-out-alt"></i> Logout
-                                 </button>
-                             </div>
+            <div class="p-4 md:p-8 space-y-10 min-h-full">
+
+                <!-- Home View -->
+                <div id="homeView" class="fade-enter space-y-8">
+                    <!-- Hero Section -->
+                    <div class="relative w-full h-[250px] md:h-[300px] rounded-[2rem] overflow-hidden group">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1493225255756-d9584f8606e9?q=80&w=2070')] bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"></div>
+                        <div class="absolute inset-0 bg-gradient-to-t from-dark-bg via-dark-bg/20 to-transparent"></div>
+                        <div class="absolute bottom-0 left-0 p-8">
+                            <span class="px-3 py-1 rounded-full border border-white/20 bg-white/10 backdrop-blur-md text-xs font-bold uppercase tracking-wider mb-3 inline-block">Featured</span>
+                            <h2 class="text-4xl md:text-5xl font-bold mb-2 leading-tight">Cosmic<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-400 to-accent-pink">Vibrations</span></h2>
+                            <p class="text-gray-300 max-w-md text-sm md:text-base mb-6">Experience music like never before with our new high-fidelity audio engine.</p>
+                            <button onclick="loadTopGlobal()" class="px-8 py-3 bg-white text-black font-bold rounded-full hover:scale-105 active:scale-95 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                                <i class="fas fa-play mr-2"></i> Play Top Hits
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Horizontal Section -->
+                    <section>
+                        <div class="flex items-center justify-between mb-4 px-1">
+                            <h3 class="text-xl font-bold">Jump Back In</h3>
+                            <button class="text-xs font-bold text-gray-500 hover:text-white transition">HISTORY</button>
+                        </div>
+                        <div id="recentlyPlayedGrid" class="flex gap-4 overflow-x-auto app-scroll pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+                             <div class="text-gray-500 text-sm italic p-2">Start playing music to see your history here.</div>
+                        </div>
+                    </section>
+
+                    <!-- Vertical Section -->
+                    <section>
+                         <h3 class="text-xl font-bold mb-4 px-1">Trending Now</h3>
+                         <div id="trendingGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                             <!-- Trending Items -->
                          </div>
-                    </div>
+                    </section>
                 </div>
 
-                <!-- Featured Horizontal Scroll -->
-                <div class="flex gap-4 overflow-x-auto app-scroll snap-x-mandatory -mx-4 px-4 pb-4">
-                    <!-- Featured Card 1 -->
-                    <div class="snap-center shrink-0 w-[85vw] md:w-[400px] h-[200px] rounded-2xl bg-gradient-to-br from-brand-900 to-black relative overflow-hidden group cursor-pointer border border-white/5" onclick="loadTopGlobal()">
-                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
-                        <div class="absolute bottom-0 left-0 p-6 bg-gradient-to-t from-black via-black/50 to-transparent w-full">
-                            <span class="text-xs font-bold text-brand-400 uppercase tracking-widest mb-1 block">Featured</span>
-                            <h3 class="text-2xl font-bold text-white mb-2">Top Hits Global</h3>
-                            <p class="text-gray-300 text-sm line-clamp-2">The hottest tracks dominating the charts right now.</p>
+                <!-- Search View -->
+                <div id="searchResultsView" class="hidden fade-enter flex flex-col h-full">
+                    <div class="sticky top-0 z-20 bg-dark-bg/95 backdrop-blur-xl py-4 border-b border-white/5 -mx-4 px-4 md:mx-0 md:px-0 md:bg-transparent md:border-none md:backdrop-blur-none md:static">
+                        <div class="relative max-w-2xl mx-auto">
+                            <input type="text" id="searchInput"
+                                class="w-full bg-white/5 border border-white/10 rounded-full py-4 pl-12 pr-12 text-white focus:outline-none focus:border-brand-500 focus:bg-white/10 transition-all shadow-lg"
+                                placeholder="What do you want to listen to?" autocomplete="off">
+                            <i class="fas fa-search absolute left-5 top-1/2 -translate-y-1/2 text-gray-500"></i>
+                            <button onclick="document.getElementById('searchInput').value=''; els.resultsList.innerHTML=''; showHome()" class="absolute right-5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
                     </div>
-                    <!-- Featured Card 2 -->
-                     <div class="snap-center shrink-0 w-[85vw] md:w-[400px] h-[200px] rounded-2xl bg-gradient-to-br from-purple-900 to-black relative overflow-hidden group cursor-pointer border border-white/5" onclick="showSection('search'); els.searchInput.value='Indonesian Pop'; els.searchForm.dispatchEvent(new Event('submit'));">
-                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1514525253440-b393332569ce?w=800&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
-                        <div class="absolute bottom-0 left-0 p-6 bg-gradient-to-t from-black via-black/50 to-transparent w-full">
-                            <span class="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1 block">Trending</span>
-                            <h3 class="text-2xl font-bold text-white mb-2">Indo Pop</h3>
-                            <p class="text-gray-300 text-sm line-clamp-2">Best of Indonesian Pop Music.</p>
+
+                    <div id="resultsList" class="flex-1 space-y-2 mt-6 pb-20 max-w-4xl mx-auto w-full">
+                        <!-- Results -->
+                    </div>
+
+                    <div id="searchLoading" class="hidden flex flex-col items-center justify-center py-20 opacity-50">
+                         <div class="w-10 h-10 border-4 border-brand-500 border-t-transparent rounded-full animate-spin mb-4"></div>
+                         <p class="text-sm font-bold tracking-widest">SEARCHING COSMOS...</p>
+                    </div>
+                </div>
+
+                <!-- Library View -->
+                <div id="libraryView" class="hidden fade-enter space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-3xl font-bold">Your Library</h2>
+                        <button onclick="createNewPlaylistUI()" class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition"><i class="fas fa-plus"></i></button>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="flex gap-2 border-b border-white/10 pb-1 overflow-x-auto">
+                        <button onclick="switchLibraryTab('favorites')" id="tabFavorites" class="px-6 py-2 rounded-full text-sm font-bold bg-white text-black transition-all">Favorites</button>
+                        <button onclick="switchLibraryTab('playlists')" id="tabPlaylists" class="px-6 py-2 rounded-full text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all">Playlists</button>
+                        <button onclick="switchLibraryTab('downloads')" id="tabDownloads" class="px-6 py-2 rounded-full text-sm font-bold text-gray-400 hover:text-white hover:bg-white/5 transition-all">Downloads</button>
+                    </div>
+
+                    <div id="libraryContent" class="min-h-[300px]">
+                        <div id="favoritesList" class="space-y-2"></div>
+                        <div id="playlistsList" class="hidden grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4"></div>
+                        <div id="downloadsList" class="hidden space-y-2"></div>
+                    </div>
+
+                    <button onclick="clearHistory()" class="text-xs text-red-400 hover:text-red-300 mt-8 flex items-center gap-2">
+                        <i class="fas fa-trash-alt"></i> Clear Download History
+                    </button>
+                </div>
+
+                <!-- Playlist Detail -->
+                <div id="playlistDetailView" class="hidden fade-enter">
+                    <div class="flex flex-col md:flex-row gap-8 mb-8">
+                        <div class="w-48 h-48 md:w-64 md:h-64 rounded-3xl bg-gradient-to-br from-gray-800 to-black shadow-2xl flex items-center justify-center shrink-0 mx-auto md:mx-0">
+                            <i class="fas fa-music text-6xl text-white/20"></i>
+                        </div>
+                        <div class="flex flex-col justify-end text-center md:text-left">
+                            <span class="text-xs font-bold uppercase tracking-widest text-brand-400 mb-2">Playlist</span>
+                            <h1 id="playlistDetailTitle" class="text-4xl md:text-6xl font-bold mb-4">Title</h1>
+                            <div class="flex items-center justify-center md:justify-start gap-4 mb-6">
+                                <p id="playlistDetailCount" class="text-gray-400">0 Songs</p>
+                                <button onclick="confirmDeletePlaylist()" class="text-red-400 hover:text-red-300 text-sm"><i class="fas fa-trash mr-1"></i> Delete</button>
+                            </div>
+                            <div class="flex items-center justify-center md:justify-start gap-4">
+                                <button onclick="playCurrentPlaylist()" class="w-14 h-14 rounded-full bg-brand-500 text-white flex items-center justify-center shadow-lg shadow-brand-500/30 hover:scale-105 active:scale-95 transition-all"><i class="fas fa-play ml-1 text-xl"></i></button>
+                                <button onclick="toggleShuffle()" class="w-10 h-10 rounded-full border border-white/20 text-white flex items-center justify-center hover:bg-white/10"><i class="fas fa-shuffle"></i></button>
+                            </div>
                         </div>
                     </div>
+
+                    <div id="playlistTracksList" class="space-y-1 pb-20"></div>
+
+                    <button onclick="showLibrary(); switchLibraryTab('playlists')" class="fixed top-4 left-4 md:hidden z-20 w-10 h-10 rounded-full bg-black/50 backdrop-blur text-white"><i class="fas fa-arrow-left"></i></button>
                 </div>
 
-                <!-- Recently Played Horizontal List -->
-                <section>
-                    <h3 class="text-lg font-bold text-white mb-4">Jump Back In</h3>
-                    <div id="recentlyPlayedGrid" class="flex gap-4 overflow-x-auto app-scroll -mx-4 px-4">
-                         <!-- Items injected here -->
-                         <div class="text-gray-500 text-sm p-4">Start listening to see recent tracks.</div>
-                    </div>
-                </section>
-
-                <!-- Trending / Suggestions -->
-                <section>
-                    <h3 class="text-lg font-bold text-white mb-4">Recommended for You</h3>
-                    <div id="trendingGrid" class="flex flex-col gap-3">
-                        <!-- Items injected here as vertical list items -->
-                    </div>
-                </section>
             </div>
-
-            <!-- Search View -->
-            <div id="searchResultsView" class="hidden space-y-4 animate-fade-in fade-in-section h-full flex flex-col">
-                <div class="sticky top-0 bg-black/80 backdrop-blur-xl z-20 py-4 -mx-4 px-4 border-b border-white/5">
-                    <h2 class="text-2xl font-bold text-white mb-4">Search</h2>
-                    <form id="searchForm" class="relative">
-                        <input type="text" id="searchInput"
-                            class="w-full bg-dark-surface text-white p-3 pl-10 rounded-lg focus:outline-none placeholder-gray-500 border border-transparent focus:border-brand-500/50 transition-colors"
-                            placeholder="Artists, songs, or lyrics" autocomplete="off">
-                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
-                         <button type="button" onclick="document.getElementById('searchInput').value=''; document.getElementById('searchResultsView').classList.add('hidden'); showHome();" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white">
-                            <i class="fas fa-times"></i>
-                        </button>
-                    </form>
-                </div>
-
-                <div id="resultsList" class="space-y-1 pb-20">
-                    <!-- Results injected here -->
-                </div>
-
-                <!-- Loading Indicator -->
-                <div id="searchLoading" class="hidden flex justify-center py-10">
-                    <div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
-                </div>
-            </div>
-
-            <!-- Library View -->
-            <div id="libraryView" class="hidden space-y-6 animate-fade-in fade-in-section pt-4">
-                 <div class="flex items-center justify-between">
-                     <div class="flex items-center gap-3">
-                         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-black font-bold">L</div>
-                         <h2 class="text-2xl font-bold text-white">Your Library</h2>
-                     </div>
-                     <button onclick="createNewPlaylistUI()" class="text-white text-2xl"><i class="fas fa-plus"></i></button>
-                 </div>
-
-                 <!-- Segmented Control -->
-                 <div class="bg-dark-surface p-1 rounded-lg flex relative">
-                     <div id="tabIndicator" class="absolute top-1 bottom-1 left-1 w-1/3 bg-gray-700 rounded-md transition-all duration-300"></div>
-                     <button onclick="switchLibraryTab('favorites')" id="tabFavorites" class="flex-1 relative z-10 py-1.5 text-sm font-medium text-white transition-colors text-center">Favorites</button>
-                     <button onclick="switchLibraryTab('playlists')" id="tabPlaylists" class="flex-1 relative z-10 py-1.5 text-sm font-medium text-gray-400 transition-colors text-center">Playlists</button>
-                     <button onclick="switchLibraryTab('downloads')" id="tabDownloads" class="flex-1 relative z-10 py-1.5 text-sm font-medium text-gray-400 transition-colors text-center">Downloads</button>
-                 </div>
-
-                 <div id="favoritesList" class="space-y-1">
-                     <!-- Favorites injected here -->
-                 </div>
-                 <div id="playlistsList" class="hidden space-y-1">
-                    <div id="playlistsContainer" class="grid grid-cols-2 gap-4"></div>
-                 </div>
-                 <div id="downloadsList" class="hidden space-y-1">
-                     <!-- Downloads injected here -->
-                 </div>
-
-                 <div class="mt-8 border-t border-white/5 pt-4 flex justify-between items-center text-xs text-gray-500">
-                     <span>Storage Used: Local</span>
-                     <button onclick="clearHistory()" class="text-red-400 hover:text-red-300 transition-colors hover:underline flex items-center gap-1">
-                         <i class="fas fa-trash"></i> Clear History
-                     </button>
-                 </div>
-            </div>
-
-            <!-- Playlist Detail View -->
-            <div id="playlistDetailView" class="hidden space-y-0 animate-fade-in fade-in-section min-h-full">
-                <!-- Playlist Header -->
-                <div class="relative h-[30vh] -mx-4 -mt-4 mb-6 bg-gradient-to-b from-brand-900 to-black p-6 flex flex-col justify-end">
-                     <button onclick="showLibrary(); switchLibraryTab('playlists')" class="absolute top-8 left-4 p-2 bg-black/20 backdrop-blur rounded-full text-white hover:bg-white/10 transition"><i class="fas fa-arrow-left text-xl"></i></button>
-
-                     <h1 id="playlistDetailTitle" class="text-3xl md:text-5xl font-bold text-white mb-2 truncate">Playlist Name</h1>
-                     <div class="flex items-center gap-2 text-sm text-gray-300">
-                         <span id="playlistDetailCount">0 Songs</span> • <span>Playlist</span>
-                     </div>
-                </div>
-
-                <div class="flex items-center justify-between mb-6 px-2">
-                     <div class="flex gap-4">
-                         <button id="playlistPlayBtn" onclick="playCurrentPlaylist()" class="w-14 h-14 rounded-full bg-brand-500 text-black flex items-center justify-center shadow-lg hover:scale-105 transition active:scale-95"><i class="fas fa-play text-xl ml-1"></i></button>
-                         <button onclick="toggleShuffle()" class="w-10 h-10 rounded-full text-gray-400 hover:text-white flex items-center justify-center"><i class="fas fa-shuffle text-xl"></i></button>
-                     </div>
-                     <button id="playlistDeleteBtn" onclick="confirmDeletePlaylist()" class="p-3 text-red-400 hover:bg-red-500/10 rounded-full transition"><i class="fas fa-trash"></i></button>
-                </div>
-
-                <div id="playlistTracksList" class="space-y-1 pb-20">
-                    <!-- Playlist tracks -->
-                </div>
-            </div>
-
         </div>
     </main>
 
+    <!-- Mini Player (Floating Capsule) -->
+    <div id="miniPlayer" class="fixed bottom-24 md:bottom-6 left-1/2 -translate-x-1/2 w-[95%] max-w-3xl z-40 hidden transition-all duration-500">
+        <div class="glass-panel p-2 pr-4 rounded-full flex items-center gap-3 shadow-[0_8px_32px_rgba(0,0,0,0.5)] border border-white/10 hover:scale-[1.01] transition-transform cursor-pointer" onclick="openFullPlayer()">
+            <!-- Artwork -->
+            <div class="relative w-12 h-12 rounded-full overflow-hidden shrink-0 animate-spin-slow" id="miniArtContainer">
+                <img id="miniCover" src="https://via.placeholder.com/100" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-black/20 ring-1 ring-inset ring-white/10 rounded-full"></div>
+            </div>
 
-    <!-- Mini Player (Fixed Bottom) -->
-    <div id="miniPlayer" class="fixed bottom-[60px] md:bottom-0 left-0 right-0 z-50 transform translate-y-[120%] transition-transform duration-300 ease-out will-change-transform">
-        <div class="container mx-auto max-w-screen-xl md:px-4 md:mb-4">
-            <div class="bg-dark-surface/95 backdrop-blur-xl border border-white/10 rounded-none md:rounded-2xl p-3 shadow-2xl flex items-center justify-between gap-4 relative overflow-hidden">
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+                <h4 id="miniTitle" class="text-sm font-bold text-white truncate">Select a song</h4>
+                <p id="miniArtist" class="text-xs text-gray-400 truncate">Spotiplay V5</p>
+            </div>
 
-                <!-- Progress Bar -->
-                <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-800 cursor-pointer" id="miniProgressBarContainer">
-                    <div id="miniProgressBar" class="h-full bg-brand-500 w-0 transition-all duration-100 ease-linear"></div>
-                </div>
+            <!-- Controls -->
+            <div class="flex items-center gap-3" onclick="event.stopPropagation()">
+                <button id="miniLikeBtn" class="text-gray-400 hover:text-brand-500 transition px-2"><i class="far fa-heart"></i></button>
+                <button id="miniPlayBtn" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-lg">
+                    <i class="fas fa-play ml-0.5"></i>
+                </button>
+            </div>
 
-                <!-- Track Info -->
-                <div class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group" onclick="openFullPlayer()">
-                    <img id="miniCover" src="https://via.placeholder.com/50" class="w-12 h-12 rounded-lg object-cover bg-gray-800 shadow-lg group-hover:scale-105 transition-transform duration-300" loading="lazy">
-                    <div class="flex flex-col justify-center overflow-hidden">
-                        <h4 id="miniTitle" class="font-bold text-sm text-white truncate group-hover:text-brand-400 transition-colors">Select a song</h4>
-                        <p id="miniArtist" class="text-xs text-gray-400 truncate">Spotiplay</p>
-                    </div>
-                </div>
-
-                <!-- Controls -->
-                <div class="flex items-center gap-4 mb-1">
-                    <button id="miniLikeBtn" class="text-gray-400 hover:text-brand-500 transition-colors hidden sm:block p-2 active:scale-95">
-                        <i class="far fa-heart"></i>
-                    </button>
-                    <button onclick="playPrev()" class="text-gray-300 hover:text-white transition-colors hidden sm:block p-2 active:scale-95">
-                        <i class="fas fa-step-backward text-lg"></i>
-                    </button>
-                    <button id="miniPlayBtn" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg">
-                        <i class="fas fa-play ml-1"></i>
-                    </button>
-                    <button onclick="playNext()" class="text-gray-300 hover:text-white transition-colors p-2 active:scale-95">
-                        <i class="fas fa-step-forward text-lg"></i>
-                    </button>
-                </div>
+            <!-- Progress Bar (Absolute Bottom) -->
+            <div class="absolute bottom-0 left-6 right-6 h-[2px] bg-white/10 overflow-hidden rounded-full mb-[-1px]">
+                <div id="miniProgressBar" class="h-full bg-brand-500 w-0 transition-all duration-300"></div>
             </div>
         </div>
     </div>
 
-    <!-- Mobile Bottom Navigation -->
-    <nav id="mobileNav" class="md:hidden fixed bottom-0 w-full z-50 bg-black/90 backdrop-blur-lg border-t border-white/5 pb-safe transition-all duration-300 hidden">
-        <div class="flex justify-around items-center h-[60px]">
-            <button onclick="showHome()" class="nav-item active flex flex-col items-center gap-1 text-xs text-brand-500 w-full h-full justify-center active:scale-95 transition-transform">
-                <i class="fas fa-home text-xl mb-0.5"></i>
-                Home
-            </button>
-            <button onclick="toggleSearchMobile()" class="nav-item flex flex-col items-center gap-1 text-xs text-gray-500 w-full h-full justify-center active:scale-95 transition-transform">
-                <i class="fas fa-search text-xl mb-0.5"></i>
-                Search
-            </button>
-            <button onclick="showLibrary()" class="nav-item flex flex-col items-center gap-1 text-xs text-gray-500 w-full h-full justify-center active:scale-95 transition-transform">
-                <i class="fas fa-book text-xl mb-0.5"></i>
-                Library
-            </button>
-        </div>
+    <!-- Mobile Navigation (Floating Dock) -->
+    <nav id="mobileNav" class="md:hidden fixed bottom-6 left-6 right-6 h-16 glass-panel rounded-2xl flex items-center justify-around z-50 shadow-2xl hidden">
+        <button onclick="showHome()" class="nav-item active flex flex-col items-center gap-1 text-gray-400 w-12 transition-all">
+            <i class="fas fa-compass text-xl"></i>
+        </button>
+        <button onclick="toggleSearchMobile()" class="nav-item flex flex-col items-center gap-1 text-gray-400 w-12 transition-all">
+            <i class="fas fa-search text-xl"></i>
+        </button>
+        <button onclick="showLibrary()" class="nav-item flex flex-col items-center gap-1 text-gray-400 w-12 transition-all">
+            <i class="fas fa-layer-group text-xl"></i>
+        </button>
     </nav>
 
-    <!-- Full Screen Player Overlay -->
-    <div id="fullPlayer" class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-3xl transform translate-y-full transition-transform duration-500 flex flex-col will-change-transform">
-        <!-- Background Blur Image -->
-        <div class="absolute inset-0 z-[-1] opacity-30">
-            <img id="playerBgImage" src="" class="w-full h-full object-cover filter blur-3xl transform scale-110">
-            <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-black/80 to-black"></div>
+    <!-- Full Player Overlay -->
+    <div id="fullPlayer" class="fixed inset-0 z-[60] bg-dark-bg flex flex-col transform translate-y-full transition-transform duration-500 will-change-transform">
+        <!-- Dynamic Background -->
+        <div class="absolute inset-0 z-0">
+            <img id="playerBgImage" src="" class="w-full h-full object-cover opacity-30 filter blur-3xl scale-110 transition-opacity duration-1000">
+            <div class="absolute inset-0 bg-gradient-to-b from-dark-bg/50 via-dark-bg/80 to-dark-bg"></div>
         </div>
 
         <!-- Header -->
-        <div class="flex items-center justify-between p-6">
-            <button onclick="closeFullPlayer()" class="text-white hover:text-gray-300 p-2 active:scale-90 transition-transform">
-                <i class="fas fa-chevron-down text-2xl"></i>
-            </button>
-            <span class="text-xs font-bold tracking-widest uppercase text-gray-400">Now Playing</span>
-            <button onclick="toggleQueue()" class="text-white hover:text-gray-300 p-2 active:scale-90 transition-transform">
-                <i class="fas fa-list text-xl"></i>
-            </button>
+        <div class="relative z-10 flex items-center justify-between p-6 mt-safe">
+            <button onclick="closeFullPlayer()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition"><i class="fas fa-chevron-down"></i></button>
+            <span class="text-xs font-bold tracking-[0.2em] text-gray-400 uppercase">Now Playing</span>
+            <button onclick="toggleQueue()" class="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center text-white hover:bg-white/10 transition"><i class="fas fa-list-ul"></i></button>
         </div>
 
-        <!-- Main Player Content -->
-        <div class="flex-1 flex flex-col items-center justify-center px-8 relative">
+        <!-- Content -->
+        <div class="relative z-10 flex-1 flex flex-col items-center justify-center px-8 pb-10">
             <!-- Artwork -->
-            <div class="w-full max-w-sm aspect-square relative mb-8 group">
-                <div class="absolute inset-0 bg-brand-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-50"></div>
-                <img id="fullCover" src="https://via.placeholder.com/400"
-                     class="relative w-full h-full object-cover rounded-2xl shadow-2xl transform transition-transform duration-500 scale-100 player-disk" loading="lazy">
+            <div class="relative w-full max-w-[320px] aspect-square mb-10 group">
+                <div class="absolute inset-0 bg-brand-500/30 blur-2xl rounded-full scale-90 group-hover:scale-100 transition-transform duration-1000 animate-pulse-slow"></div>
+                <img id="fullCover" src="https://via.placeholder.com/400" class="relative w-full h-full object-cover rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10">
 
                 <!-- Visualizer Overlay -->
-                <div class="absolute bottom-4 right-4 flex gap-1 items-end h-8">
-                    <div class="bar h-full paused" id="vis1"></div>
-                    <div class="bar h-full paused" id="vis2"></div>
-                    <div class="bar h-full paused" id="vis3"></div>
-                    <div class="bar h-full paused" id="vis4"></div>
+                <div class="absolute bottom-4 right-4 flex gap-1 h-6">
+                    <div class="bar"></div><div class="bar"></div><div class="bar"></div>
                 </div>
             </div>
 
             <!-- Meta -->
             <div class="w-full max-w-md flex items-end justify-between mb-8">
-                <div class="overflow-hidden">
-                    <h2 id="fullTitle" class="text-2xl font-bold text-white leading-tight truncate">No Track Selected</h2>
-                    <p id="fullArtist" class="text-lg text-gray-400 truncate">Spotiplay</p>
+                <div class="flex-1 min-w-0 pr-4">
+                    <h2 id="fullTitle" class="text-3xl font-bold text-white leading-tight truncate">No Track</h2>
+                    <p id="fullArtist" class="text-lg text-gray-400 truncate mt-1">Select music</p>
                 </div>
-                <button id="fullLikeBtn" class="text-2xl text-gray-400 hover:text-brand-500 transition-colors p-2 active:scale-110 transform">
-                    <i class="far fa-heart"></i>
-                </button>
+                <button id="fullLikeBtn" class="text-2xl text-gray-400 hover:text-brand-500 hover:scale-110 transition-all"><i class="far fa-heart"></i></button>
             </div>
 
             <!-- Progress -->
-            <div class="w-full max-w-md mb-8">
-                <input type="range" id="progressBar" min="0" max="100" value="0" class="w-full mb-2 cursor-pointer">
-                <div class="flex justify-between text-xs text-gray-400 font-medium">
+            <div class="w-full max-w-md mb-8 group">
+                <input type="range" id="progressBar" min="0" max="100" value="0" class="w-full h-2 rounded-lg cursor-pointer">
+                <div class="flex justify-between text-xs font-medium text-gray-500 mt-2 font-mono">
                     <span id="currentTime">0:00</span>
                     <span id="duration">0:00</span>
                 </div>
@@ -557,121 +485,89 @@
 
             <!-- Controls -->
             <div class="w-full max-w-md flex items-center justify-between">
-                <button onclick="toggleShuffle()" id="shuffleBtn" class="text-gray-400 hover:text-white transition-colors p-2 active:scale-95">
-                    <i class="fas fa-shuffle text-xl"></i>
+                <button onclick="toggleShuffle()" id="shuffleBtn" class="text-gray-400 hover:text-white transition"><i class="fas fa-shuffle text-xl"></i></button>
+                <button onclick="playPrev()" class="text-white hover:text-brand-400 transition active:scale-90"><i class="fas fa-backward-step text-3xl"></i></button>
+                <button id="fullPlayBtn" class="w-20 h-20 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-transform shadow-[0_0_30px_rgba(255,255,255,0.2)]">
+                    <i class="fas fa-play text-3xl ml-1"></i>
                 </button>
-                <button onclick="playPrev()" class="text-white hover:text-brand-400 transition-colors p-2 active:scale-90 transform">
-                    <i class="fas fa-backward-step text-3xl"></i>
-                </button>
-                <button id="fullPlayBtn" class="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]">
-                    <i class="fas fa-play text-2xl ml-1"></i>
-                </button>
-                <button onclick="playNext()" class="text-white hover:text-brand-400 transition-colors p-2 active:scale-90 transform">
-                    <i class="fas fa-forward-step text-3xl"></i>
-                </button>
-                <button onclick="toggleRepeat()" id="repeatBtn" class="text-gray-400 hover:text-white transition-colors p-2 active:scale-95">
-                    <i class="fas fa-repeat text-xl"></i>
-                </button>
+                <button onclick="playNext()" class="text-white hover:text-brand-400 transition active:scale-90"><i class="fas fa-forward-step text-3xl"></i></button>
+                <button onclick="toggleRepeat()" id="repeatBtn" class="text-gray-400 hover:text-white transition"><i class="fas fa-repeat text-xl"></i></button>
             </div>
         </div>
 
-        <!-- Footer Actions -->
-        <div class="p-8 flex justify-center gap-6">
-            <button onclick="downloadCurrentTrack()" class="flex items-center gap-2 text-sm font-medium text-gray-400 hover:text-white transition-colors active:scale-95 transform">
-                <i class="fas fa-download"></i> Download
+        <!-- Footer -->
+        <div class="relative z-10 p-6 flex justify-center pb-safe">
+            <button onclick="downloadCurrentTrack()" class="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 hover:bg-white/10 text-sm font-bold text-gray-300 transition border border-white/5">
+                <i class="fas fa-cloud-download-alt"></i> <span>Download MP3</span>
             </button>
         </div>
     </div>
 
-    <!-- Hidden Audio Element -->
-    <audio id="audioPlayer" preload="auto"></audio>
-
-    <!-- Add to Playlist Modal -->
-    <div id="addToPlaylistModal" class="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300 opacity-0 pointer-events-none">
-        <div class="bg-dark-surface border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-all duration-300" id="addToPlaylistContent">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold">Add to Playlist</h3>
-                <button onclick="closeAddToPlaylistModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
-            </div>
-
-            <button onclick="createNewPlaylistUI()" class="w-full py-3 mb-4 rounded-xl border border-dashed border-gray-600 hover:border-brand-500 text-gray-400 hover:text-brand-500 transition-all flex items-center justify-center gap-2">
-                <i class="fas fa-plus"></i> Create New Playlist
-            </button>
-
-            <div class="text-xs font-bold text-gray-500 uppercase mb-2">Your Playlists</div>
-            <div id="modalPlaylistsList" class="max-h-[300px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
-                <!-- Playlists injected here -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Create Playlist Modal -->
-    <div id="createPlaylistModal" class="fixed inset-0 z-[90] bg-black/90 hidden flex items-center justify-center p-4">
-        <div class="bg-dark-surface border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
-            <h3 class="text-xl font-bold mb-4">New Playlist</h3>
-            <input type="text" id="newPlaylistName" placeholder="Playlist Name" class="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none mb-6">
-            <div class="flex justify-end gap-3">
-                <button onclick="closeCreatePlaylistModal()" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
-                <button onclick="submitCreatePlaylist()" class="px-6 py-2 bg-brand-500 hover:bg-brand-400 text-black font-bold rounded-lg">Create</button>
-            </div>
-        </div>
-    </div>
+    <!-- Hidden Audio -->
+    <audio id="audioPlayer" crossorigin="anonymous"></audio>
 
     <!-- Queue Modal -->
-    <div id="queueModal" class="fixed inset-0 z-[70] bg-black/95 backdrop-blur-xl transform translate-y-full transition-transform duration-300 will-change-transform flex flex-col">
+    <div id="queueModal" class="fixed inset-0 z-[70] bg-dark-bg/90 backdrop-blur-xl transform translate-y-full transition-transform duration-300 flex flex-col">
         <div class="flex items-center justify-between p-6 border-b border-white/10">
-            <h3 class="text-xl font-bold">Current Queue</h3>
-            <button onclick="toggleQueue()" class="p-2 text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+            <h3 class="text-xl font-bold">Up Next</h3>
+            <button onclick="toggleQueue()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10"><i class="fas fa-times"></i></button>
         </div>
-        <div id="queueList" class="flex-1 overflow-y-auto p-4 space-y-2">
-            <!-- Queue items injected here -->
-        </div>
-        <div class="p-4 border-t border-white/10 text-center">
-            <button onclick="clearQueue()" class="text-xs text-red-400 hover:text-red-300">Clear Queue</button>
+        <div id="queueList" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
+        <div class="p-4 border-t border-white/10">
+            <button onclick="clearQueue()" class="w-full py-3 rounded-xl bg-red-500/10 text-red-400 font-bold hover:bg-red-500/20 transition">Clear Queue</button>
         </div>
     </div>
 
-    <!-- Toast Notification -->
-    <div id="toast" class="fixed top-24 right-4 z-[100] transform translate-x-full transition-transform duration-300 will-change-transform">
-        <div class="bg-dark-surface border border-white/10 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px]">
-            <div id="toastIcon" class="text-brand-500 text-xl">
-                <i class="fas fa-info-circle"></i>
+    <!-- Modals (Add to Playlist / Create Playlist) -->
+    <div id="addToPlaylistModal" class="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300 pointer-events-none">
+        <div class="glass-panel w-full max-w-sm rounded-3xl p-6 transform scale-95 transition-transform duration-300" id="addToPlaylistContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="font-bold text-lg">Add to Playlist</h3>
+                <button onclick="closeAddToPlaylistModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times"></i></button>
             </div>
+            <button onclick="createNewPlaylistUI()" class="w-full py-3 mb-4 rounded-xl border border-dashed border-white/20 hover:border-brand-500 text-gray-400 hover:text-brand-500 transition font-bold flex items-center justify-center gap-2">
+                <i class="fas fa-plus-circle"></i> New Playlist
+            </button>
+            <div id="modalPlaylistsList" class="max-h-[300px] overflow-y-auto space-y-2 app-scroll"></div>
+        </div>
+    </div>
+
+    <div id="createPlaylistModal" class="fixed inset-0 z-[90] bg-black/90 hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-sm rounded-3xl p-6 border border-white/10">
+            <h3 class="font-bold text-lg mb-4">Name your playlist</h3>
+            <input type="text" id="newPlaylistName" class="w-full bg-white/5 border border-white/10 rounded-xl p-3 text-white focus:border-brand-500 focus:outline-none mb-6" placeholder="My Awesome Mix">
+            <div class="flex gap-3">
+                <button onclick="closeCreatePlaylistModal()" class="flex-1 py-2 rounded-xl hover:bg-white/5 text-gray-400">Cancel</button>
+                <button onclick="submitCreatePlaylist()" class="flex-1 py-2 rounded-xl bg-brand-600 text-white font-bold shadow-lg shadow-brand-600/20">Create</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 md:left-auto md:translate-x-0 md:right-6 z-[100] transform -translate-y-[200%] md:translate-y-0 md:translate-x-[200%] transition-transform duration-300">
+        <div class="glass-panel px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-4 border border-white/10 min-w-[300px]">
+            <div id="toastIcon" class="text-2xl text-brand-500"><i class="fas fa-check-circle"></i></div>
             <div>
-                <h4 id="toastTitle" class="font-bold text-sm">Notification</h4>
-                <p id="toastMessage" class="text-xs text-gray-400">This is a message</p>
+                <h4 id="toastTitle" class="font-bold text-sm text-white">Notification</h4>
+                <p id="toastMessage" class="text-xs text-gray-400">Message content</p>
             </div>
         </div>
     </div>
 
     <script>
-        // --- Utility to debounce functions ---
-        function debounce(func, wait) {
-            let timeout;
-            return function executedFunction(...args) {
-                const later = () => {
-                    clearTimeout(timeout);
-                    func(...args);
-                };
-                clearTimeout(timeout);
-                timeout = setTimeout(later, wait);
-            };
-        }
+        // --- Core Application Logic ---
+        const audio = document.getElementById('audioPlayer');
 
-        // --- State Management ---
+        // Initial State
         const state = {
-            currentUser: null, // { username: string }
+            currentUser: null,
             queue: [],
             originalQueue: [],
             currentIndex: -1,
             searchResults: [],
-            trendingResults: [],
             isPlaying: false,
             isShuffled: false,
-            repeatMode: 0,
-            currentSection: 'home',
-            activeLibraryTab: 'favorites',
-            // User Data (Loaded on Login)
+            repeatMode: 0, // 0: off, 1: all, 2: one
             favorites: [],
             recent: [],
             downloads: [],
@@ -680,9 +576,7 @@
             trackToAdd: null
         };
 
-        const audio = document.getElementById('audioPlayer');
-
-        // --- DOM Elements ---
+        // DOM Elements
         const els = {
             miniPlayer: document.getElementById('miniPlayer'),
             fullPlayer: document.getElementById('fullPlayer'),
@@ -696,44 +590,47 @@
             artists: [document.getElementById('miniArtist'), document.getElementById('fullArtist')],
             covers: [document.getElementById('miniCover'), document.getElementById('fullCover')],
             bgImage: document.getElementById('playerBgImage'),
-            views: {
-                home: document.getElementById('homeView'),
-                search: document.getElementById('searchResultsView'),
-                library: document.getElementById('libraryView')
-            },
-            searchBarContainer: document.getElementById('searchBarContainer'),
-            searchForm: document.getElementById('searchForm'),
             searchInput: document.getElementById('searchInput'),
-            resultsList: document.getElementById('resultsList'),
-            searchLoading: document.getElementById('searchLoading')
+            resultsList: document.getElementById('resultsList')
         };
 
-        // --- Initialization ---
+        // Initialization
         document.addEventListener('DOMContentLoaded', () => {
-            auth.init(); // Check session
+            auth.init();
+            setupEventListeners();
+        });
 
-            // Setup audio events
+        function setupEventListeners() {
+            // Audio Events
             audio.addEventListener('timeupdate', updateProgress);
             audio.addEventListener('ended', handleTrackEnd);
             audio.addEventListener('play', () => updatePlayState(true));
             audio.addEventListener('pause', () => updatePlayState(false));
-            audio.addEventListener('error', handleAudioError);
+            audio.addEventListener('error', () => handleAudioError(true)); // Pass true to allow one retry
             audio.addEventListener('loadedmetadata', () => {
                 els.duration.textContent = formatTime(audio.duration);
             });
-            
-            // Setup input events
-            els.searchForm.addEventListener('submit', handleSearch);
-            els.progressBar.addEventListener('input', seek);
-            
-            // Play buttons
-            els.playBtns.forEach(btn => btn.addEventListener('click', togglePlay));
 
-            // Like buttons
-            els.likeBtns.forEach(btn => btn.addEventListener('click', toggleLike));
+            // Input Events
+            els.searchInput.addEventListener('keypress', (e) => {
+                if(e.key === 'Enter') handleSearch(e);
+            });
+            els.progressBar.addEventListener('input', (e) => {
+                const time = (e.target.value / 100) * audio.duration;
+                audio.currentTime = time;
+            });
 
-            // Mobile toggle
-            document.getElementById('searchToggleBtn')?.addEventListener('click', toggleSearchMobile);
+            // Play/Pause Buttons
+            els.playBtns.forEach(btn => btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                togglePlay();
+            }));
+
+            // Like Buttons
+            els.likeBtns.forEach(btn => btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleLike();
+            }));
 
             // Auth Forms
             document.getElementById('loginForm').addEventListener('submit', (e) => {
@@ -744,118 +641,76 @@
                 e.preventDefault();
                 auth.register(document.getElementById('regUser').value, document.getElementById('regPass').value);
             });
+        }
 
-            // Window resize handler (debounced)
-            window.addEventListener('resize', debounce(() => {
-                if(state.currentUser) showSection(state.currentSection);
-            }, 100));
-        });
-
-        // --- Authentication & Persistence ---
+        // --- Authentication ---
         const auth = {
             init: () => {
-                const sessionUser = localStorage.getItem('spotiplay_session');
-                if (sessionUser) {
-                    try {
-                        const user = JSON.parse(sessionUser);
-                        if (user && user.username) {
-                            // Valid session
-                            state.currentUser = user;
-                            auth.loadUserData(user.username);
-                            auth.showApp();
-                            return;
-                        }
-                    } catch (e) {
-                        localStorage.removeItem('spotiplay_session');
+                try {
+                    const session = JSON.parse(localStorage.getItem('spotiplay_session'));
+                    if (session && session.username) {
+                        state.currentUser = session;
+                        auth.loadUserData(session.username);
+                        auth.showApp();
+                    } else {
+                        auth.showLogin();
                     }
-                }
-                // No session
-                auth.showLogin();
+                } catch(e) { auth.showLogin(); }
             },
 
-            register: (username, password) => {
-                if (!username || !password) return showToast('Error', 'error', 'Please fill all fields');
-
+            register: (u, p) => {
+                if(!u || !p) return showToast('Error', 'error', 'Fields required');
                 const users = JSON.parse(localStorage.getItem('spotiplay_users') || '{}');
-                if (users[username]) {
-                    showToast('Error', 'error', 'Username already taken');
-                    return;
-                }
+                if(users[u]) return showToast('Error', 'error', 'Username taken');
 
-                users[username] = { password: password }; // In real app, hash this!
+                users[u] = { password: p };
                 localStorage.setItem('spotiplay_users', JSON.stringify(users));
+                localStorage.setItem(`spotiplay_data_${u}`, JSON.stringify({ favorites: [], recent: [], playlists: [] }));
 
-                // Init empty data for new user
-                const userData = { favorites: [], recent: [], downloads: [], playlists: [] };
-                localStorage.setItem(`spotiplay_data_${username}`, JSON.stringify(userData));
-
-                showToast('Success', 'success', 'Account created! Please login.');
+                showToast('Success', 'success', 'Account created');
                 switchAuthTab('login');
-                document.getElementById('loginUser').value = username;
-                document.getElementById('loginPass').value = '';
+                document.getElementById('loginUser').value = u;
             },
 
-            login: (username, password) => {
+            login: (u, p) => {
                 const users = JSON.parse(localStorage.getItem('spotiplay_users') || '{}');
-                if (!users[username] || users[username].password !== password) {
-                    showToast('Error', 'error', 'Invalid credentials');
-                    return;
-                }
+                if(!users[u] || users[u].password !== p) return showToast('Error', 'error', 'Invalid credentials');
 
-                const user = { username };
-                localStorage.setItem('spotiplay_session', JSON.stringify(user));
-                state.currentUser = user;
-
-                auth.loadUserData(username);
+                const session = { username: u };
+                localStorage.setItem('spotiplay_session', JSON.stringify(session));
+                state.currentUser = session;
+                auth.loadUserData(u);
                 auth.showApp();
-                showToast('Welcome', 'success', `Logged in as ${username}`);
+                showToast('Welcome', 'success', `Hello, ${u}`);
             },
 
-            logout: () => {
-                localStorage.removeItem('spotiplay_session');
-                state.currentUser = null;
-                // Clear state
-                state.favorites = [];
-                state.recent = [];
-                state.downloads = [];
-                state.playlists = [];
-
-                auth.showLogin();
-                showToast('Bye', 'info', 'Logged out successfully');
-            },
-
-            loadUserData: (username) => {
-                const raw = localStorage.getItem(`spotiplay_data_${username}`);
-                const data = raw ? JSON.parse(raw) : { favorites: [], recent: [], downloads: [], playlists: [] };
-
+            loadUserData: (u) => {
+                const data = JSON.parse(localStorage.getItem(`spotiplay_data_${u}`) || '{}');
                 state.favorites = data.favorites || [];
                 state.recent = data.recent || [];
-                state.downloads = data.downloads || [];
                 state.playlists = data.playlists || [];
+                state.downloads = data.downloads || [];
 
-                // Update UI Profile
-                document.getElementById('userProfileBtn').textContent = username.charAt(0).toUpperCase();
-                document.getElementById('userProfileName').textContent = username;
+                document.getElementById('sidebarUserName').textContent = u;
+                document.getElementById('sidebarUserIcon').textContent = u.charAt(0).toUpperCase();
             },
 
             saveUserData: () => {
-                if (!state.currentUser) return;
-                const data = {
-                    favorites: state.favorites,
-                    recent: state.recent,
-                    downloads: state.downloads,
-                    playlists: state.playlists
-                };
+                if(!state.currentUser) return;
+                const data = { favorites: state.favorites, recent: state.recent, playlists: state.playlists, downloads: state.downloads };
                 localStorage.setItem(`spotiplay_data_${state.currentUser.username}`, JSON.stringify(data));
             },
 
             showApp: () => {
-                document.getElementById('authView').classList.add('hidden');
-                document.getElementById('app-container').classList.remove('hidden');
-                if(window.innerWidth >= 768) document.getElementById('desktopSidebar').classList.remove('hidden');
-                else document.getElementById('mobileNav').classList.remove('hidden');
+                document.getElementById('authView').classList.add('hidden'); // Hide Login
+                document.getElementById('app-container').classList.remove('hidden'); // Show Main
+                document.getElementById('desktopSidebar').classList.remove('hidden'); // Show Sidebar
 
-                // Initialize App Views
+                // IMPORTANT: Show Mini Player Logic
+                els.miniPlayer.classList.remove('hidden');
+                document.getElementById('mobileNav').classList.remove('hidden');
+
+                // Init Views
                 showHome();
                 loadRecentlyPlayed();
                 loadTopGlobal();
@@ -866,182 +721,131 @@
                 document.getElementById('authView').classList.remove('hidden');
                 document.getElementById('app-container').classList.add('hidden');
                 document.getElementById('desktopSidebar').classList.add('hidden');
+
+                // IMPORTANT: Hide Players
+                els.miniPlayer.classList.add('hidden');
                 document.getElementById('mobileNav').classList.add('hidden');
 
-                // Reset inputs
+                // Reset Forms
                 document.getElementById('loginUser').value = '';
                 document.getElementById('loginPass').value = '';
             }
         };
 
+        function logout() {
+            localStorage.removeItem('spotiplay_session');
+            state.currentUser = null;
+            // Clear runtime state
+            state.queue = [];
+            audio.pause();
+            audio.src = '';
+            auth.showLogin();
+        }
+
         function switchAuthTab(tab) {
-            const loginForm = document.getElementById('loginForm');
-            const regForm = document.getElementById('registerForm');
-            const tabLogin = document.getElementById('tabLogin');
-            const tabReg = document.getElementById('tabRegister');
-
-            if (tab === 'login') {
-                loginForm.classList.remove('hidden');
-                regForm.classList.add('hidden');
-                tabLogin.classList.replace('text-gray-400', 'text-brand-500');
-                tabLogin.classList.replace('border-transparent', 'border-brand-500');
-                tabReg.classList.replace('text-brand-500', 'text-gray-400'); // Assuming reverse
-                tabReg.classList.remove('text-white'); // Fix hover state logic issues
-                tabReg.classList.replace('border-brand-500', 'border-transparent');
-                // Re-add hover/color classes carefully
-                tabReg.className = "flex-1 text-center font-bold text-gray-400 hover:text-white pb-2 border-b-2 border-transparent transition-colors";
-                tabLogin.className = "flex-1 text-center font-bold text-brand-500 pb-2 border-b-2 border-brand-500 transition-colors";
+            if(tab === 'login') {
+                document.getElementById('loginForm').classList.remove('hidden');
+                document.getElementById('registerForm').classList.add('hidden');
+                document.getElementById('tabLogin').classList.replace('text-gray-400', 'text-brand-400');
+                document.getElementById('tabLogin').classList.add('bg-brand-500/20');
+                document.getElementById('tabRegister').classList.replace('text-brand-400', 'text-gray-400');
+                document.getElementById('tabRegister').classList.remove('bg-brand-500/20');
             } else {
-                loginForm.classList.add('hidden');
-                regForm.classList.remove('hidden');
-
-                tabReg.className = "flex-1 text-center font-bold text-brand-500 pb-2 border-b-2 border-brand-500 transition-colors";
-                tabLogin.className = "flex-1 text-center font-bold text-gray-400 hover:text-white pb-2 border-b-2 border-transparent transition-colors";
+                document.getElementById('loginForm').classList.add('hidden');
+                document.getElementById('registerForm').classList.remove('hidden');
+                document.getElementById('tabRegister').classList.replace('text-gray-400', 'text-brand-400');
+                document.getElementById('tabRegister').classList.add('bg-brand-500/20');
+                document.getElementById('tabLogin').classList.replace('text-brand-400', 'text-gray-400');
+                document.getElementById('tabLogin').classList.remove('bg-brand-500/20');
             }
         }
 
-        function logout() {
-            auth.logout();
-        }
-
-        // --- Core Audio Logic ---
+        // --- Playback Engine ---
 
         async function playTrack(track, queue = null, index = 0) {
+            if (queue) {
+                state.queue = queue;
+                state.originalQueue = [...queue];
+                state.currentIndex = index;
+            }
+
+            const currentTrack = normalizeTrack(state.queue[state.currentIndex]);
+            if (!currentTrack) return;
+
+            updatePlayerInfo(currentTrack);
+            updatePlayState(true); // Optimistic UI
+            els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-circle-notch fa-spin"></i>');
+
             try {
-                if (queue) {
-                    state.queue = queue;
-                    state.originalQueue = [...queue];
-                    state.currentIndex = index;
-                }
+                // Ensure Mini Player is visible (it has logic to hide empty state if needed, but here we just show it)
+                els.miniPlayer.classList.remove('translate-y-[150%]'); // Reset potential hide transform
 
-                const currentTrack = normalizeTrack(state.queue[state.currentIndex]);
-                if (!currentTrack) return;
-
-                // UI Loading State
-                updatePlayerInfo(currentTrack);
-                showToast('Memuat lagu...', 'info', 'Mohon tunggu sebentar...');
-                els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
-
-                // Show Mini Player immediately
-                els.miniPlayer.style.transform = 'translateY(0)';
-
-                // Check if track object already has a direct download link (optimization)
                 let streamUrl = currentTrack.download;
 
-                // If not, fetch it
+                // Fetch streaming link if not present
                 if (!streamUrl) {
-                    // Use v2 endpoint
-                    const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`;
-                    const res = await fetch(apiUrl);
+                    const res = await fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`);
                     const data = await res.json();
 
                     if (!data.status || !data.data || !data.data.mp3DownloadLink) {
-                        if (data.status === false && data.code === 500) {
-                             throw new Error('RESTRICTED');
-                        }
-                        throw new Error('FAILED');
+                        throw new Error('API_FAIL');
                     }
 
                     streamUrl = data.data.mp3DownloadLink;
+                    state.queue[state.currentIndex].download = streamUrl; // Cache
 
-                    // Cache it in the queue object to avoid re-fetching
-                    state.queue[state.currentIndex].download = streamUrl;
-
-                    // Update metadata if available from detailed response
+                    // Update meta if improved
                     if(data.data.coverImage) state.queue[state.currentIndex].thumbnail = data.data.coverImage;
-                    if(data.data.artist) state.queue[state.currentIndex].artist = data.data.artist;
-                    if(data.data.songTitle) state.queue[state.currentIndex].title = data.data.songTitle;
-
-                    // Re-update info
                     updatePlayerInfo(normalizeTrack(state.queue[state.currentIndex]));
                 }
 
-                // Play
                 audio.src = streamUrl;
-                audio.play().catch(e => {
-                    console.error("Playback failed:", e);
-                    handleAudioError();
-                });
+                audio.play();
 
-                // Add to recent
                 addToRecent(currentTrack);
-
-                // Update Like Button state
                 updateLikeButtonState(currentTrack.track_url);
 
-            } catch (error) {
-                console.error("Play error:", error);
-                let msg = 'Gagal memutar lagu. Silakan coba lagu lain.';
-                if (error.message === 'RESTRICTED') {
-                    msg = 'Maaf, lagu ini bermasalah dari server pusat. Silakan cari versi lain.';
-                }
-                showToast('Gagal Memutar', 'error', msg);
-                updatePlayState(false);
+            } catch (e) {
+                console.error("Playback Error:", e);
+                showToast('Playback Error', 'error', 'Failed to load stream. Skipping...');
+                setTimeout(playNext, 2000); // Auto skip on fail
             }
         }
 
-        function normalizeTrack(track) {
-            if (!track) return null;
-            let duration = track.duration;
-            if (!duration && track.durasi) {
-                duration = formatTime(track.durasi / 1000);
-            }
-            return {
-                ...track,
-                title: track.title || track.songTitle,
-                artist: track.artist || track.artis || 'Unknown Artist',
-                thumbnail: track.thumbnail || track.image || track.coverImage || 'https://via.placeholder.com/400',
-                track_url: track.track_url || track.url,
-                duration: duration
-            };
+        function handleAudioError(retry) {
+            // Simple retry logic could go here, for now just notify
+            showToast('Connection Lost', 'error', 'Audio stream interrupted.');
+            updatePlayState(false);
         }
 
-        function togglePlay(e) {
-            e?.stopPropagation();
+        function togglePlay() {
             if (state.queue.length === 0) return;
-
-            if (audio.paused) {
-                audio.play();
-            } else {
-                audio.pause();
-            }
+            if (audio.paused) audio.play();
+            else audio.pause();
         }
 
         function playNext() {
             if (state.queue.length === 0) return;
-            
-            let nextIndex = state.currentIndex + 1;
-            if (nextIndex >= state.queue.length) {
-                if (state.repeatMode === 1) { // Loop All
-                    nextIndex = 0;
-                } else {
-                    return; // Stop at end
-                }
+            let next = state.currentIndex + 1;
+            if (next >= state.queue.length) {
+                if (state.repeatMode === 1) next = 0;
+                else return; // Stop
             }
-
-            state.currentIndex = nextIndex;
+            state.currentIndex = next;
             playTrack(null);
         }
 
         function playPrev() {
             if (state.queue.length === 0) return;
-
-            if (audio.currentTime > 3) {
-                audio.currentTime = 0;
-                return;
-            }
-
-            let prevIndex = state.currentIndex - 1;
-            if (prevIndex < 0) {
-                prevIndex = 0;
-            }
-
-            state.currentIndex = prevIndex;
+            if (audio.currentTime > 3) { audio.currentTime = 0; return; }
+            let prev = state.currentIndex - 1;
+            if (prev < 0) prev = 0;
+            state.currentIndex = prev;
             playTrack(null);
         }
 
         function handleTrackEnd() {
-            if (state.repeatMode === 2) { // Loop One
+            if (state.repeatMode === 2) {
                 audio.currentTime = 0;
                 audio.play();
             } else {
@@ -1049,813 +853,442 @@
             }
         }
 
-        function handleAudioError() {
-            showToast('Stream Error', 'error', 'Koneksi audio terputus.');
-            updatePlayState(false);
-        }
-
         function updatePlayState(playing) {
             state.isPlaying = playing;
-            const icon = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play ml-1"></i>';
-            els.playBtns.forEach(btn => {
-                btn.innerHTML = icon;
-                if(playing) btn.classList.remove('animate-pulse');
-            });
+            const icon = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play ml-0.5"></i>';
+            els.playBtns.forEach(btn => btn.innerHTML = icon);
 
-            const disk = document.querySelector('.player-disk');
-            if(disk) {
-                if(playing) disk.classList.add('playing');
-                else disk.classList.remove('playing');
-            }
-
-            // Visualizer
+            // Visualizer & Animations
             const bars = document.querySelectorAll('.bar');
-            bars.forEach(bar => {
-                if(playing) bar.classList.remove('paused');
-                else bar.classList.add('paused');
-            });
+            bars.forEach(b => playing ? b.classList.remove('paused') : b.classList.add('paused'));
+
+            if(playing) document.getElementById('miniArtContainer').classList.remove('paused');
         }
 
         function updateProgress() {
-            if (!audio.duration) return;
-            const percent = (audio.currentTime / audio.duration) * 100;
-
-            els.progressBar.value = percent;
-            els.miniProgressBar.style.width = `${percent}%`;
-
+            if(!audio.duration) return;
+            const pct = (audio.currentTime / audio.duration) * 100;
+            els.progressBar.value = pct;
+            els.miniProgressBar.style.width = `${pct}%`;
             els.currentTime.textContent = formatTime(audio.currentTime);
 
-            els.progressBar.style.background = `linear-gradient(to right, #22c55e 0%, #22c55e ${percent}%, #404040 ${percent}%, #404040 100%)`;
+            // Gradient fill for range input
+            els.progressBar.style.background = `linear-gradient(to right, #8b5cf6 0%, #8b5cf6 ${pct}%, rgba(255,255,255,0.2) ${pct}%, rgba(255,255,255,0.2) 100%)`;
         }
 
-        function seek(e) {
-            const percent = e.target.value;
-            const time = (percent / 100) * audio.duration;
-            audio.currentTime = time;
-        }
+        function updatePlayerInfo(t) {
+            els.titles.forEach(el => el.textContent = t.title);
+            els.artists.forEach(el => el.textContent = t.artist);
+            els.covers.forEach(el => el.src = t.thumbnail);
+            els.bgImage.src = t.thumbnail;
 
-        function updatePlayerInfo(track) {
-            if (!track) return;
-            const title = track.title;
-            const artist = track.artist || track.artis || 'Unknown Artist';
-            const cover = track.thumbnail || track.image || 'https://via.placeholder.com/400';
-
-            els.titles.forEach(el => el.textContent = title);
-            els.artists.forEach(el => el.textContent = artist);
-            els.covers.forEach(el => el.src = cover);
-            els.bgImage.src = cover;
-
+            // Media Session
             if ('mediaSession' in navigator) {
                 navigator.mediaSession.metadata = new MediaMetadata({
-                    title: title,
-                    artist: artist,
-                    artwork: [{ src: cover, sizes: '512x512', type: 'image/jpeg' }]
+                    title: t.title,
+                    artist: t.artist,
+                    artwork: [{ src: t.thumbnail }]
                 });
-
                 navigator.mediaSession.setActionHandler('play', () => audio.play());
                 navigator.mediaSession.setActionHandler('pause', () => audio.pause());
-                navigator.mediaSession.setActionHandler('previoustrack', playPrev);
                 navigator.mediaSession.setActionHandler('nexttrack', playNext);
+                navigator.mediaSession.setActionHandler('previoustrack', playPrev);
             }
         }
 
-        // --- Search & Data Logic ---
+        // --- Search ---
 
         async function handleSearch(e) {
-            e.preventDefault();
-            const query = els.searchInput.value.trim();
-            if (!query) return;
+            const q = els.searchInput.value.trim();
+            if(!q) return;
 
             showSection('search');
             els.resultsList.innerHTML = '';
-            els.searchLoading.classList.remove('hidden');
+            document.getElementById('searchLoading').classList.remove('hidden');
 
             try {
-                const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}`);
+                const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(q)}`);
                 const data = await res.json();
+                document.getElementById('searchLoading').classList.add('hidden');
 
-                els.searchLoading.classList.add('hidden');
-
-                if (data.status && data.data && data.data.length > 0) {
+                if(data.status && data.data) {
                     state.searchResults = data.data;
                     renderResults(data.data);
                 } else {
-                    els.resultsList.innerHTML = `
-                        <div class="text-center py-10 text-gray-500">
-                            <i class="fas fa-ghost text-4xl mb-4 opacity-50"></i>
-                            <p>Tidak ada hasil untuk "${query}"</p>
-                        </div>
-                    `;
+                    els.resultsList.innerHTML = '<div class="text-center text-gray-500 mt-10">No results found in the cosmos.</div>';
                 }
-            } catch (error) {
-                console.error(error);
-                els.searchLoading.classList.add('hidden');
-                showToast('Gagal Mencari', 'error', 'Tidak dapat terhubung ke server.');
+            } catch(e) {
+                document.getElementById('searchLoading').classList.add('hidden');
+                showToast('Error', 'error', 'Search failed. Try again.');
             }
         }
 
         function renderResults(tracks) {
-            const html = tracks.map((track, index) => {
-                return `
-                <div class="glass-card p-3 rounded-xl flex items-center gap-4 cursor-pointer group" onclick="playFromSearch(${index})">
-                    <div class="relative w-16 h-16 flex-shrink-0">
-                        <img src="${track.thumbnail}" class="w-full h-full object-cover rounded-md shadow-sm" loading="lazy">
-                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+            els.resultsList.innerHTML = tracks.map((t, i) => `
+                <div class="glass-card p-3 rounded-2xl flex items-center gap-4 cursor-pointer group" onclick="playTrack(null, state.searchResults, ${i})">
+                    <div class="relative w-16 h-16 shrink-0">
+                        <img src="${t.thumbnail}" class="w-full h-full object-cover rounded-xl shadow-md">
+                        <div class="absolute inset-0 bg-black/40 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <i class="fas fa-play text-white"></i>
                         </div>
                     </div>
                     <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-white truncate text-base">${track.title}</h4>
-                        <p class="text-gray-400 text-sm truncate">${track.artist}</p>
+                        <h4 class="font-bold text-white truncate">${t.title}</h4>
+                        <p class="text-sm text-gray-400 truncate">${t.artist}</p>
                     </div>
-                    <div class="flex items-center gap-3">
-                        <span class="text-xs text-gray-500">${track.duration || ''}</span>
-                        <button onclick="event.stopPropagation(); toggleLikeData('${track.track_url}', '${track.title.replace(/'/g, "\\'")}', '${track.artist.replace(/'/g, "\\'")}', '${track.thumbnail}')"
-                                class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-brand-500 transition-colors active:scale-90">
-                            <i class="${isFavorited(track.track_url) ? 'fas text-brand-500' : 'far'} fa-heart"></i>
-                        </button>
-                        <button onclick="event.stopPropagation(); openAddToPlaylistModal(${JSON.stringify(track).replace(/"/g, '&quot;')})"
-                                class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors active:scale-90">
-                            <i class="fas fa-plus"></i>
-                        </button>
+                    <div class="flex items-center gap-2">
+                         <button onclick="event.stopPropagation(); toggleLikeData('${t.url}', '${t.title.replace(/'/g, "")}', '${t.artist.replace(/'/g, "")}', '${t.thumbnail}')" class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center transition ${isFavorited(t.url) ? 'text-brand-500' : 'text-gray-400'}">
+                             <i class="${isFavorited(t.url) ? 'fas' : 'far'} fa-heart"></i>
+                         </button>
+                         <button onclick="event.stopPropagation(); openAddToPlaylistModal(state.searchResults[${i}])" class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition">
+                             <i class="fas fa-plus"></i>
+                         </button>
                     </div>
                 </div>
-                `;
-            }).join('');
-
-            els.resultsList.innerHTML = html;
+            `).join('');
         }
 
-        function playFromSearch(index) {
-            if (state.searchResults && state.searchResults.length > 0) {
-                playTrack(null, state.searchResults, index);
-            }
-        }
+        // --- Library & Playlists ---
 
-        function playFromTrending(index) {
-            if (state.trendingResults && state.trendingResults.length > 0) {
-                playTrack(null, state.trendingResults, index);
-            }
-        }
-
-        async function loadTopGlobal() {
-            const grid = document.getElementById('trendingGrid');
-            try {
-                const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=top%20hits%20global`);
-                const data = await res.json();
-
-                if (data.status && data.data) {
-                    const tracks = data.data.slice(0, 8); // Show more
-                    state.trendingResults = tracks;
-                    grid.innerHTML = tracks.map((track, idx) => `
-                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition cursor-pointer group" onclick='playFromTrending(${idx})'>
-                             <span class="text-sm font-bold text-gray-600 w-6 text-center group-hover:text-white transition-colors">${idx + 1}</span>
-                             <img src="${track.thumbnail}" class="w-10 h-10 rounded bg-gray-800 object-cover" loading="lazy">
-                             <div class="flex-1 overflow-hidden">
-                                 <h4 class="font-bold text-sm truncate text-white group-hover:text-brand-400 transition-colors">${track.title}</h4>
-                                 <p class="text-xs text-gray-400 truncate">${track.artist}</p>
-                             </div>
-                             <div class="text-xs text-gray-500">${track.duration || ''}</div>
-                             <button class="text-gray-400 hover:text-white px-2"><i class="fas fa-ellipsis-v"></i></button>
-                        </div>
-                    `).join('');
-                }
-            } catch (e) {
-                grid.innerHTML = '<p class="text-red-400 text-sm">Gagal memuat trending.</p>';
-            }
-        }
-
-        // --- View Navigation ---
-
-        function showSection(sectionId) {
-            state.currentSection = sectionId;
-
-            Object.values(els.views).forEach(el => el.classList.add('hidden'));
-
-            if (sectionId === 'home') els.views.home.classList.remove('hidden');
-            if (sectionId === 'search') els.views.search.classList.remove('hidden');
-            if (sectionId === 'library') {
-                els.views.library.classList.remove('hidden');
-                // Default to favorites if no tab active or previously active
-                if (!state.activeLibraryTab) switchLibraryTab('favorites');
-                else switchLibraryTab(state.activeLibraryTab);
-            }
-
-            // Mobile Nav Updates
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-brand-500'));
-            const navIndex = sectionId === 'home' ? 0 : sectionId === 'search' ? 1 : 2;
-            const navItems = document.querySelectorAll('.nav-item');
-            if(navItems[navIndex]) {
-                 navItems[navIndex].classList.add('active', 'text-brand-500');
-                 navItems[navIndex].classList.remove('text-gray-500');
-            }
-
-            // Desktop Nav Updates
-            document.querySelectorAll('.nav-item-desktop').forEach(el => el.classList.remove('active', 'bg-white/5', 'text-white'));
-            const dNavIndex = sectionId === 'home' ? 0 : sectionId === 'search' ? 1 : 2;
-            const dNavItems = document.querySelectorAll('.nav-item-desktop');
-            if(dNavItems[dNavIndex]) {
-                dNavItems[dNavIndex].classList.add('active', 'bg-white/5', 'text-white');
-                dNavItems[dNavIndex].classList.remove('text-gray-400');
-            }
-
-            // Reset scroll
-            const scrollContainer = document.getElementById('contentScroll');
-            if(scrollContainer) scrollContainer.scrollTo(0,0);
-        }
-
-        function showHome() { showSection('home'); }
-        function showLibrary() { showSection('library'); }
-
-        function toggleSearchMobile() {
-            showSection('search');
-            setTimeout(() => els.searchInput.focus(), 100);
-        }
-
-        // --- Player UI Toggle ---
-
-        function openFullPlayer() {
-            els.fullPlayer.classList.remove('translate-y-full');
-        }
-
-        function closeFullPlayer() {
-            els.fullPlayer.classList.add('translate-y-full');
-        }
-
-        function toggleQueue() {
-            const modal = document.getElementById('queueModal');
-            if (modal.classList.contains('translate-y-full')) {
-                renderQueue();
-                modal.classList.remove('translate-y-full');
-            } else {
-                modal.classList.add('translate-y-full');
-            }
-        }
-
-        function renderQueue() {
-            const list = document.getElementById('queueList');
-            if (state.queue.length === 0) {
-                list.innerHTML = `<div class="text-center py-20 text-gray-500">Queue is empty.</div>`;
-                return;
-            }
-
-            list.innerHTML = state.queue.map((track, idx) => {
-                const isCurrent = idx === state.currentIndex;
-                const norm = normalizeTrack(track);
-                return `
-                <div class="p-3 rounded-xl flex items-center gap-4 ${isCurrent ? 'bg-brand-500/10 border border-brand-500/30' : 'hover:bg-white/5'} transition-colors cursor-pointer group" onclick="playFromQueue(${idx})">
-                    <div class="w-8 text-center text-xs font-bold ${isCurrent ? 'text-brand-500' : 'text-gray-600'}">
-                        ${isCurrent ? '<i class="fas fa-play"></i>' : idx + 1}
-                    </div>
-                    <img src="${norm.thumbnail}" class="w-10 h-10 rounded bg-gray-800 object-cover">
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-sm ${isCurrent ? 'text-brand-500' : 'text-white'} truncate">${norm.title}</h4>
-                        <p class="text-xs text-gray-400 truncate">${norm.artist}</p>
-                    </div>
-                    ${isCurrent ? '<div class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>' : ''}
-                </div>
-            `}).join('');
-        }
-
-        function playFromQueue(index) {
-            if (index === state.currentIndex) return;
-            state.currentIndex = index;
-            playTrack(null);
-            renderQueue(); // Update UI
-        }
-
-        function clearQueue() {
-            if (state.queue.length <= 1) return;
-            // Keep current track
-            const current = state.queue[state.currentIndex];
-            state.queue = [current];
-            state.originalQueue = [current];
-            state.currentIndex = 0;
-            renderQueue();
-            showToast('Queue Cleared', 'success');
-        }
-
-        // --- Favorites & Recent ---
-
-        function toggleLikeData(url, title, artist, img) {
-            const idx = state.favorites.findIndex(t => (t.url || t.track_url) === url);
-            if (idx > -1) {
-                state.favorites.splice(idx, 1);
-                showToast('Dihapus', 'info', 'Lagu dihapus dari favorit');
-            } else {
-                state.favorites.push({ url, track_url: url, title, artist, thumbnail: img, image: img });
-                showToast('Disukai', 'success', 'Lagu ditambahkan ke favorit');
-            }
-            auth.saveUserData();
-
-            if (!els.views.library.classList.contains('hidden')) {
-                if (document.getElementById('tabFavorites').classList.contains('bg-brand-600')) {
-                    renderFavorites();
-                }
-            }
-            handleSearchLikeUpdate(url);
-
-            const current = normalizeTrack(state.queue[state.currentIndex]);
-            if (current && (current.track_url === url)) {
-                updateLikeButtonState(url);
-            }
-        }
-
-        function toggleLike() {
-            const track = normalizeTrack(state.queue[state.currentIndex]);
-            if (!track) return;
-            toggleLikeData(track.track_url, track.title, track.artist, track.thumbnail);
-        }
-
-        function isFavorited(url) {
-            return state.favorites.some(t => (t.url || t.track_url) === url);
-        }
-
-        function updateLikeButtonState(url) {
-            const isLiked = isFavorited(url);
-            els.likeBtns.forEach(btn => {
-                if (isLiked) {
-                    btn.innerHTML = '<i class="fas fa-heart text-brand-500"></i>';
-                    btn.classList.add('text-brand-500');
+        function switchLibraryTab(tab) {
+            // UI Toggle
+            ['favorites', 'playlists', 'downloads'].forEach(t => {
+                const btn = document.getElementById(`tab${t.charAt(0).toUpperCase() + t.slice(1)}`);
+                if(t === tab) {
+                    btn.classList.replace('text-gray-400', 'text-black');
+                    btn.classList.replace('hover:text-white', 'bg-white');
+                    btn.classList.remove('hover:bg-white/5');
                 } else {
-                    btn.innerHTML = '<i class="far fa-heart"></i>';
-                    btn.classList.remove('text-brand-500');
+                    btn.classList.replace('text-black', 'text-gray-400');
+                    btn.classList.replace('bg-white', 'hover:text-white');
+                    btn.classList.add('hover:bg-white/5');
                 }
-            });
-        }
 
-        function handleSearchLikeUpdate(url) {
-             const btns = document.querySelectorAll(`button[onclick*="${url}"] i`);
-             btns.forEach(icon => {
-                 if (isFavorited(url)) {
-                     icon.className = 'fas fa-heart text-brand-500';
-                 } else {
-                     icon.className = 'far fa-heart';
-                 }
-             });
+                document.getElementById(`${t}List`).classList.add('hidden');
+            });
+
+            document.getElementById(`${tab}List`).classList.remove('hidden');
+
+            if(tab === 'favorites') renderFavorites();
+            if(tab === 'playlists') renderPlaylists();
+            if(tab === 'downloads') renderDownloads();
         }
 
         function renderFavorites() {
             const list = document.getElementById('favoritesList');
-            if (state.favorites.length === 0) {
-                list.innerHTML = '<div class="text-center py-10 text-gray-500">Belum ada favorit.</div>';
-                return;
-            }
+            if(state.favorites.length === 0) return list.innerHTML = '<div class="text-center text-gray-500 py-10">No favorites yet.</div>';
 
-            list.innerHTML = state.favorites.map((track, idx) => `
-                <div class="glass-card p-3 rounded-xl flex items-center gap-4 group" onclick='playTrack(null, ${JSON.stringify(state.favorites).replace(/'/g, "&#39;")}, ${idx})'>
-                    <img src="${track.thumbnail || track.image}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
+            list.innerHTML = state.favorites.map((t, i) => `
+                <div class="glass-card p-3 rounded-2xl flex items-center gap-4 cursor-pointer" onclick="playTrack(null, state.favorites, ${i})">
+                    <img src="${t.thumbnail}" class="w-12 h-12 rounded-xl object-cover">
                     <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-white truncate text-base">${track.title}</h4>
-                        <p class="text-gray-400 text-sm truncate">${track.artist}</p>
+                        <h4 class="font-bold text-white truncate">${t.title}</h4>
+                        <p class="text-sm text-gray-400 truncate">${t.artist}</p>
                     </div>
-                    <button class="p-2 text-brand-500" onclick="event.stopPropagation(); toggleLikeData('${track.url || track.track_url}')">
-                        <i class="fas fa-heart"></i>
-                    </button>
-                    <button onclick="event.stopPropagation(); openAddToPlaylistModal(${JSON.stringify(track).replace(/"/g, '&quot;')})"
-                            class="p-2 text-gray-400 hover:text-white">
-                        <i class="fas fa-plus"></i>
-                    </button>
+                    <button onclick="event.stopPropagation(); toggleLikeData('${t.url}')" class="text-brand-500 p-2"><i class="fas fa-heart"></i></button>
                 </div>
             `).join('');
         }
-
-        function addToDownloads(track) {
-            const trackUrl = track.track_url || track.url;
-            if (state.downloads.some(t => (t.url || t.track_url) === trackUrl)) return;
-
-            state.downloads.unshift(track);
-            auth.saveUserData();
-
-            if (document.getElementById('tabDownloads').classList.contains('bg-brand-600')) {
-                renderDownloads();
-            }
-        }
-
-        function renderDownloads() {
-            const list = document.getElementById('downloadsList');
-            if (state.downloads.length === 0) {
-                list.innerHTML = `
-                    <div class="text-center py-10 text-gray-500">
-                        <i class="fas fa-download text-4xl mb-4 opacity-50"></i>
-                        <p>Belum ada riwayat download.</p>
-                    </div>`;
-                return;
-            }
-
-            list.innerHTML = state.downloads.map((track, idx) => {
-                const norm = normalizeTrack(track);
-                return `
-                <div class="glass-card p-3 rounded-xl flex items-center gap-4">
-                    <img src="${norm.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
-                    <div class="flex-1 min-w-0">
-                        <h4 class="font-bold text-white truncate text-base">${norm.title}</h4>
-                        <p class="text-gray-400 text-sm truncate">${norm.artist}</p>
-                    </div>
-                    <a href="${norm.download || '#'}" target="_blank" class="p-2 text-white hover:text-brand-400">
-                        <i class="fas fa-external-link-alt"></i>
-                    </a>
-                </div>
-                `;
-            }).join('');
-        }
-
-        function clearHistory() {
-            if(confirm('Hapus riwayat download?')) {
-                state.downloads = [];
-                auth.saveUserData();
-                renderDownloads();
-                showToast('Riwayat Dihapus', 'success');
-            }
-        }
-
-        function switchLibraryTab(tab) {
-            state.activeLibraryTab = tab;
-
-            // Hide all lists first
-            document.getElementById('favoritesList').classList.add('hidden');
-            document.getElementById('downloadsList').classList.add('hidden');
-            document.getElementById('playlistsList').classList.add('hidden');
-            document.getElementById('playlistDetailView').classList.add('hidden');
-
-            // Update Segmented Control
-            const indicator = document.getElementById('tabIndicator');
-            const btns = {
-                'favorites': document.getElementById('tabFavorites'),
-                'playlists': document.getElementById('tabPlaylists'),
-                'downloads': document.getElementById('tabDownloads')
-            };
-
-            // Reset text colors
-            Object.values(btns).forEach(btn => btn.classList.replace('text-white', 'text-gray-400'));
-
-            if (btns[tab]) {
-                btns[tab].classList.replace('text-gray-400', 'text-white');
-                // Move indicator
-                if (tab === 'favorites') indicator.style.transform = 'translateX(0%)';
-                if (tab === 'playlists') indicator.style.transform = 'translateX(100%)';
-                if (tab === 'downloads') indicator.style.transform = 'translateX(200%)';
-            }
-
-            // Show Content
-            if (tab === 'favorites') {
-                document.getElementById('favoritesList').classList.remove('hidden');
-                renderFavorites();
-            } else if (tab === 'downloads') {
-                document.getElementById('downloadsList').classList.remove('hidden');
-                renderDownloads();
-            } else if (tab === 'playlists') {
-                document.getElementById('playlistsList').classList.remove('hidden');
-                renderPlaylists();
-            }
-        }
-
-        function addToRecent(track) {
-            const trackUrl = track.track_url || track.url;
-            state.recent = state.recent.filter(t => (t.url || t.track_url) !== trackUrl);
-            state.recent.unshift(track);
-            if (state.recent.length > 10) state.recent.pop();
-            auth.saveUserData();
-            loadRecentlyPlayed();
-        }
-
-        function loadRecentlyPlayed() {
-            const grid = document.getElementById('recentlyPlayedGrid');
-            if (state.recent.length === 0) return;
-
-            grid.innerHTML = state.recent.map((track, idx) => `
-                <div class="shrink-0 w-32 cursor-pointer group" onclick='playTrack(null, ${JSON.stringify(state.recent).replace(/'/g, "&#39;")}, ${idx})'>
-                    <div class="relative w-32 h-32 mb-2 overflow-hidden rounded-lg shadow-lg">
-                        <img src="${track.thumbnail || track.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy">
-                        <button class="absolute bottom-2 right-2 w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-lg text-black">
-                            <i class="fas fa-play text-xs ml-0.5"></i>
-                        </button>
-                    </div>
-                    <h4 class="font-bold text-xs text-white truncate">${track.title}</h4>
-                    <p class="text-[10px] text-gray-400 truncate">${track.artist}</p>
-                </div>
-            `).join('');
-        }
-
-        // --- Utility ---
-
-        function formatTime(seconds) {
-            if (typeof seconds === 'string' && seconds.includes(':')) return seconds;
-            if (!seconds || isNaN(seconds)) return '0:00';
-            const m = Math.floor(seconds / 60);
-            const s = Math.floor(seconds % 60);
-            return `${m}:${s < 10 ? '0' : ''}${s}`;
-        }
-
-        function showToast(title, type, message) {
-            const toast = document.getElementById('toast');
-            const icon = document.getElementById('toastIcon');
-
-            document.getElementById('toastTitle').textContent = title;
-            document.getElementById('toastMessage').textContent = message || '';
-
-            icon.className = `text-xl ${type === 'success' ? 'text-green-500' : type === 'error' ? 'text-red-500' : 'text-blue-500'}`;
-            icon.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>`;
-
-            toast.classList.remove('translate-x-full');
-            setTimeout(() => {
-                toast.classList.add('translate-x-full');
-            }, 4000);
-        }
-
-        function downloadCurrentTrack() {
-             const track = normalizeTrack(state.queue[state.currentIndex]);
-             if (!track) return;
-
-             addToDownloads(track);
-
-             if (track.download) {
-                 window.open(track.download, '_blank');
-             } else {
-                 showToast('Mengambil Link...', 'info');
-                 const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`;
-                 fetch(apiUrl).then(res => res.json()).then(data => {
-                     if (data.status && data.data && data.data.mp3DownloadLink) {
-                         if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = data.data.mp3DownloadLink;
-                         window.open(data.data.mp3DownloadLink, '_blank');
-                     } else {
-                         showToast('Gagal', 'error', 'Tidak dapat mengunduh.');
-                     }
-                 });
-             }
-        }
-
-        function toggleShuffle() {
-            state.isShuffled = !state.isShuffled;
-            const btn = document.getElementById('shuffleBtn');
-            btn.classList.toggle('text-brand-500', state.isShuffled);
-            btn.classList.toggle('text-gray-400', !state.isShuffled);
-
-            if (state.isShuffled) {
-                const currentTrack = state.queue[state.currentIndex];
-                const rest = state.queue.filter((_, i) => i !== state.currentIndex);
-
-                for (let i = rest.length - 1; i > 0; i--) {
-                    const j = Math.floor(Math.random() * (i + 1));
-                    [rest[i], rest[j]] = [rest[j], rest[i]];
-                }
-
-                state.queue = [currentTrack, ...rest];
-                state.currentIndex = 0;
-            } else {
-                const currentTrack = state.queue[state.currentIndex];
-                const indexInOriginal = state.originalQueue.findIndex(t => (t.url || t.track_url) === (currentTrack.url || currentTrack.track_url));
-                if (indexInOriginal > -1) {
-                    state.queue = [...state.originalQueue];
-                    state.currentIndex = indexInOriginal;
-                }
-            }
-            showToast('Shuffle ' + (state.isShuffled ? 'Aktif' : 'Mati'), 'info');
-        }
-
-        function toggleRepeat() {
-            state.repeatMode = (state.repeatMode + 1) % 3;
-            const btn = document.getElementById('repeatBtn');
-            const icon = btn.querySelector('i');
-
-            if (state.repeatMode === 0) {
-                btn.classList.remove('text-brand-500');
-                btn.classList.add('text-gray-400');
-                icon.className = 'fas fa-repeat text-xl';
-                showToast('Repeat Mati', 'info');
-            } else if (state.repeatMode === 1) {
-                btn.classList.add('text-brand-500');
-                btn.classList.remove('text-gray-400');
-                icon.className = 'fas fa-repeat text-xl';
-                showToast('Repeat Semua', 'info');
-            } else {
-                btn.classList.add('text-brand-500');
-                icon.className = 'fas fa-1 text-xl';
-                icon.innerHTML = '<span class="text-xs absolute -top-1 -right-1 font-bold">1</span>';
-                showToast('Repeat Satu', 'info');
-            }
-        }
-
-        // --- Playlist Logic ---
 
         function renderPlaylists() {
-            renderSidebarPlaylists(); // Update Sidebar too
+            renderSidebarPlaylists();
+            const list = document.getElementById('playlistsList');
+            if(state.playlists.length === 0) return list.innerHTML = '<div class="col-span-full text-center text-gray-500 py-10">Create your first playlist!</div>';
 
-            const container = document.getElementById('playlistsContainer');
-            if (!container) return; // Might be hidden/not applicable
-
-            if (state.playlists.length === 0) {
-                container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-4 text-sm">No playlists yet.</div>`;
-                return;
-            }
-
-            container.innerHTML = state.playlists.map(pl => `
-                <div class="glass-card p-4 rounded-xl flex flex-col gap-3 cursor-pointer hover:bg-white/5 transition group relative overflow-hidden" onclick="openPlaylistDetail('${pl.id}')">
-                    <div class="w-full aspect-square rounded-lg bg-gradient-to-br from-brand-600 to-purple-700 flex items-center justify-center shadow-lg mb-2">
-                        <i class="fas fa-music text-4xl text-white/50 group-hover:scale-110 transition-transform"></i>
+            list.innerHTML = state.playlists.map(pl => `
+                <div class="glass-card p-4 rounded-3xl flex flex-col gap-3 cursor-pointer hover:bg-white/10 group" onclick="openPlaylistDetail('${pl.id}')">
+                    <div class="w-full aspect-square rounded-2xl bg-gradient-to-br from-brand-600 to-accent-pink flex items-center justify-center shadow-lg">
+                        <i class="fas fa-music text-4xl text-white/40 group-hover:scale-110 transition-transform"></i>
                     </div>
                     <div>
                         <h4 class="font-bold text-white truncate">${pl.name}</h4>
-                        <p class="text-xs text-gray-400">${pl.tracks.length} Songs</p>
+                        <p class="text-xs text-gray-400">${pl.tracks.length} tracks</p>
                     </div>
                 </div>
             `).join('');
         }
 
         function renderSidebarPlaylists() {
-            const sidebar = document.getElementById('desktopPlaylistSidebar');
-            if (!sidebar) return;
-
-            if (state.playlists.length === 0) {
-                sidebar.innerHTML = `<div class="text-gray-600 text-xs px-2">No playlists</div>`;
-                return;
-            }
-
-            sidebar.innerHTML = state.playlists.map(pl => `
-                <div class="px-3 py-2 rounded-md hover:bg-white/5 cursor-pointer text-sm text-gray-400 hover:text-white transition truncate" onclick="openPlaylistDetail('${pl.id}')">
+            const sb = document.getElementById('desktopPlaylistSidebar');
+            if(!sb) return;
+            sb.innerHTML = state.playlists.map(pl => `
+                <div class="px-3 py-2 rounded-lg hover:bg-white/5 text-gray-400 hover:text-white cursor-pointer transition text-sm truncate" onclick="openPlaylistDetail('${pl.id}')">
                     ${pl.name}
                 </div>
             `).join('');
         }
 
-        function createNewPlaylistUI() {
-            document.getElementById('createPlaylistModal').classList.remove('hidden');
-            document.getElementById('newPlaylistName').focus();
-        }
-
-        function closeCreatePlaylistModal() {
-            document.getElementById('createPlaylistModal').classList.add('hidden');
-            document.getElementById('newPlaylistName').value = '';
-        }
-
-        function submitCreatePlaylist() {
-            const name = document.getElementById('newPlaylistName').value.trim();
-            if (!name) return;
-
-            const newPlaylist = {
-                id: Date.now().toString(),
-                name: name,
-                tracks: []
-            };
-
-            state.playlists.push(newPlaylist);
-            auth.saveUserData();
-
-            closeCreatePlaylistModal();
-
-            // If we are in "Add to Playlist" mode, refresh that list too
-            if (!document.getElementById('addToPlaylistModal').classList.contains('hidden')) {
-                renderAddToPlaylistModal();
-            }
-
-            // If we are in Library, refresh
-            if (!document.getElementById('libraryView').classList.contains('hidden')) {
-                renderPlaylists();
-            }
-
-            showToast('Playlist Dibuat', 'success', name);
-        }
-
         function openPlaylistDetail(id) {
-            const playlist = state.playlists.find(p => p.id === id);
-            if (!playlist) return;
-
+            const pl = state.playlists.find(p => p.id === id);
+            if(!pl) return;
             state.activePlaylistId = id;
 
-            document.getElementById('playlistsList').classList.add('hidden');
-            document.getElementById('playlistDetailView').classList.remove('hidden');
-
-            document.getElementById('playlistDetailTitle').textContent = playlist.name;
-            document.getElementById('playlistDetailCount').textContent = `${playlist.tracks.length} Songs`;
+            showSection('playlistDetail');
+            document.getElementById('playlistDetailTitle').textContent = pl.name;
+            document.getElementById('playlistDetailCount').textContent = `${pl.tracks.length} Songs`;
 
             const list = document.getElementById('playlistTracksList');
-            if (playlist.tracks.length === 0) {
-                list.innerHTML = `<div class="text-center py-10 text-gray-500">Playlist kosong.</div>`;
-            } else {
-                list.innerHTML = playlist.tracks.map((track, idx) => `
-                    <div class="glass-card p-3 rounded-xl flex items-center gap-4 group" onclick='playTrack(null, ${JSON.stringify(playlist.tracks).replace(/'/g, "&#39;")}, ${idx})'>
-                        <img src="${track.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
-                        <div class="flex-1 min-w-0">
-                            <h4 class="font-bold text-white truncate text-base">${track.title}</h4>
-                            <p class="text-gray-400 text-sm truncate">${track.artist}</p>
-                        </div>
-                        <button onclick="event.stopPropagation(); removeTrackFromPlaylist('${id}', ${idx})" class="p-2 text-gray-500 hover:text-red-400 transition">
-                            <i class="fas fa-trash"></i>
-                        </button>
+            list.innerHTML = pl.tracks.map((t, i) => `
+                <div class="glass-card p-3 rounded-2xl flex items-center gap-4 group cursor-pointer" onclick="playTrack(null, state.playlists.find(p=>p.id=='${id}').tracks, ${i})">
+                    <span class="w-6 text-center text-gray-500 text-xs font-bold group-hover:text-brand-500 transition">${i+1}</span>
+                    <img src="${t.thumbnail}" class="w-10 h-10 rounded-lg object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-white truncate text-sm">${t.title}</h4>
+                        <p class="text-xs text-gray-400 truncate">${t.artist}</p>
                     </div>
-                `).join('');
-            }
+                    <button onclick="event.stopPropagation(); removeTrackFromPlaylist('${id}', ${i})" class="text-gray-500 hover:text-red-400 p-2"><i class="fas fa-trash"></i></button>
+                </div>
+            `).join('');
         }
 
-        function playCurrentPlaylist() {
-            const playlist = state.playlists.find(p => p.id === state.activePlaylistId);
-            if (!playlist || playlist.tracks.length === 0) {
-                showToast('Playlist Kosong', 'error');
-                return;
-            }
-            playTrack(null, playlist.tracks, 0);
+        // --- Helpers ---
+
+        function showSection(id) {
+            ['home', 'search', 'library', 'playlistDetail'].forEach(v => {
+                const el = document.getElementById(v === 'playlistDetail' ? 'playlistDetailView' : (v === 'search' ? 'searchResultsView' : `${v}View`));
+                if(el) el.classList.add('hidden');
+
+                // Nav State
+                const navId = v === 'home' ? 0 : v === 'search' ? 1 : v === 'library' ? 2 : -1;
+                if(navId > -1) {
+                    const mobNav = document.querySelectorAll('#mobileNav .nav-item');
+                    mobNav.forEach(n => n.classList.remove('nav-active', 'text-brand-500'));
+                    if(mobNav[navId]) mobNav[navId].classList.add('nav-active', 'text-brand-500');
+
+                    const deskNav = document.querySelectorAll('.nav-item-desktop');
+                    deskNav.forEach(n => n.classList.remove('bg-white/10', 'text-white'));
+                    if(deskNav[navId]) deskNav[navId].classList.add('bg-white/10', 'text-white');
+                }
+            });
+
+            const target = document.getElementById(id === 'playlistDetail' ? 'playlistDetailView' : (id === 'search' ? 'searchResultsView' : `${id}View`));
+            if(target) target.classList.remove('hidden');
         }
 
-        function confirmDeletePlaylist() {
-            if (confirm('Hapus playlist ini secara permanen?')) {
-                state.playlists = state.playlists.filter(p => p.id !== state.activePlaylistId);
-                auth.saveUserData();
-                showLibrary();
-                switchLibraryTab('playlists');
-                showToast('Playlist Dihapus', 'success');
-            }
+        function showHome() { showSection('home'); }
+        function showLibrary() { showSection('library'); }
+        function toggleSearchMobile() { showSection('search'); setTimeout(() => els.searchInput.focus(), 100); }
+
+        function normalizeTrack(t) {
+            if(!t) return null;
+            return {
+                title: t.title || t.songTitle || 'Unknown',
+                artist: t.artist || t.artis || 'Unknown',
+                thumbnail: t.thumbnail || t.image || t.coverImage || 'https://via.placeholder.com/400',
+                track_url: t.track_url || t.url,
+                download: t.download || null
+            };
         }
 
-        function removeTrackFromPlaylist(playlistId, trackIndex) {
-            const playlist = state.playlists.find(p => p.id === playlistId);
-            if (!playlist) return;
+        function formatTime(s) {
+            if(!s || isNaN(s)) return '0:00';
+            const m = Math.floor(s / 60);
+            const sec = Math.floor(s % 60);
+            return `${m}:${sec < 10 ? '0' : ''}${sec}`;
+        }
 
-            playlist.tracks.splice(trackIndex, 1);
+        function showToast(title, type, msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMessage').textContent = msg;
+
+            // Adjust transform based on viewport
+            const isMobile = window.innerWidth < 768;
+            t.style.transform = isMobile ? 'translate(-50%, 0)' : 'translateX(0)';
+
+            setTimeout(() => {
+                t.style.transform = isMobile ? 'translate(-50%, -200%)' : 'translateX(200%)';
+            }, 3000);
+        }
+
+        // --- Data Helpers ---
+        function toggleLikeData(url, t, a, i) {
+            const idx = state.favorites.findIndex(x => (x.url || x.track_url) === url);
+            if(idx > -1) {
+                state.favorites.splice(idx, 1);
+                showToast('Removed', 'info', 'Removed from favorites');
+            } else {
+                state.favorites.push({ url, track_url: url, title: t, artist: a, thumbnail: i });
+                showToast('Liked', 'success', 'Added to favorites');
+            }
             auth.saveUserData();
-
-            // Re-render
-            openPlaylistDetail(playlistId);
-            showToast('Dihapus dari Playlist', 'info');
+            updateLikeButtonState(url);
+            if(!document.getElementById('libraryView').classList.contains('hidden')) renderFavorites();
         }
 
-        // --- Add to Playlist Modal Logic ---
+        function isFavorited(url) { return state.favorites.some(x => (x.url || x.track_url) === url); }
 
-        function openAddToPlaylistModal(track) {
-            // Need to handle track objects differently if coming from strings or objects
-            // The JSON.stringify in HTML attributes might be tricky with quotes
-            // So we rely on the object passed.
-            state.trackToAdd = normalizeTrack(track);
+        function updateLikeButtonState(url) {
+            const liked = isFavorited(url);
+            els.likeBtns.forEach(b => {
+                b.innerHTML = `<i class="${liked ? 'fas text-brand-500' : 'far'} fa-heart"></i>`;
+                b.classList.toggle('text-brand-500', liked);
+            });
+        }
 
-            const modal = document.getElementById('addToPlaylistModal');
-            const content = document.getElementById('addToPlaylistContent');
+        function addToRecent(t) {
+            state.recent = state.recent.filter(x => (x.url || x.track_url) !== t.track_url);
+            state.recent.unshift(t);
+            if(state.recent.length > 10) state.recent.pop();
+            auth.saveUserData();
+            loadRecentlyPlayed();
+        }
 
-            modal.classList.remove('hidden', 'pointer-events-none', 'opacity-0');
-            modal.classList.add('opacity-100');
-            content.classList.remove('scale-95');
-            content.classList.add('scale-100');
+        function loadRecentlyPlayed() {
+            const grid = document.getElementById('recentlyPlayedGrid');
+            if(!state.recent.length) return;
+            grid.innerHTML = state.recent.map((t, i) => `
+                <div class="shrink-0 w-32 cursor-pointer group" onclick="playTrack(null, state.recent, ${i})">
+                    <div class="relative w-32 h-32 rounded-xl overflow-hidden mb-2">
+                         <img src="${t.thumbnail}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                         <div class="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                             <i class="fas fa-play text-white"></i>
+                         </div>
+                    </div>
+                    <h4 class="text-xs font-bold text-white truncate">${t.title}</h4>
+                </div>
+            `).join('');
+        }
 
+        async function loadTopGlobal() {
+             const grid = document.getElementById('trendingGrid');
+             try {
+                 const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=top%20global`);
+                 const data = await res.json();
+                 if(data.status && data.data) {
+                     grid.innerHTML = data.data.slice(0, 9).map((t, i) => `
+                         <div class="glass-card p-3 rounded-2xl flex items-center gap-3 cursor-pointer group hover:bg-white/10" onclick="playTrack(null, [${JSON.stringify(t).replace(/"/g, "&quot;")}], 0)">
+                             <span class="w-4 text-xs font-bold text-gray-500 text-center">${i+1}</span>
+                             <img src="${t.thumbnail}" class="w-12 h-12 rounded-lg object-cover">
+                             <div class="flex-1 min-w-0">
+                                 <h4 class="font-bold text-sm text-white truncate group-hover:text-brand-400 transition">${t.title}</h4>
+                                 <p class="text-xs text-gray-400 truncate">${t.artist}</p>
+                             </div>
+                             <div class="w-8 h-8 rounded-full border border-white/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition"><i class="fas fa-play text-xs"></i></div>
+                         </div>
+                     `).join('');
+                 }
+             } catch(e) {}
+        }
+
+        function downloadCurrentTrack() {
+            const t = normalizeTrack(state.queue[state.currentIndex]);
+            if(!t) return;
+
+            const d = { ...t, url: t.track_url };
+            if(!state.downloads.some(x => x.url === d.url)) {
+                 state.downloads.unshift(d);
+                 auth.saveUserData();
+            }
+
+            if(t.download) window.open(t.download, '_blank');
+            else {
+                showToast('Processing', 'info', 'Getting download link...');
+                fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(t.track_url)}`)
+                .then(r=>r.json()).then(res=>{
+                     if(res.status && res.data && res.data.mp3DownloadLink) window.open(res.data.mp3DownloadLink, '_blank');
+                     else showToast('Error', 'error', 'Download unavailable');
+                });
+            }
+        }
+
+        // --- Modal Wrappers ---
+        function createNewPlaylistUI() { document.getElementById('createPlaylistModal').classList.remove('hidden'); document.getElementById('newPlaylistName').focus(); }
+        function closeCreatePlaylistModal() { document.getElementById('createPlaylistModal').classList.add('hidden'); }
+        function submitCreatePlaylist() {
+            const n = document.getElementById('newPlaylistName').value.trim();
+            if(!n) return;
+            state.playlists.push({ id: Date.now().toString(), name: n, tracks: [] });
+            auth.saveUserData();
+            closeCreatePlaylistModal();
+            renderPlaylists();
+            if(!document.getElementById('addToPlaylistModal').classList.contains('pointer-events-none')) renderAddToPlaylistModal();
+            showToast('Created', 'success', n);
+        }
+
+        function openAddToPlaylistModal(t) {
+            state.trackToAdd = normalizeTrack(t);
+            const m = document.getElementById('addToPlaylistModal');
+            m.classList.remove('hidden', 'pointer-events-none', 'opacity-0');
+            m.classList.add('opacity-100');
+            document.getElementById('addToPlaylistContent').classList.replace('scale-95', 'scale-100');
             renderAddToPlaylistModal();
         }
 
         function closeAddToPlaylistModal() {
-            const modal = document.getElementById('addToPlaylistModal');
-            const content = document.getElementById('addToPlaylistContent');
-
-            modal.classList.add('opacity-0', 'pointer-events-none');
-            content.classList.remove('scale-100');
-            content.classList.add('scale-95');
-
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                state.trackToAdd = null;
-            }, 300);
+             const m = document.getElementById('addToPlaylistModal');
+             m.classList.add('opacity-0', 'pointer-events-none');
+             document.getElementById('addToPlaylistContent').classList.replace('scale-100', 'scale-95');
+             setTimeout(() => m.classList.add('hidden'), 300);
         }
 
         function renderAddToPlaylistModal() {
-            const container = document.getElementById('modalPlaylistsList');
-            if (state.playlists.length === 0) {
-                container.innerHTML = `<div class="text-center text-gray-500 py-4 text-xs">No playlists found. Create one!</div>`;
-                return;
-            }
-
-            container.innerHTML = state.playlists.map(pl => {
-                const alreadyIn = pl.tracks.some(t => (t.track_url || t.url) === (state.trackToAdd.track_url || state.trackToAdd.url));
-                return `
-                <div class="p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 flex items-center justify-between cursor-pointer transition-colors" onclick="addTrackToPlaylist('${pl.id}')">
-                    <div class="flex items-center gap-3 overflow-hidden">
-                        <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-600 to-purple-700 flex items-center justify-center shrink-0">
-                            <i class="fas fa-music text-[10px] text-white/50"></i>
-                        </div>
-                        <span class="font-bold text-sm truncate">${pl.name}</span>
-                        <span class="text-xs text-gray-500 shrink-0">(${pl.tracks.length})</span>
-                    </div>
-                    ${alreadyIn ? '<i class="fas fa-check text-brand-500"></i>' : '<i class="fas fa-plus text-gray-400"></i>'}
+            const div = document.getElementById('modalPlaylistsList');
+            if(!state.playlists.length) return div.innerHTML = '<p class="text-center text-xs text-gray-500 py-4">No playlists</p>';
+            div.innerHTML = state.playlists.map(p => `
+                <div class="p-3 rounded-xl bg-white/5 hover:bg-white/10 flex items-center justify-between cursor-pointer" onclick="addTrackToPlaylist('${p.id}')">
+                    <span class="font-bold text-sm">${p.name}</span>
+                    <i class="fas fa-plus text-xs"></i>
                 </div>
-            `}).join('');
+            `).join('');
         }
 
-        function addTrackToPlaylist(playlistId) {
-            if (!state.trackToAdd) return;
-
-            const playlist = state.playlists.find(p => p.id === playlistId);
-            if (!playlist) return;
-
-            // Check duplicate
-            if (playlist.tracks.some(t => (t.track_url || t.url) === (state.trackToAdd.track_url || state.trackToAdd.url))) {
-                showToast('Sudah ada', 'info', 'Lagu sudah ada di playlist ini.');
-                return;
-            }
-
-            playlist.tracks.push(state.trackToAdd);
+        function addTrackToPlaylist(id) {
+            const p = state.playlists.find(x => x.id === id);
+            if(p.tracks.some(x => x.track_url === state.trackToAdd.track_url)) return showToast('Exists', 'info', 'Already in playlist');
+            p.tracks.push(state.trackToAdd);
             auth.saveUserData();
-
-            showToast('Berhasil', 'success', `Ditambahkan ke ${playlist.name}`);
             closeAddToPlaylistModal();
+            showToast('Added', 'success', `Added to ${p.name}`);
+        }
 
-            // Update library if visible
-            if (!document.getElementById('libraryView').classList.contains('hidden') &&
-                document.getElementById('tabPlaylists').classList.contains('bg-brand-600')) {
-                renderPlaylists();
+        function toggleQueue() { document.getElementById('queueModal').classList.toggle('translate-y-full'); renderQueue(); }
+        function renderQueue() {
+            const div = document.getElementById('queueList');
+            if(!state.queue.length) return div.innerHTML = '<p class="text-center text-gray-500 mt-10">Queue empty</p>';
+            div.innerHTML = state.queue.map((t, i) => `
+                <div class="p-2 rounded-xl flex items-center gap-3 ${i===state.currentIndex ? 'bg-brand-500/20' : ''} cursor-pointer" onclick="state.currentIndex=${i}; playTrack(null);">
+                    <span class="text-xs font-bold w-6 text-center">${i+1}</span>
+                    <img src="${t.thumbnail||t.image}" class="w-8 h-8 rounded object-cover">
+                    <div class="flex-1 min-w-0">
+                         <h4 class="text-sm font-bold text-white truncate">${t.title||t.songTitle}</h4>
+                    </div>
+                </div>
+            `).join('');
+        }
+        function clearQueue() {
+             if(state.queue.length < 2) return;
+             state.queue = [state.queue[state.currentIndex]];
+             state.currentIndex = 0;
+             renderQueue();
+             showToast('Cleared', 'info', 'Queue cleared');
+        }
+
+        function openFullPlayer() { els.fullPlayer.classList.remove('translate-y-full'); }
+        function closeFullPlayer() { els.fullPlayer.classList.add('translate-y-full'); }
+        function toggleShuffle() { state.isShuffled = !state.isShuffled; document.getElementById('shuffleBtn').classList.toggle('text-brand-500'); showToast('Shuffle', 'info', state.isShuffled?'On':'Off'); }
+        function toggleRepeat() {
+            state.repeatMode = (state.repeatMode+1)%3;
+            const b = document.getElementById('repeatBtn');
+            if(state.repeatMode===0) { b.classList.remove('text-brand-500'); b.innerHTML='<i class="fas fa-repeat text-xl"></i>'; }
+            if(state.repeatMode===1) { b.classList.add('text-brand-500'); b.innerHTML='<i class="fas fa-repeat text-xl"></i>'; }
+            if(state.repeatMode===2) { b.classList.add('text-brand-500'); b.innerHTML='<i class="fas fa-1 text-xl"></i>'; }
+        }
+        function confirmDeletePlaylist() {
+            if(confirm('Delete playlist?')) {
+                state.playlists = state.playlists.filter(p=>p.id!==state.activePlaylistId);
+                auth.saveUserData();
+                showLibrary(); switchLibraryTab('playlists');
+                showToast('Deleted', 'info');
+            }
+        }
+        function removeTrackFromPlaylist(pid, idx) {
+            const p = state.playlists.find(x=>x.id===pid);
+            if(p) {
+                p.tracks.splice(idx, 1);
+                auth.saveUserData();
+                openPlaylistDetail(pid);
+                showToast('Removed', 'info');
             }
         }
     </script>
