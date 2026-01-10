@@ -780,8 +780,16 @@
             // Setup audio events
             audio.addEventListener('timeupdate', updateProgress);
             audio.addEventListener('ended', handleTrackEnd);
-            audio.addEventListener('play', () => updatePlayState(true));
+
+            // Only update state when actually playing to show loading spinner correctly
+            audio.addEventListener('playing', () => updatePlayState(true));
             audio.addEventListener('pause', () => updatePlayState(false));
+
+            // Show loading when buffering
+            audio.addEventListener('waiting', () => {
+                els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
+            });
+
             audio.addEventListener('error', handleAudioError);
             audio.addEventListener('loadedmetadata', () => {
                 els.duration.textContent = formatTime(audio.duration);
@@ -1070,6 +1078,8 @@
             if (state.queue.length === 0) return;
 
             if (audio.paused) {
+                // Show loading immediately
+                els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
                 audio.play();
             } else {
                 audio.pause();
