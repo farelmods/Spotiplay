@@ -988,35 +988,63 @@
 
                 // UI Loading State
                 updatePlayerInfo(currentTrack);
+                showToast('Memuat lagu...', 'info', 'Mohon tunggu sebentar...');
                 els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
+
+                // Show Mini Player immediately
                 els.miniPlayer.style.transform = 'translateY(0)';
 
-                // MOCK PLAYBACK LOGIC
-                // Since API is disabled, we use a sample audio or just "fake" it
+                // Check if track object already has a direct download link (optimization)
                 let streamUrl = currentTrack.download;
 
+                // If not, fetch it
                 if (!streamUrl) {
-                    // Use a generic copyright-free sample for demo purposes
-                    // or just a placeholder that might fail but shows intent
-                    streamUrl = "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3";
+                    // Use v2 endpoint
+                    const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`;
+                    const res = await fetch(apiUrl);
+                    const data = await res.json();
+
+                    if (!data.status || !data.data || !data.data.mp3DownloadLink) {
+                        if (data.status === false && data.code === 500) {
+                             throw new Error('RESTRICTED');
+                        }
+                        throw new Error('FAILED');
+                    }
+
+                    streamUrl = data.data.mp3DownloadLink;
+
+                    // Cache it in the queue object to avoid re-fetching
                     state.queue[state.currentIndex].download = streamUrl;
-                    showToast('Mode Demo', 'info', 'Memutar sampel audio (API Nonaktif).');
+
+                    // Update metadata if available from detailed response
+                    if(data.data.coverImage) state.queue[state.currentIndex].thumbnail = data.data.coverImage;
+                    if(data.data.artist) state.queue[state.currentIndex].artist = data.data.artist;
+                    if(data.data.songTitle) state.queue[state.currentIndex].title = data.data.songTitle;
+
+                    // Re-update info
+                    updatePlayerInfo(normalizeTrack(state.queue[state.currentIndex]));
                 }
 
                 // Play
                 audio.src = streamUrl;
-                audio.play().then(() => {
-                    addToRecent(currentTrack);
-                    updateLikeButtonState(currentTrack.track_url);
-                }).catch(e => {
+                audio.play().catch(e => {
                     console.error("Playback failed:", e);
-                    // In demo mode, just show playing state even if audio fails
-                    updatePlayState(true);
-                    showToast('Info', 'info', 'Simulasi pemutaran (Audio tidak tersedia).');
+                    handleAudioError();
                 });
+
+                // Add to recent
+                addToRecent(currentTrack);
+
+                // Update Like Button state
+                updateLikeButtonState(currentTrack.track_url);
 
             } catch (error) {
                 console.error("Play error:", error);
+                let msg = 'Gagal memutar lagu. Silakan coba lagu lain.';
+                if (error.message === 'RESTRICTED') {
+                    msg = 'Maaf, lagu ini bermasalah dari server pusat. Silakan cari versi lain.';
+                }
+                showToast('Gagal Memutar', 'error', msg);
                 updatePlayState(false);
             }
         }
@@ -1160,60 +1188,39 @@
             }
         }
 
-        // --- Search & Data Logic (MOCK MODE) ---
-
-        const MOCK_DB = [
-            { title: "Faded", artist: "Alan Walker", thumbnail: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=400", duration: "3:32" },
-            { title: "Alone", artist: "Marshmello", thumbnail: "https://images.unsplash.com/photo-1514525253440-b393332569ce?w=400", duration: "3:19" },
-            { title: "Shape of You", artist: "Ed Sheeran", thumbnail: "https://images.unsplash.com/photo-1493225255756-d9584f8606e9?w=400", duration: "4:23" },
-            { title: "Blinding Lights", artist: "The Weeknd", thumbnail: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=400", duration: "3:20" },
-            { title: "Levitating", artist: "Dua Lipa", thumbnail: "https://images.unsplash.com/photo-1506157786151-b8491531f063?w=400", duration: "3:41" },
-            { title: "Stay", artist: "The Kid LAROI", thumbnail: "https://images.unsplash.com/photo-1459749411177-0473ef71607b?w=400", duration: "2:21" },
-            { title: "Montero", artist: "Lil Nas X", thumbnail: "https://images.unsplash.com/photo-1511379938547-c1f69419868d?w=400", duration: "2:17" },
-            { title: "Peaches", artist: "Justin Bieber", thumbnail: "https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=400", duration: "3:18" }
-        ];
+        // --- Search & Data Logic ---
 
         async function handleSearch(e) {
             e.preventDefault();
-            const query = els.searchInput.value.trim().toLowerCase();
+            const query = els.searchInput.value.trim();
             if (!query) return;
 
             showSection('search');
             els.resultsList.innerHTML = '';
             els.searchLoading.classList.remove('hidden');
 
-            // Simulate API Delay
-            setTimeout(() => {
+            try {
+                const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}`);
+                const data = await res.json();
+
                 els.searchLoading.classList.add('hidden');
 
-                // Filter mock data
-                const results = MOCK_DB.filter(item =>
-                    item.title.toLowerCase().includes(query) ||
-                    item.artist.toLowerCase().includes(query)
-                );
-
-                if (results.length === 0) {
-                    // If no match, fake some data based on query
-                    for(let i=1; i<=3; i++) {
-                        results.push({
-                            title: `${query} Remix ${i}`,
-                            artist: "Unknown Artist",
-                            thumbnail: "https://via.placeholder.com/150",
-                            duration: "3:00",
-                            track_url: `mock://${query}-${i}`
-                        });
-                    }
+                if (data.status && data.data && data.data.length > 0) {
+                    state.searchResults = data.data;
+                    renderResults(data.data);
+                } else {
+                    els.resultsList.innerHTML = `
+                        <div class="text-center py-10 text-gray-500">
+                            <i class="fas fa-ghost text-4xl mb-4 opacity-50"></i>
+                            <p>Tidak ada hasil untuk "${query}"</p>
+                        </div>
+                    `;
                 }
-
-                state.searchResults = results.map(item => ({
-                    ...item,
-                    track_url: item.track_url || `mock://${item.title.replace(/\s/g,'-')}`,
-                    download: null // Force offline check
-                }));
-
-                renderResults(state.searchResults);
-                showToast('Mode Offline', 'info', 'Menampilkan data demo (API Nonaktif).');
-            }, 800);
+            } catch (error) {
+                console.error(error);
+                els.searchLoading.classList.add('hidden');
+                showToast('Gagal Mencari', 'error', 'Tidak dapat terhubung ke server.');
+            }
         }
 
         function renderResults(tracks) {
@@ -1263,19 +1270,11 @@
         async function loadTopGlobal() {
             const grid = document.getElementById('trendingGrid');
             try {
-                // Using search API as placeholder for trending since no dedicated trending endpoint is provided in new API
-                const res = await fetch(`https://apizell.web.id/search/youtube?q=top%20music%20hits`);
+                const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=top%20hits%20global`);
                 const data = await res.json();
-                const results = data.otakudesu || data.data || [];
 
-                if (data.status && results.length > 0) {
-                    const tracks = results.slice(0, 8).map(item => ({
-                        title: item.title,
-                        artist: item.status || 'YouTube',
-                        thumbnail: item.image || item.thumbnail,
-                        track_url: item.url,
-                        duration: item.rating || ''
-                    }));
+                if (data.status && data.data) {
+                    const tracks = data.data.slice(0, 8); // Show more
                     state.trendingResults = tracks;
                     grid.innerHTML = tracks.map((track, idx) => `
                         <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition cursor-pointer group" onclick='playFromTrending(${idx})'>
@@ -1490,16 +1489,52 @@
             `).join('');
         }
 
-        function addToDownloads(track) {
-            const trackUrl = track.track_url || track.url;
-            if (state.downloads.some(t => (t.url || t.track_url) === trackUrl)) return;
+        async function downloadCurrentTrack() {
+             const track = normalizeTrack(state.queue[state.currentIndex]);
+             if (!track) return;
 
-            state.downloads.unshift(track);
-            auth.saveUserData();
+             addToDownloads(track);
+             showToast('Menyiapkan...', 'info', 'Mengunduh lagu ke perangkat...');
 
-            if (document.getElementById('tabDownloads').classList.contains('bg-brand-600')) {
-                renderDownloads();
-            }
+             let downloadUrl = track.download;
+
+             if (!downloadUrl) {
+                 const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`;
+                 try {
+                     const res = await fetch(apiUrl);
+                     const data = await res.json();
+                     if (data.status && data.data && data.data.mp3DownloadLink) {
+                         downloadUrl = data.data.mp3DownloadLink;
+                         if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = downloadUrl;
+                     } else {
+                         throw new Error('No link');
+                     }
+                 } catch (e) {
+                     showToast('Gagal', 'error', 'Tidak dapat mengambil link download.');
+                     return;
+                 }
+             }
+
+             // Trigger System Download via Blob Fetch
+             try {
+                 const response = await fetch(downloadUrl);
+                 if(!response.ok) throw new Error('Fetch failed');
+                 const blob = await response.blob();
+                 const url = window.URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.style.display = 'none';
+                 a.href = url;
+                 a.download = `${track.title} - ${track.artist}.mp3`;
+                 document.body.appendChild(a);
+                 a.click();
+                 window.URL.revokeObjectURL(url);
+                 document.body.removeChild(a);
+                 showToast('Berhasil', 'success', 'Lagu tersimpan di perangkat.');
+             } catch(e) {
+                 // Fallback to direct window open if CORS fails
+                 console.log("Blob fetch failed, falling back to window.open", e);
+                 window.open(downloadUrl, '_blank');
+             }
         }
 
         function renderDownloads() {
@@ -1539,14 +1574,35 @@
         }
 
         async function openExternalPlayer(directLink, trackUrl) {
+            showToast('Membuka...', 'info', 'Mengarahkan ke pemutar eksternal...');
+
             let targetUrl = directLink;
 
-            // In Mock mode, we don't refetch
+            // If link is invalid or hash, try to fetch fresh link
+            if (!targetUrl || targetUrl === '#' || targetUrl.includes('undefined')) {
+                 try {
+                     const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(trackUrl)}`;
+                     const res = await fetch(apiUrl);
+                     const data = await res.json();
+                     if (data.status && data.data && data.data.mp3DownloadLink) {
+                         targetUrl = data.data.mp3DownloadLink;
+                         // Update local cache if possible
+                         const idx = state.downloads.findIndex(t => (t.track_url || t.url) === trackUrl);
+                         if(idx > -1) {
+                             state.downloads[idx].download = targetUrl;
+                             auth.saveUserData();
+                         }
+                     }
+                 } catch(e) {
+                     showToast('Gagal', 'error', 'Link kadaluarsa & offline.');
+                     return;
+                 }
+            }
+
             if(targetUrl && targetUrl !== '#') {
-                showToast('Membuka...', 'info', 'Mengarahkan ke pemutar eksternal...');
                 window.open(targetUrl, '_blank');
             } else {
-                showToast('Error', 'error', 'Link tidak tersedia (Mode Demo).');
+                showToast('Error', 'error', 'Link tidak tersedia.');
             }
         }
 
@@ -1651,14 +1707,6 @@
             setTimeout(() => {
                 toast.classList.add('translate-x-full');
             }, 4000);
-        }
-
-        async function downloadCurrentTrack() {
-             const track = normalizeTrack(state.queue[state.currentIndex]);
-             if (!track) return;
-
-             // In Offline/No-API mode, we cannot download real files.
-             showToast('Fitur Terbatas', 'info', 'Download tidak tersedia di mode Offline/Demo.');
         }
 
         function toggleShuffle() {
