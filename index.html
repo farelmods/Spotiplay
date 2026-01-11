@@ -985,6 +985,21 @@
 
         // --- Core Audio Logic ---
 
+        /**
+         * Playback Strategy: Parallel/Fallback Race
+         * ----------------------------------------
+         * This system uses a "Race" strategy to ensure the fastest and most reliable playback.
+         * It calls multiple APIs simultaneously:
+         * 1. Siputzx V1 (Spotify) - Usually fast.
+         * 2. Vreden V1 (Spotify) - Reliable backup.
+         * 3. Siputzx V2 (Spotify) - Alternative fallback.
+         *
+         * Logic:
+         * - Promise.any() waits for the FIRST successful response.
+         * - If a source is blacklisted (due to previous error), it is skipped.
+         * - If one API is down, others are used automatically.
+         * - 'AbortController' ensures only the latest request consumes bandwidth.
+         */
         async function playTrack(track, queue = null, index = 0, blacklist = []) {
             try {
                 // Cancel previous pending requests
