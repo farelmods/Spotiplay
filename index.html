@@ -1007,62 +1007,37 @@
 
                 // If not, fetch it
                 if (!streamUrl) {
-                    // Strategy: Siputzx V1 -> Vreden -> Siputzx V2
-                    let found = false;
+                    // Multi-API Race Strategy: Try all valid endpoints simultaneously and take the first success
+                    showToast('Mengunduh...', 'info', 'Mencari sumber audio tercepat...');
 
-                    // 1. Try Siputzx V1 (Fastest)
-                    console.log('Trying V1...');
                     try {
-                        let res = await fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`);
-                        let data = await res.json();
-                        if (data.status && data.data && data.data.download) {
-                            streamUrl = data.data.download;
-                            found = true;
-                            console.log('V1 Success');
-                        }
-                    } catch(e) { console.log('V1 Failed'); }
+                         const fetchV1 = fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`)
+                            .then(r => r.json())
+                            .then(d => (d.status && d.data && d.data.download) ? d.data.download : Promise.reject('V1 Fail'));
 
-                    // 2. Try Vreden (Mid)
-                    if (!found) {
-                        console.log('Trying Vreden...');
-                        try {
-                            // showToast('Server 1 sibuk...', 'info', 'Mencoba server 2...');
-                            let res = await fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(currentTrack.track_url)}`);
-                            let data = await res.json();
-                            if (data.status && data.result && data.result.download) {
-                                streamUrl = data.result.download;
-                                found = true;
-                                console.log('Vreden Success');
-                                // Update metadata
-                                if(data.result.cover_url) state.queue[state.currentIndex].thumbnail = data.result.cover_url;
-                            }
-                        } catch(e) { console.log('Vreden Failed', e); }
-                    }
+                         const fetchVreden = fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(currentTrack.track_url)}`)
+                            .then(r => r.json())
+                            .then(d => (d.status && d.result && d.result.download) ? d.result.download : Promise.reject('Vreden Fail'));
 
-                    // 3. Try Siputzx V2 (Slowest/Fallback)
-                    if (!found) {
-                        try {
-                            showToast('Server 2 sibuk...', 'info', 'Mencoba server cadangan...');
-                            let res = await fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`);
-                            let data = await res.json();
-                            if (data.status && data.data && data.data.mp3DownloadLink) {
-                                streamUrl = data.data.mp3DownloadLink;
-                                found = true;
-                                if(data.data.coverImage) state.queue[state.currentIndex].thumbnail = data.data.coverImage;
-                            }
-                        } catch(e) {}
-                    }
+                         const fetchV2 = fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`)
+                            .then(r => r.json())
+                            .then(d => (d.status && d.data && d.data.mp3DownloadLink) ? d.data.mp3DownloadLink : Promise.reject('V2 Fail'));
 
-                    if (!found) {
+                         // Race them using Promise.any
+                         streamUrl = await Promise.any([fetchV1, fetchVreden, fetchV2]);
+                         console.log('Got stream url from fastest source');
+
+                         // Cache
+                         state.queue[state.currentIndex].download = streamUrl;
+
+                    } catch (e) {
+                         console.error("All sources failed", e);
                          throw new Error('FAILED');
                     }
-
-                    // Cache it in the queue object
-                    state.queue[state.currentIndex].download = streamUrl;
-
-                    // Re-update info
-                    updatePlayerInfo(normalizeTrack(state.queue[state.currentIndex]));
                 }
+
+                // Re-update info
+                updatePlayerInfo(normalizeTrack(state.queue[state.currentIndex]));
 
                 // Play
                 audio.src = streamUrl;
@@ -1241,39 +1216,49 @@
             els.searchLoading.classList.remove('hidden');
 
             try {
-                // Priority 1: Siputzx
-                let results = [];
-                try {
-                    const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}`);
-                    const data = await res.json();
-                    if (data.status && data.data && data.data.length > 0) {
-                        results = data.data;
-                    }
-                } catch (e) { console.log('Siputzx search failed, trying fallback...'); }
+                // Parallel Execution: Fetch from both APIs simultaneously
+                const [siputzxRes, vredenRes] = await Promise.allSettled([
+                    fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}`).then(r => r.json()),
+                    fetch(`https://api.vreden.my.id/api/v2/search/spotify?query=${encodeURIComponent(query)}`).then(r => r.json())
+                ]);
 
-                // Priority 2: Vreden (Fallback)
-                if (results.length === 0) {
-                    try {
-                        const res = await fetch(`https://api.vreden.my.id/api/v2/search/spotify?query=${encodeURIComponent(query)}`);
-                        const data = await res.json();
-                        if (data.status && data.result && data.result.search_data) {
-                            // Normalize Vreden data to match Siputzx structure
-                            results = data.result.search_data.map(item => ({
-                                title: item.name,
-                                artist: item.artist,
-                                thumbnail: item.cover_img,
-                                track_url: item.song_link,
-                                duration: item.duration
-                            }));
-                        }
-                    } catch (e) { console.log('Vreden search failed'); }
+                let combinedResults = [];
+
+                // Process Siputzx
+                if (siputzxRes.status === 'fulfilled' && siputzxRes.value.status && siputzxRes.value.data) {
+                    combinedResults.push(...siputzxRes.value.data);
+                }
+
+                // Process Vreden (Normalize and merge)
+                if (vredenRes.status === 'fulfilled' && vredenRes.value.status && vredenRes.value.result && vredenRes.value.result.search_data) {
+                    const vredenNorm = vredenRes.value.result.search_data.map(item => ({
+                        title: item.name,
+                        artist: item.artist,
+                        thumbnail: item.cover_img,
+                        track_url: item.song_link,
+                        duration: item.duration
+                    }));
+                    combinedResults.push(...vredenNorm);
+                }
+
+                // Deduplicate based on URL or Title+Artist
+                const uniqueResults = [];
+                const seen = new Set();
+
+                for (const track of combinedResults) {
+                    const key = track.track_url || (track.title + track.artist).toLowerCase();
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        uniqueResults.push(track);
+                    }
                 }
 
                 els.searchLoading.classList.add('hidden');
 
-                if (results.length > 0) {
-                    state.searchResults = results;
-                    renderResults(results);
+                if (uniqueResults.length > 0) {
+                    state.searchResults = uniqueResults;
+                    renderResults(uniqueResults);
+                    showToast('Pencarian Selesai', 'success', `Ditemukan ${uniqueResults.length} lagu dari multi-sumber.`);
                 } else {
                     els.resultsList.innerHTML = `
                         <div class="text-center py-10 text-gray-500">
@@ -1566,41 +1551,19 @@
 
              if (!downloadUrl) {
                  try {
-                     // 1. Try V1
-                     let found = false;
-                     try {
-                         let res = await fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(track.track_url)}`);
-                         let data = await res.json();
-                         if (data.status && data.data && data.data.download) {
-                             downloadUrl = data.data.download;
-                             found = true;
-                         }
-                     } catch(e){}
+                     const fetchV1 = fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(track.track_url)}`)
+                        .then(r => r.json())
+                        .then(d => (d.status && d.data && d.data.download) ? d.data.download : Promise.reject());
 
-                     // 2. Try Vreden
-                     if(!found) {
-                         try {
-                             let res = await fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(track.track_url)}`);
-                             let data = await res.json();
-                             if (data.status && data.result && data.result.download) {
-                                 downloadUrl = data.result.download;
-                                 found = true;
-                             }
-                         } catch(e){}
-                     }
+                     const fetchVreden = fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(track.track_url)}`)
+                        .then(r => r.json())
+                        .then(d => (d.status && d.result && d.result.download) ? d.result.download : Promise.reject());
 
-                     // 3. Fallback V2
-                     if(!found) {
-                         let res = await fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`);
-                         let data = await res.json();
-                         if (data.status && data.data && data.data.mp3DownloadLink) {
-                             downloadUrl = data.data.mp3DownloadLink;
-                             found = true;
-                         }
-                     }
+                     const fetchV2 = fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`)
+                        .then(r => r.json())
+                        .then(d => (d.status && d.data && d.data.mp3DownloadLink) ? d.data.mp3DownloadLink : Promise.reject());
 
-                     if(!found) throw new Error('No link');
-
+                     downloadUrl = await Promise.any([fetchV1, fetchVreden, fetchV2]);
                      if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = downloadUrl;
                  } catch (e) {
                      showToast('Gagal', 'error', 'Tidak dapat mengambil link download.');
