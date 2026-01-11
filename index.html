@@ -1007,27 +1007,33 @@
 
                 // If not, fetch it
                 if (!streamUrl) {
-                    // Use v2 endpoint
-                    const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`;
-                    const res = await fetch(apiUrl);
-                    const data = await res.json();
+                    // Try V1 first (Faster)
+                    let apiUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`;
+                    let res = await fetch(apiUrl);
+                    let data = await res.json();
 
-                    if (!data.status || !data.data || !data.data.mp3DownloadLink) {
-                        if (data.status === false && data.code === 500) {
-                             throw new Error('RESTRICTED');
+                    if (data.status && data.data && data.data.download) {
+                        streamUrl = data.data.download;
+                    } else {
+                        // Fallback to V2 (Slower but reliable)
+                        showToast('Memuat ulang...', 'info', 'Menggunakan server cadangan...');
+                        apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`;
+                        res = await fetch(apiUrl);
+                        data = await res.json();
+
+                        if (!data.status || !data.data || !data.data.mp3DownloadLink) {
+                             throw new Error('FAILED');
                         }
-                        throw new Error('FAILED');
-                    }
+                        streamUrl = data.data.mp3DownloadLink;
 
-                    streamUrl = data.data.mp3DownloadLink;
+                        // Update metadata if available from V2
+                        if(data.data.coverImage) state.queue[state.currentIndex].thumbnail = data.data.coverImage;
+                        if(data.data.artist) state.queue[state.currentIndex].artist = data.data.artist;
+                        if(data.data.songTitle) state.queue[state.currentIndex].title = data.data.songTitle;
+                    }
 
                     // Cache it in the queue object to avoid re-fetching
                     state.queue[state.currentIndex].download = streamUrl;
-
-                    // Update metadata if available from detailed response
-                    if(data.data.coverImage) state.queue[state.currentIndex].thumbnail = data.data.coverImage;
-                    if(data.data.artist) state.queue[state.currentIndex].artist = data.data.artist;
-                    if(data.data.songTitle) state.queue[state.currentIndex].title = data.data.songTitle;
 
                     // Re-update info
                     updatePlayerInfo(normalizeTrack(state.queue[state.currentIndex]));
@@ -1509,16 +1515,24 @@
              let downloadUrl = track.download;
 
              if (!downloadUrl) {
-                 const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`;
                  try {
-                     const res = await fetch(apiUrl);
-                     const data = await res.json();
-                     if (data.status && data.data && data.data.mp3DownloadLink) {
-                         downloadUrl = data.data.mp3DownloadLink;
-                         if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = downloadUrl;
+                     // Try V1 first
+                     let res = await fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(track.track_url)}`);
+                     let data = await res.json();
+
+                     if (data.status && data.data && data.data.download) {
+                         downloadUrl = data.data.download;
                      } else {
-                         throw new Error('No link');
+                         // Fallback V2
+                         res = await fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`);
+                         data = await res.json();
+                         if (data.status && data.data && data.data.mp3DownloadLink) {
+                             downloadUrl = data.data.mp3DownloadLink;
+                         } else {
+                             throw new Error('No link');
+                         }
                      }
+                     if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = downloadUrl;
                  } catch (e) {
                      showToast('Gagal', 'error', 'Tidak dapat mengambil link download.');
                      return;
@@ -1591,12 +1605,22 @@
             // If link is invalid or hash, try to fetch fresh link
             if (!targetUrl || targetUrl === '#' || targetUrl.includes('undefined')) {
                  try {
-                     const apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(trackUrl)}`;
-                     const res = await fetch(apiUrl);
-                     const data = await res.json();
-                     if (data.status && data.data && data.data.mp3DownloadLink) {
-                         targetUrl = data.data.mp3DownloadLink;
-                         // Update local cache if possible
+                     // Try V1
+                     let res = await fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(trackUrl)}`);
+                     let data = await res.json();
+                     if (data.status && data.data && data.data.download) {
+                         targetUrl = data.data.download;
+                     } else {
+                         // Fallback V2
+                         res = await fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(trackUrl)}`);
+                         data = await res.json();
+                         if (data.status && data.data && data.data.mp3DownloadLink) {
+                             targetUrl = data.data.mp3DownloadLink;
+                         }
+                     }
+
+                     // Update local cache if possible
+                     if(targetUrl) {
                          const idx = state.downloads.findIndex(t => (t.track_url || t.url) === trackUrl);
                          if(idx > -1) {
                              state.downloads[idx].download = targetUrl;
