@@ -1007,32 +1007,57 @@
 
                 // If not, fetch it
                 if (!streamUrl) {
-                    // Try V1 first (Faster)
-                    let apiUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`;
-                    let res = await fetch(apiUrl);
-                    let data = await res.json();
+                    // Strategy: Siputzx V1 -> Vreden -> Siputzx V2
+                    let found = false;
 
-                    if (data.status && data.data && data.data.download) {
-                        streamUrl = data.data.download;
-                    } else {
-                        // Fallback to V2 (Slower but reliable)
-                        showToast('Memuat ulang...', 'info', 'Menggunakan server cadangan...');
-                        apiUrl = `https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`;
-                        res = await fetch(apiUrl);
-                        data = await res.json();
-
-                        if (!data.status || !data.data || !data.data.mp3DownloadLink) {
-                             throw new Error('FAILED');
+                    // 1. Try Siputzx V1 (Fastest)
+                    console.log('Trying V1...');
+                    try {
+                        let res = await fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`);
+                        let data = await res.json();
+                        if (data.status && data.data && data.data.download) {
+                            streamUrl = data.data.download;
+                            found = true;
+                            console.log('V1 Success');
                         }
-                        streamUrl = data.data.mp3DownloadLink;
+                    } catch(e) { console.log('V1 Failed'); }
 
-                        // Update metadata if available from V2
-                        if(data.data.coverImage) state.queue[state.currentIndex].thumbnail = data.data.coverImage;
-                        if(data.data.artist) state.queue[state.currentIndex].artist = data.data.artist;
-                        if(data.data.songTitle) state.queue[state.currentIndex].title = data.data.songTitle;
+                    // 2. Try Vreden (Mid)
+                    if (!found) {
+                        console.log('Trying Vreden...');
+                        try {
+                            // showToast('Server 1 sibuk...', 'info', 'Mencoba server 2...');
+                            let res = await fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(currentTrack.track_url)}`);
+                            let data = await res.json();
+                            if (data.status && data.result && data.result.download) {
+                                streamUrl = data.result.download;
+                                found = true;
+                                console.log('Vreden Success');
+                                // Update metadata
+                                if(data.result.cover_url) state.queue[state.currentIndex].thumbnail = data.result.cover_url;
+                            }
+                        } catch(e) { console.log('Vreden Failed', e); }
                     }
 
-                    // Cache it in the queue object to avoid re-fetching
+                    // 3. Try Siputzx V2 (Slowest/Fallback)
+                    if (!found) {
+                        try {
+                            showToast('Server 2 sibuk...', 'info', 'Mencoba server cadangan...');
+                            let res = await fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`);
+                            let data = await res.json();
+                            if (data.status && data.data && data.data.mp3DownloadLink) {
+                                streamUrl = data.data.mp3DownloadLink;
+                                found = true;
+                                if(data.data.coverImage) state.queue[state.currentIndex].thumbnail = data.data.coverImage;
+                            }
+                        } catch(e) {}
+                    }
+
+                    if (!found) {
+                         throw new Error('FAILED');
+                    }
+
+                    // Cache it in the queue object
                     state.queue[state.currentIndex].download = streamUrl;
 
                     // Re-update info
@@ -1216,14 +1241,39 @@
             els.searchLoading.classList.remove('hidden');
 
             try {
-                const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}`);
-                const data = await res.json();
+                // Priority 1: Siputzx
+                let results = [];
+                try {
+                    const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}`);
+                    const data = await res.json();
+                    if (data.status && data.data && data.data.length > 0) {
+                        results = data.data;
+                    }
+                } catch (e) { console.log('Siputzx search failed, trying fallback...'); }
+
+                // Priority 2: Vreden (Fallback)
+                if (results.length === 0) {
+                    try {
+                        const res = await fetch(`https://api.vreden.my.id/api/v2/search/spotify?query=${encodeURIComponent(query)}`);
+                        const data = await res.json();
+                        if (data.status && data.result && data.result.search_data) {
+                            // Normalize Vreden data to match Siputzx structure
+                            results = data.result.search_data.map(item => ({
+                                title: item.name,
+                                artist: item.artist,
+                                thumbnail: item.cover_img,
+                                track_url: item.song_link,
+                                duration: item.duration
+                            }));
+                        }
+                    } catch (e) { console.log('Vreden search failed'); }
+                }
 
                 els.searchLoading.classList.add('hidden');
 
-                if (data.status && data.data && data.data.length > 0) {
-                    state.searchResults = data.data;
-                    renderResults(data.data);
+                if (results.length > 0) {
+                    state.searchResults = results;
+                    renderResults(results);
                 } else {
                     els.resultsList.innerHTML = `
                         <div class="text-center py-10 text-gray-500">
@@ -1235,7 +1285,7 @@
             } catch (error) {
                 console.error(error);
                 els.searchLoading.classList.add('hidden');
-                showToast('Gagal Mencari', 'error', 'Tidak dapat terhubung ke server.');
+                showToast('Gagal Mencari', 'error', 'Semua server sibuk.');
             }
         }
 
@@ -1516,22 +1566,41 @@
 
              if (!downloadUrl) {
                  try {
-                     // Try V1 first
-                     let res = await fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(track.track_url)}`);
-                     let data = await res.json();
+                     // 1. Try V1
+                     let found = false;
+                     try {
+                         let res = await fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(track.track_url)}`);
+                         let data = await res.json();
+                         if (data.status && data.data && data.data.download) {
+                             downloadUrl = data.data.download;
+                             found = true;
+                         }
+                     } catch(e){}
 
-                     if (data.status && data.data && data.data.download) {
-                         downloadUrl = data.data.download;
-                     } else {
-                         // Fallback V2
-                         res = await fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`);
-                         data = await res.json();
+                     // 2. Try Vreden
+                     if(!found) {
+                         try {
+                             let res = await fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(track.track_url)}`);
+                             let data = await res.json();
+                             if (data.status && data.result && data.result.download) {
+                                 downloadUrl = data.result.download;
+                                 found = true;
+                             }
+                         } catch(e){}
+                     }
+
+                     // 3. Fallback V2
+                     if(!found) {
+                         let res = await fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`);
+                         let data = await res.json();
                          if (data.status && data.data && data.data.mp3DownloadLink) {
                              downloadUrl = data.data.mp3DownloadLink;
-                         } else {
-                             throw new Error('No link');
+                             found = true;
                          }
                      }
+
+                     if(!found) throw new Error('No link');
+
                      if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = downloadUrl;
                  } catch (e) {
                      showToast('Gagal', 'error', 'Tidak dapat mengambil link download.');
