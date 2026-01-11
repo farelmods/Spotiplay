@@ -735,7 +735,8 @@
             downloads: [],
             playlists: [],
             activePlaylistId: null,
-            trackToAdd: null
+            trackToAdd: null,
+            retryCount: 0
         };
 
         const audio = document.getElementById('audioPlayer');
@@ -983,8 +984,13 @@
 
         // --- Core Audio Logic ---
 
-        async function playTrack(track, queue = null, index = 0) {
+        async function playTrack(track, queue = null, index = 0, blacklist = []) {
             try {
+                // If starting a new track (not a retry), reset retry count
+                if (queue || (index !== state.currentIndex)) {
+                    state.retryCount = 0;
+                }
+
                 if (queue) {
                     state.queue = queue;
                     state.originalQueue = [...queue];
@@ -996,42 +1002,51 @@
 
                 // UI Loading State
                 updatePlayerInfo(currentTrack);
-                showToast('Memuat lagu...', 'info', 'Mohon tunggu sebentar...');
+                if (state.retryCount === 0) showToast('Memuat lagu...', 'info', 'Mohon tunggu sebentar...');
+                else showToast('Mencoba lagi...', 'info', 'Mengalihkan sumber audio...');
+
                 els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
 
                 // Show Mini Player immediately
                 els.miniPlayer.style.transform = 'translateY(0)';
 
                 // Check if track object already has a direct download link (optimization)
+                // BUT if that link is in blacklist, we must fetch new one
                 let streamUrl = currentTrack.download;
+                if (blacklist.includes(streamUrl)) streamUrl = null;
 
                 // If not, fetch it
                 if (!streamUrl) {
                     // Multi-API Race Strategy: Try all valid endpoints simultaneously and take the first success
                     showToast('Mengunduh...', 'info', 'Mencari sumber audio tercepat...');
 
+                    const validate = (url) => {
+                        if (blacklist.includes(url)) return Promise.reject('Blacklisted');
+                        return url;
+                    };
+
                     try {
                          const fetchV1 = fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`)
                             .then(r => r.json())
-                            .then(d => (d.status && d.data && d.data.download) ? d.data.download : Promise.reject('V1 Fail'));
+                            .then(d => (d.status && d.data && d.data.download) ? validate(d.data.download) : Promise.reject('V1 Fail'));
 
                          const fetchVreden = fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(currentTrack.track_url)}`)
                             .then(r => r.json())
-                            .then(d => (d.status && d.result && d.result.download) ? d.result.download : Promise.reject('Vreden Fail'));
+                            .then(d => (d.status && d.result && d.result.download) ? validate(d.result.download) : Promise.reject('Vreden Fail'));
 
                          const fetchV2 = fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`)
                             .then(r => r.json())
-                            .then(d => (d.status && d.data && d.data.mp3DownloadLink) ? d.data.mp3DownloadLink : Promise.reject('V2 Fail'));
+                            .then(d => (d.status && d.data && d.data.mp3DownloadLink) ? validate(d.data.mp3DownloadLink) : Promise.reject('V2 Fail'));
 
                          // Race them using Promise.any
                          streamUrl = await Promise.any([fetchV1, fetchVreden, fetchV2]);
-                         console.log('Got stream url from fastest source');
+                         console.log('Got stream url from fastest source:', streamUrl);
 
-                         // Cache
+                         // Cache (only if not blacklisted, but we validated)
                          state.queue[state.currentIndex].download = streamUrl;
 
                     } catch (e) {
-                         console.error("All sources failed", e);
+                         console.error("All sources failed or blacklisted", e);
                          throw new Error('FAILED');
                     }
                 }
@@ -1043,7 +1058,11 @@
                 audio.src = streamUrl;
                 audio.play().catch(e => {
                     console.error("Playback failed:", e);
-                    handleAudioError();
+                    // handleAudioError will be triggered by the error event on audio element or manually here?
+                    // audio.play() returning rejected promise usually means auto-play policy or not supported.
+                    // The 'error' event on the audio element handles source errors (404, etc).
+                    // If play() fails immediately, we should trigger error logic manually if it's a source issue.
+                    // But usually 404 triggers the 'error' event.
                 });
 
                 // Add to recent
@@ -1135,8 +1154,31 @@
         }
 
         function handleAudioError() {
-            showToast('Stream Error', 'error', 'Koneksi audio terputus.');
-            updatePlayState(false);
+            if (audio.error && audio.error.code) {
+                console.error("Audio Error Code:", audio.error.code);
+            }
+
+            // Smart Fallback Strategy
+            if (state.retryCount < 3) {
+                state.retryCount++;
+                const currentSrc = audio.src;
+                console.log(`Audio error on ${currentSrc}, retrying (${state.retryCount}/3)...`);
+
+                // Add bad URL to blacklist
+                const track = state.queue[state.currentIndex];
+                if (!track) return;
+
+                const blacklist = track._blacklist || [];
+                if (currentSrc) blacklist.push(currentSrc);
+                track._blacklist = blacklist;
+
+                // Retry
+                playTrack(null, null, state.currentIndex, blacklist);
+            } else {
+                showToast('Stream Error', 'error', 'Gagal memutar lagu dari semua sumber.');
+                updatePlayState(false);
+                state.retryCount = 0; // Reset
+            }
         }
 
         function updatePlayState(playing) {
