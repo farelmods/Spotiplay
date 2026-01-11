@@ -1297,20 +1297,36 @@
             els.searchLoading.classList.remove('hidden');
 
             try {
-                // Parallel Execution: Fetch from both APIs simultaneously
-                const [siputzxRes, vredenRes] = await Promise.allSettled([
+                // Parallel Execution: Fetch from multiple APIs simultaneously
+                const [siputzxRes, vredenRes, vredenPlayRes] = await Promise.allSettled([
                     fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}`).then(r => r.json()),
-                    fetch(`https://api.vreden.my.id/api/v2/search/spotify?query=${encodeURIComponent(query)}`).then(r => r.json())
+                    fetch(`https://api.vreden.my.id/api/v2/search/spotify?query=${encodeURIComponent(query)}`, { signal: state.abortController?.signal }).then(r => r.json()),
+                    fetch(`https://api.vreden.my.id/api/v1/download/play/audio?query=${encodeURIComponent(query)}`, { signal: state.abortController?.signal }).then(r => r.json())
                 ]);
 
                 let combinedResults = [];
+
+                // Process Vreden Play Audio (Single Result with Direct Download)
+                if (vredenPlayRes.status === 'fulfilled' && vredenPlayRes.value.status && vredenPlayRes.value.result) {
+                    const res = vredenPlayRes.value.result;
+                    if (res.metadata && res.download) {
+                        combinedResults.push({
+                            title: res.metadata.title,
+                            artist: res.metadata.author ? res.metadata.author.name : 'Unknown',
+                            thumbnail: res.metadata.thumbnail,
+                            track_url: res.metadata.url,
+                            duration: res.metadata.timestamp,
+                            download: res.download.url // Pre-filled download link
+                        });
+                    }
+                }
 
                 // Process Siputzx
                 if (siputzxRes.status === 'fulfilled' && siputzxRes.value.status && siputzxRes.value.data) {
                     combinedResults.push(...siputzxRes.value.data);
                 }
 
-                // Process Vreden (Normalize and merge)
+                // Process Vreden Spotify Search (List)
                 if (vredenRes.status === 'fulfilled' && vredenRes.value.status && vredenRes.value.result && vredenRes.value.result.search_data) {
                     const vredenNorm = vredenRes.value.result.search_data.map(item => ({
                         title: item.name,
