@@ -736,7 +736,8 @@
             playlists: [],
             activePlaylistId: null,
             trackToAdd: null,
-            retryCount: 0
+            retryCount: 0,
+            abortController: null
         };
 
         const audio = document.getElementById('audioPlayer');
@@ -986,6 +987,14 @@
 
         async function playTrack(track, queue = null, index = 0, blacklist = []) {
             try {
+                // Cancel previous pending requests
+                if (state.abortController) {
+                    state.abortController.abort();
+                    console.log('Aborted previous request');
+                }
+                state.abortController = new AbortController();
+                const signal = state.abortController.signal;
+
                 // If starting a new track (not a retry), reset retry count
                 if (queue || (index !== state.currentIndex)) {
                     state.retryCount = 0;
@@ -1026,15 +1035,15 @@
                     };
 
                     try {
-                         const fetchV1 = fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`)
+                         const fetchV1 = fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`, { signal })
                             .then(r => r.json())
                             .then(d => (d.status && d.data && d.data.download) ? validate(d.data.download) : Promise.reject('V1 Fail'));
 
-                         const fetchVreden = fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(currentTrack.track_url)}`)
+                         const fetchVreden = fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(currentTrack.track_url)}`, { signal })
                             .then(r => r.json())
                             .then(d => (d.status && d.result && d.result.download) ? validate(d.result.download) : Promise.reject('Vreden Fail'));
 
-                         const fetchV2 = fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`)
+                         const fetchV2 = fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`, { signal })
                             .then(r => r.json())
                             .then(d => (d.status && d.data && d.data.mp3DownloadLink) ? validate(d.data.mp3DownloadLink) : Promise.reject('V2 Fail'));
 
@@ -1046,6 +1055,17 @@
                          state.queue[state.currentIndex].download = streamUrl;
 
                     } catch (e) {
+                         // Check for AbortError inside AggregateError (Promise.any behavior)
+                         if (e instanceof AggregateError && e.errors.some(err => err.name === 'AbortError')) {
+                             console.log('Fetch aborted (Aggregate)');
+                             const abortErr = new Error('Aborted');
+                             abortErr.name = 'AbortError';
+                             throw abortErr;
+                         }
+                         if (e.name === 'AbortError') {
+                             console.log('Fetch aborted');
+                             throw e;
+                         }
                          console.error("All sources failed or blacklisted", e);
                          throw new Error('FAILED');
                     }
@@ -1072,6 +1092,10 @@
                 updateLikeButtonState(currentTrack.track_url);
 
             } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Playback cancelled due to new request.');
+                    return; // Ignore
+                }
                 console.error("Play error:", error);
                 let msg = 'Gagal memutar lagu. Silakan coba lagu lain.';
                 if (error.message === 'RESTRICTED') {
