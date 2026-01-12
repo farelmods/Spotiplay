@@ -1298,13 +1298,33 @@
 
             try {
                 // Parallel Execution: Fetch from multiple APIs simultaneously
-                const [siputzxRes, vredenRes, vredenPlayRes] = await Promise.allSettled([
+                const [siputzxRes, vredenRes, vredenPlayRes, nexrayRes] = await Promise.allSettled([
                     fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}`).then(r => r.json()),
                     fetch(`https://api.vreden.my.id/api/v2/search/spotify?query=${encodeURIComponent(query)}`, { signal: state.abortController?.signal }).then(r => r.json()),
-                    fetch(`https://api.vreden.my.id/api/v1/download/play/audio?query=${encodeURIComponent(query)}`, { signal: state.abortController?.signal }).then(r => r.json())
+                    fetch(`https://api.vreden.my.id/api/v1/download/play/audio?query=${encodeURIComponent(query)}`, { signal: state.abortController?.signal }).then(r => r.json()),
+                    fetch(`https://api.nexray.web.id/search/applemusic?q=${encodeURIComponent(query)}`, { signal: state.abortController?.signal }).then(r => r.json())
                 ]);
 
                 let combinedResults = [];
+
+                // Process Nexray (Apple Music)
+                if (nexrayRes.status === 'fulfilled' && nexrayRes.value.status && Array.isArray(nexrayRes.value.result)) {
+                    const nexrayNorm = nexrayRes.value.result.map(item => {
+                        let artist = item.subtitle || 'Unknown Artist';
+                        if (artist.includes('·')) {
+                            const parts = artist.split('·');
+                            if (parts.length > 1) artist = parts[1].trim();
+                        }
+                        return {
+                            title: item.title,
+                            artist: artist,
+                            thumbnail: item.image,
+                            track_url: item.link,
+                            duration: '' // API doesn't provide duration in list
+                        };
+                    });
+                    combinedResults.push(...nexrayNorm);
+                }
 
                 // Process Vreden Play Audio (Single Result with Direct Download)
                 if (vredenPlayRes.status === 'fulfilled' && vredenPlayRes.value.status && vredenPlayRes.value.result) {
