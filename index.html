@@ -1,1881 +1,2170 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Spotifplay 🎧 - Download & Streaming Lagu Spotify</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Spotiplay v2 - Premium Music Experience</title>
+    <meta name="description" content="Streaming dan download lagu Spotify gratis dengan kualitas terbaik.">
+    <meta name="theme-color" content="#000000">
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            950: '#052e16',
+                        },
+                        accent: {
+                            purple: '#a855f7',
+                            cyan: '#06b6d4',
+                            pink: '#ec4899'
+                        },
+                        dark: {
+                            bg: '#050505',
+                            card: '#121212',
+                            surface: '#1E1E1E'
+                        }
+                    },
+                    animation: {
+                        'blob': 'blob 7s infinite',
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'slide-up': 'slideUp 0.3s ease-out forwards',
+                        'spin-slow': 'spin 3s linear infinite',
+                        'equalizer': 'equalizer 1s infinite ease-in-out',
+                    },
+                    keyframes: {
+                        blob: {
+                            '0%': { transform: 'translate(0px, 0px) scale(1)' },
+                            '33%': { transform: 'translate(30px, -50px) scale(1.1)' },
+                            '66%': { transform: 'translate(-20px, 20px) scale(0.9)' },
+                            '100%': { transform: 'translate(0px, 0px) scale(1)' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(100%)' },
+                            '100%': { transform: 'translateY(0)' },
+                        },
+                        equalizer: {
+                            '0%, 100%': { height: '10%' },
+                            '50%': { height: '100%' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        :root {
-            --spotify-green: #1DB;
-            --spotify-dark: #191414;
-            --spotify-light: #FFFFFF;
+        /* App Reset */
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden; /* Prevent body scroll */
+            overscroll-behavior: none;
+            background-color: #050505;
         }
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f8fafc;
-            padding-bottom: 120px;
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
         }
-        .spotify-bg {
-            background: var(--spotify-green);
+
+        /* Custom Scrollbar - Hidden but scrollable (Native Feel) */
+        .app-scroll {
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none;  /* IE 10+ */
         }
-        .spotify-dark-bg {
-            background: var(--spotify-dark);
+        .app-scroll::-webkit-scrollbar {
+            display: none; /* Chrome/Safari */
         }
-        .spotify-text {
-            color: var(--spotify-green);
+
+        /* Horizontal Snap */
+        .snap-x-mandatory {
+            scroll-snap-type: x mandatory;
         }
-        .track-card {
-            transition: all 0.3s ease;
-            opacity: 0;
-            transform: translateY(20px);
+        .snap-center {
+            scroll-snap-align: center;
         }
-        .lazy-show {
-            animation: fadeInUp 0.5s ease-out forwards;
+
+        /* Glassmorphism Utilities */
+        .glass {
+            background: rgba(23, 23, 23, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
-        @keyframes fadeInUp {
-            to { opacity: 1; transform: translateY(0); }
+
+        .glass-card {
+            background: rgba(38, 38, 38, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            will-change: transform, background-color;
         }
-        .scroll-container {
-            scrollbar-width: thin;
-            scrollbar-color: var(--spotify-green) transparent;
+
+        .glass-card:hover {
+            background: rgba(38, 38, 38, 0.6);
+            transform: translateY(-2px);
+            border-color: rgba(34, 197, 94, 0.5);
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.2);
         }
-        .scroll-container::-webkit-scrollbar {
-            height: 6px;
+
+        /* Visualizer Bars */
+        .bar {
+            width: 4px;
+            background: #22c55e;
+            border-radius: 2px;
+            animation: equalizer 1s infinite ease-in-out;
         }
-        .scroll-container::-webkit-scrollbar-track {
+        .bar:nth-child(2) { animation-delay: 0.1s; }
+        .bar:nth-child(3) { animation-delay: 0.2s; }
+        .bar:nth-child(4) { animation-delay: 0.3s; }
+        .bar.paused { animation-play-state: paused; height: 10%; }
+
+        /* Player Animation */
+        .player-disk {
+            animation: spin 10s linear infinite;
+            animation-play-state: paused;
+            will-change: transform;
+        }
+        .player-disk.playing {
+            animation-play-state: running;
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Input Range Styling */
+        input[type="range"] {
+            -webkit-appearance: none;
             background: transparent;
         }
-        .scroll-container::-webkit-scrollbar-thumb {
-            background-color: var(--spotify-green);
-            border-radius: 20px;
-        }
-        .slide-in {
-            animation: slideIn 0.5s ease-out;
-        }
-        @keyframes slideIn {
-            from { transform: translateX(20px); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        .pulse {
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
-        }
-        .animated-gradient {
-            background: linear-gradient(270deg, #15803d, #191414, #15803d);
-            background-size: 600% 600%;
-            animation: gradientMove 8s ease infinite;
-        }
-        .pagination-btn {
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            background-color: var(--spotify-green);
-            color: white;
-            border: none;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .pagination-btn:hover:not(:disabled) {
-            opacity: 0.9;
-        }
-        .pagination-btn:disabled {
-            background-color: #d1d5db;
-            cursor: not-allowed;
-        }
-        /* Player Styles */
-        .player-container {
-            position: fixed;
-            bottom: 60px; /* Di atas bottom-nav */
-            left: 0;
-            right: 0;
-            background: white;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 40;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-        }
-        .player-container.active {
-            transform: translateY(0);
-        }
-        .progress-bar {
-            height: 3px;
-            background-color: #e2e8f0;
-            cursor: pointer;
-        }
-        .progress {
-            height: 100%;
-            background-color: var(--spotify-green);
-            width: 0%;
-        }
-        /* Full Player Styles */
-        .full-player {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: linear-gradient(to bottom, #191414, #000000);
-            z-index: 200;
-            display: flex;
-            flex-direction: column;
-            color: white;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
-            padding: 20px;
-        }
-        .full-player.active {
-            transform: translateY(0);
-        }
-        .full-player-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        .full-player-cover {
-            width: 300px;
-            height: 300px;
-            margin: 0 auto 40px;
-            border-radius: 10px;
-            overflow: hidden;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-        }
-        .full-player-cover img {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-        }
-        .full-player-info {
-            text-align: center;
-            margin-bottom: 40px;
-        }
-        .full-player-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .full-player-artist {
-            font-size: 16px;
-            color: #b3b3b3;
-        }
-        .full-player-controls {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 30px;
-            margin-bottom: 40px;
-        }
-        .full-player-btn {
-            background: none;
-            border: none;
-            color: white;
-            font-size: 20px;
-            cursor: pointer;
-        }
-        .full-player-btn.play {
-            width: 70px;
-            height: 70px;
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 12px;
+            width: 12px;
             border-radius: 50%;
-            background-color: var(--spotify-green);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            font-size: 30px;
+            background: #22c55e;
+            margin-top: -4px;
+            cursor: pointer;
+            box-shadow: 0 0 10px rgba(34, 197, 94, 0.5);
         }
-        .full-player-progress {
+        input[type="range"]::-webkit-slider-runnable-track {
             width: 100%;
-            margin-bottom: 20px;
+            height: 4px;
+            background: #404040;
+            border-radius: 2px;
         }
-        .full-player-time {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: #b3b3b3;
+        input[type="range"]:focus {
+            outline: none;
         }
-        /* Bottom Navigation */
-        .bottom-nav {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-            z-index: 50;
-            display: flex;
-            justify-content: space-around;
-            padding: 10px 0;
-            height: 60px;
-        }
-        .nav-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 0 10px;
-            color: #6b7280;
-            text-decoration: none;
-            font-size: 0.75rem;
-            transition: all 0.3s;
-            position: relative;
-        }
-        .nav-item.active {
-            color: var(--spotify-green);
-        }
-        .nav-item i {
-            font-size: 1.25rem;
-            margin-bottom: 0.25rem;
-        }
-        .nav-circle {
-            position: absolute;
-            top: -5px;
-            width: 6px;
-            height: 6px;
-            background-color: var(--spotify-green);
-            border-radius: 50%;
-            transition: all 0.3s;
+
+        /* Smooth transitions for sections */
+        .fade-in-section {
             opacity: 0;
+            transform: translateY(20px);
+            animation: fadeInUp 0.5s ease forwards;
+            will-change: transform, opacity;
         }
-        .nav-item.active .nav-circle {
-            opacity: 1;
-            transform: translateY(-3px);
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
-        /* Header Styles */
-        .app-header {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 50px;
-            background: var(--spotify-dark);
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 100;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
-        .app-header h1 {
-            font-size: 1.25rem;
-            font-weight: bold;
-        }
-        .app-header i {
-            margin-right: 8px;
-            color: var(--spotify-green);
-        }
-        /* Search Results Styles */
-        .search-results-container {
-            display: none;
-            margin-top: 20px;
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
-        }
-        .search-results-container.active {
-            display: block;
-            animation: slideUp 0.3s ease-out;
-        }
-        @keyframes slideUp {
-            from { transform: translateY(10px); opacity: 0.8; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        .search-result-item {
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            border-bottom: 1px solid #f1f1f1;
-            transition: background-color 0.2s;
-        }
-        .search-result-item:hover {
-            background-color: #f8f8f8;
-        }
-        .search-result-item:last-child {
-            border-bottom: none;
-        }
-        .search-result-img {
-            width: 50px;
-            height: 50px;
-            border-radius: 5px;
-            object-fit: cover;
-            margin-right: 15px;
-        }
-        .search-result-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .search-result-title {
-            font-weight: 600;
-            font-size: 15px;
-            margin-bottom: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .search-result-artist {
-            font-size: 13px;
-            color: #666;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .search-result-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .search-result-btn {
-            background: none;
-            border: none;
-            cursor: pointer;
-            color: #555;
-            font-size: 16px;
-            transition: color 0.2s;
-        }
-        .search-result-btn:hover {
-            color: var(--spotify-green);
-        }
-        .favorite-btn {
-            transition: all 0.3s;
-        }
-        .favorite-btn.active {
-            color: #ff0000;
-            transform: scale(1.1);
-        }
-        /* Recently Played */
-        .recently-played {
-            margin-top: 30px;
-        }
-        .recently-played-title {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: white;
-        }
-        .recently-played-container {
-            display: flex;
-            gap: 15px;
-            overflow-x: auto;
-            padding-bottom: 10px;
-        }
-        .recently-played-item {
-            min-width: 150px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-            overflow: hidden;
-            transition: transform 0.3s;
-        }
-        .recently-played-item:hover {
-            transform: scale(1.05);
-        }
-        .recently-played-item img {
-            width: 100%;
-            height: 150px;
-            object-fit: cover;
-        }
-        .recently-played-info {
-            padding: 10px;
-        }
-        .recently-played-name {
-            font-size: 14px;
-            font-weight: bold;
-            margin-bottom: 5px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .recently-played-artist {
-            font-size: 12px;
-            color: #b3b3b3;
-        }
-        /* Favorites Section */
-        .favorites-container {
-            display: none;
-        }
-        .favorites-container.active {
-            display: block;
-            animation: slideUp 0.3s ease-out;
-        }
-        .no-favorites-message {
-            text-align: center;
-            padding: 40px 20px;
-            color: #666;
-        }
-        .favorite-track {
-            display: flex;
-            align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid #eee;
-            transition: background-color 0.2s;
-        }
-        .favorite-track:hover {
-            background-color: #f8f8f8;
-        }
-        .favorite-track-img {
-            width: 50px;
-            height: 50px;
-            border-radius: 5px;
-            object-fit: cover;
-            margin-right: 15px;
-        }
-        .favorite-track-info {
-            flex: 1;
-            min-width: 0;
-        }
-        .favorite-track-title {
-            font-weight: 600;
-            font-size: 15px;
-            margin-bottom: 3px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .favorite-track-artist {
-            font-size: 13px;
-            color: #666;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .favorite-track-date {
-            font-size: 11px;
-            color: #999;
-        }
-        .favorite-track-actions {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        /* Direct Download Section */
-        .direct-download-container {
-            display: none;
-        }
-        .direct-download-container.active {
-            display: block;
-            animation: slideUp 0.3s ease-out;
-        }
-        /* About Section */
-        .about-container {
-            display: none;
-            padding: 20px;
-            background: white;
-            border-radius: 10px;
-            margin: 20px 0;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-        .about-container.active {
-            display: block;
-            animation: slideUp 0.3s ease-out;
-        }
-        .about-title {
-            font-size: 24px;
-            font-weight: bold;
-            margin-bottom: 15px;
-            color: var(--spotify-dark);
-        }
-        .about-content {
-            color: #666;
-            line-height: 1.6;
-        }
-        .about-link {
-            color: var(--spotify-green);
-            text-decoration: none;
-            font-weight: 600;
-        }
-        .about-link:hover {
-            text-decoration: underline;
-        }
-        /* Top Global Section */
-        .trending-container {
-            display: none;
-        }
-        .trending-container.active {
-            display: block;
-            animation: slideUp 0.3s ease-out;
-        }
-        .trending-track {
-            background: white;
-            border-radius: 8px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.3s;
-        }
-        .trending-track:hover {
-            transform: translateY(-5px);
-        }
-        .trending-track img {
-            width: 100%;
-            height: 120px;
-            object-fit: cover;
-        }
-        .trending-track-info {
-            padding: 12px;
-        }
-        .trending-track-title {
-            font-weight: 600;
-            font-size: 14px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-        .trending-track-artist {
-            font-size: 12px;
-            color: #666;
+
+        /* Modal Transitions */
+        #fullPlayer, #queueModal, #miniPlayer {
+            will-change: transform;
         }
     </style>
 </head>
-<body class="min-h-screen">
-    <!-- Header Baru -->
-    <header class="app-header">
-        <i class="fab fa-spotify"></i>
-        <h1>SPOTIPLAY</h1>
-    </header>
+<body class="bg-black text-gray-200 antialiased overflow-hidden selection:bg-brand-500 selection:text-white flex flex-col md:flex-row h-full">
 
-    <!-- Main Content -->
-    <main class="pt-16 pb-24"> <!-- Adjusted padding for header and player -->
-        <!-- Home Section -->
-        <section id="home" class="relative py-16 spotify-dark-bg text-white overflow-hidden">
-            <div class="absolute inset-0 opacity-10">
-                <div class="absolute top-0 left-0 w-64 h-64 rounded-full bg-green-500 filter blur-3xl opacity-20"></div>
-                <div class="absolute bottom-0 right-0 w-64 h-64 rounded-full bg-black filter blur-3xl opacity-20"></div>
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="flex flex-col items-center gap-4">
+            <div class="w-16 h-16 rounded-full bg-brand-500 flex items-center justify-center animate-pulse">
+                <i class="fab fa-spotify text-black text-3xl"></i>
             </div>
-            <div class="container mx-auto px-4 relative z-10 text-center">
-                <div class="max-w-2xl mx-auto">
-                    <div class="inline-flex items-center bg-green-100 text-green-800 px-4 py-1 rounded-full text-sm font-medium mb-4">
-                        <span class="pulse mr-2">🔥</span> TRENDING NOW
+            <div class="text-brand-500 font-bold tracking-widest text-sm">LOADING</div>
+        </div>
+    </div>
+
+    <!-- Background Elements -->
+    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none transform-gpu bg-[#050505]">
+        <!-- Aurora Effect -->
+        <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] bg-gradient-to-b from-brand-900/20 via-accent-purple/10 to-transparent opacity-50 blur-3xl"></div>
+    </div>
+
+    <!-- Auth View (Login/Register) -->
+    <div id="authView" class="fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex items-center justify-center p-4">
+        <div class="w-full max-w-md space-y-8 animate-slide-up">
+            <div class="text-center">
+                <div class="w-16 h-16 rounded-full bg-gradient-to-br from-brand-500 to-accent-purple mx-auto flex items-center justify-center text-black font-bold text-3xl shadow-[0_0_30px_rgba(34,197,94,0.4)] mb-4">
+                    <i class="fab fa-spotify"></i>
+                </div>
+                <h2 class="text-3xl font-bold text-white tracking-tight">Welcome to Spotiplay</h2>
+                <p class="text-gray-400 mt-2">Sign in to sync your library across devices.</p>
+            </div>
+
+            <div class="glass-card p-8 rounded-2xl border border-white/10 shadow-2xl">
+                <!-- Tabs -->
+                <div class="flex gap-4 mb-6 border-b border-white/10 pb-4">
+                    <button onclick="switchAuthTab('login')" id="tabLogin" class="flex-1 text-center font-bold text-brand-500 pb-2 border-b-2 border-brand-500 transition-colors">Login</button>
+                    <button onclick="switchAuthTab('register')" id="tabRegister" class="flex-1 text-center font-bold text-gray-400 hover:text-white pb-2 border-b-2 border-transparent transition-colors">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Username</label>
+                        <input type="text" id="loginUser" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="Enter username" required>
                     </div>
-                    <h1 class="text-4xl md:text-5xl font-bold mb-6">
-                        Streaming & Download <span class="spotiplay-text">Spotiplay</span> Tracks
-                    </h1>
-                    <p class="text-lg text-gray-300 mb-8">
-                        Dengarkan dan download lagu favorit lo langsung dari Spotiplay,<br>
-                        <span class="font-semibold spotify-text">GRATIS & NO RIBAET!</span>
-                    </p>
-                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                        <a href="#search" class="spotify-bg text-white font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all">
-                            <i class="fas fa-search mr-2"></i> Search Track
-                        </a>
-                        <a href="#direct" class="bg-white text-gray-800 font-semibold px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all">
-                            <i class="fas fa-link mr-2"></i> Direct Link
-                        </a>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Password</label>
+                        <input type="password" id="loginPass" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-400 text-black font-bold rounded-lg transition-transform active:scale-95 shadow-lg shadow-brand-500/20">Sign In</button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" class="space-y-4 hidden">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Choose Username</label>
+                        <input type="text" id="regUser" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="Unique username" required>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-400 uppercase mb-1">Password</label>
+                        <input type="password" id="regPass" class="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none transition-colors" placeholder="Create password" required>
+                    </div>
+                    <button type="submit" class="w-full py-3 bg-accent-purple hover:bg-purple-400 text-white font-bold rounded-lg transition-transform active:scale-95 shadow-lg shadow-purple-500/20">Create Account</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Desktop Sidebar -->
+    <aside id="desktopSidebar" class="hidden md:flex flex-col w-64 bg-black/95 border-r border-white/5 h-full z-40 p-6 gap-6 relative hidden">
+        <div class="flex items-center gap-3 mb-4">
+            <div class="w-8 h-8 rounded-full bg-brand-500 flex items-center justify-center text-black font-bold text-lg shadow-lg">
+                <i class="fab fa-spotify"></i>
+            </div>
+            <h1 class="text-xl font-bold text-white">Spotiplay</h1>
+        </div>
+
+        <nav class="flex flex-col gap-2">
+            <button onclick="showHome()" class="nav-item-desktop flex items-center gap-4 text-gray-400 hover:text-white transition p-3 rounded-lg hover:bg-white/5 active">
+                <i class="fas fa-home text-xl w-6 text-center"></i> <span class="font-medium">Home</span>
+            </button>
+            <button onclick="showSection('search'); setTimeout(() => els.searchInput.focus(), 100);" class="nav-item-desktop flex items-center gap-4 text-gray-400 hover:text-white transition p-3 rounded-lg hover:bg-white/5">
+                <i class="fas fa-search text-xl w-6 text-center"></i> <span class="font-medium">Search</span>
+            </button>
+            <button onclick="showLibrary()" class="nav-item-desktop flex items-center gap-4 text-gray-400 hover:text-white transition p-3 rounded-lg hover:bg-white/5">
+                <i class="fas fa-book text-xl w-6 text-center"></i> <span class="font-medium">Library</span>
+            </button>
+        </nav>
+
+        <div class="mt-auto">
+             <div class="text-xs font-bold text-gray-500 uppercase mb-4 tracking-wider">Playlists</div>
+             <div class="flex flex-col gap-2 h-40 overflow-y-auto app-scroll" id="desktopPlaylistSidebar">
+                 <!-- Playlists injected here -->
+             </div>
+             <button onclick="createNewPlaylistUI()" class="flex items-center gap-3 text-gray-400 hover:text-white transition mt-4 group">
+                 <div class="w-6 h-6 bg-gray-400 group-hover:bg-white text-black flex items-center justify-center rounded-sm">
+                     <i class="fas fa-plus text-xs"></i>
+                 </div>
+                 <span class="text-sm font-medium">Create Playlist</span>
+             </button>
+        </div>
+    </aside>
+
+    <!-- Main Content App Container -->
+    <main id="app-container" class="relative z-10 flex-1 h-full overflow-hidden flex flex-col bg-black/50 hidden">
+
+        <!-- Mobile/Tablet Content Scroll Area -->
+        <div id="contentScroll" class="flex-1 app-scroll pb-[140px] md:pb-[100px] pt-4 px-4 md:px-8">
+
+            <!-- Home View -->
+            <div id="homeView" class="space-y-8 animate-fade-in fade-in-section pt-4">
+                <!-- Header -->
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-2xl font-bold text-white">Good Evening</h2>
+                    <div class="flex gap-4 items-center">
+                         <button onclick="showSection('search')" class="md:hidden text-white"><i class="fas fa-search text-xl"></i></button>
+                         <!-- Profile Dropdown -->
+                         <div class="relative group">
+                             <button class="w-8 h-8 rounded-full bg-brand-600 flex items-center justify-center text-black font-bold shadow-lg ring-2 ring-transparent group-hover:ring-brand-400 transition-all" id="userProfileBtn">U</button>
+                             <div class="absolute right-0 top-10 w-40 bg-dark-card border border-white/10 rounded-xl shadow-2xl overflow-hidden hidden group-hover:block transition-all transform origin-top-right z-50">
+                                 <div class="px-4 py-3 border-b border-white/5">
+                                     <p class="text-xs text-gray-400">Signed in as</p>
+                                     <p class="text-sm font-bold text-white truncate" id="userProfileName">User</p>
+                                 </div>
+                                 <button onclick="logout()" class="w-full text-left px-4 py-3 text-sm text-red-400 hover:bg-white/5 transition-colors flex items-center gap-2">
+                                     <i class="fas fa-sign-out-alt"></i> Logout
+                                 </button>
+                             </div>
+                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Recently Played Section -->
-            <div class="container mx-auto px-4 mt-16 recently-played">
-                <h2 class="recently-played-title">Terakhir Didengar</h2>
-                <div class="recently-played-container" id="recentlyPlayedContainer">
-                    <!-- Recently played items will be loaded here -->
+                <!-- Featured Horizontal Scroll -->
+                <div class="flex gap-4 overflow-x-auto app-scroll snap-x-mandatory -mx-4 px-4 pb-4">
+                    <!-- Featured Card 1 -->
+                    <div class="snap-center shrink-0 w-[85vw] md:w-[400px] h-[200px] rounded-2xl bg-gradient-to-br from-brand-900 to-black relative overflow-hidden group cursor-pointer border border-white/5" onclick="loadTopGlobal()">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1470225620780-dba8ba36b745?w=800&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
+                        <div class="absolute bottom-0 left-0 p-6 bg-gradient-to-t from-black via-black/50 to-transparent w-full">
+                            <span class="text-xs font-bold text-brand-400 uppercase tracking-widest mb-1 block">Featured</span>
+                            <h3 class="text-2xl font-bold text-white mb-2">Top Hits Global</h3>
+                            <p class="text-gray-300 text-sm line-clamp-2">The hottest tracks dominating the charts right now.</p>
+                        </div>
+                    </div>
+                    <!-- Featured Card 2 -->
+                     <div class="snap-center shrink-0 w-[85vw] md:w-[400px] h-[200px] rounded-2xl bg-gradient-to-br from-purple-900 to-black relative overflow-hidden group cursor-pointer border border-white/5" onclick="showSection('search'); els.searchInput.value='Indonesian Pop'; els.searchForm.dispatchEvent(new Event('submit'));">
+                        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1514525253440-b393332569ce?w=800&q=80')] bg-cover bg-center opacity-40 group-hover:scale-105 transition-transform duration-700"></div>
+                        <div class="absolute bottom-0 left-0 p-6 bg-gradient-to-t from-black via-black/50 to-transparent w-full">
+                            <span class="text-xs font-bold text-purple-400 uppercase tracking-widest mb-1 block">Trending</span>
+                            <h3 class="text-2xl font-bold text-white mb-2">Indo Pop</h3>
+                            <p class="text-gray-300 text-sm line-clamp-2">Best of Indonesian Pop Music.</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </section>
 
-        <!-- Search Section -->
-        <section id="search" class="py-16 bg-white">
-            <div class="container mx-auto px-4 max-w-4xl">
-                <div class="bg-gray-50 p-6 rounded-xl shadow-sm">
-                    <form id="searchForm" class="space-y-4">
-                        <div class="text-center">
-                            <h3 class="text-2xl font-bold text-gray-800 mb-2">Cari Lagu di Spotiplay</h3>
-                            <p class="text-gray-500">Masukkan judul lagu atau nama artist</p>
-                        </div>
-                        
-                        <div class="relative">
-                            <input
-                                type="text"
-                                id="query"
-                                name="query"
-                                class="w-full p-4 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                placeholder="Lagu, artist, atau album..."
-                                required
-                                autocomplete="off"
-                            >
-                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                <i class="fas fa-music"></i>
-                            </div>
-                        </div>
-                        
-                        <button
-                            type="submit"
-                            class="w-full spotify-bg text-white py-3 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all flex items-center justify-center gap-2"
-                        >
-                            <i class="fas fa-search"></i> Search
+                <!-- Recently Played Horizontal List -->
+                <section>
+                    <h3 class="text-lg font-bold text-white mb-4">Jump Back In</h3>
+                    <div id="recentlyPlayedGrid" class="flex gap-4 overflow-x-auto app-scroll -mx-4 px-4">
+                         <!-- Items injected here -->
+                         <div class="text-gray-500 text-sm p-4">Start listening to see recent tracks.</div>
+                    </div>
+                </section>
+
+                <!-- Trending / Suggestions -->
+                <section>
+                    <h3 class="text-lg font-bold text-white mb-4">Recommended for You</h3>
+                    <div id="trendingGrid" class="flex flex-col gap-3">
+                        <!-- Items injected here as vertical list items -->
+                    </div>
+                </section>
+            </div>
+
+            <!-- Search View -->
+            <div id="searchResultsView" class="hidden space-y-4 animate-fade-in fade-in-section h-full flex flex-col">
+                <div class="sticky top-0 bg-black/80 backdrop-blur-xl z-20 py-4 -mx-4 px-4 border-b border-white/5">
+                    <h2 class="text-2xl font-bold text-white mb-4">Search</h2>
+                    <form id="searchForm" class="relative">
+                        <input type="text" id="searchInput"
+                            class="w-full bg-dark-surface text-white p-3 pl-10 rounded-lg focus:outline-none placeholder-gray-500 border border-transparent focus:border-brand-500/50 transition-colors"
+                            placeholder="Artists, songs, or lyrics" autocomplete="off">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                         <button type="button" onclick="document.getElementById('searchInput').value=''; document.getElementById('searchResultsView').classList.add('hidden'); showHome();" class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-white">
+                            <i class="fas fa-times"></i>
                         </button>
                     </form>
-                    
-                    <div id="loading" class="mt-8 hidden">
-                        <div class="flex flex-col items-center">
-                            <div class="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                            <p class="text-gray-600 font-medium">Searching Spotiplay...</p>
-                        </div>
-                    </div>
                 </div>
 
-                <!-- Search Results -->
-                <div id="searchResultsContainer" class="search-results-container mt-6">
-                    <div id="searchResultsList" class="divide-y divide-gray-100">
-                        <!-- Results will be inserted here -->
-                    </div>
-                    
-                    <!-- Pagination Controls -->
-                    <div id="paginationControls" class="flex justify-center p-4 gap-4">
-                        <button id="prevPage" class="pagination-btn" disabled>
-                            <i class="fas fa-chevron-left mr-2"></i> Previous
-                        </button>
-                        <span id="pageInfo" class="px-4 py-2">Page 1</span>
-                        <button id="nextPage" class="pagination-btn">
-                            Next <i class="fas fa-chevron-right ml-2"></i> 
-                        </button>
-                    </div>
+                <div id="resultsList" class="space-y-1 pb-20">
+                    <!-- Results injected here -->
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="searchLoading" class="hidden flex justify-center py-10">
+                    <div class="w-8 h-8 border-2 border-brand-500 border-t-transparent rounded-full animate-spin"></div>
                 </div>
             </div>
-        </section>
 
-        <!-- Direct Download Section -->
-        <section id="direct" class="py-16 bg-gray-50 direct-download-container">
-            <div class="container mx-auto px-4 max-w-4xl">
-                <div class="bg-white p-6 rounded-xl shadow-sm">
-                    <form id="directForm" class="space-y-4">
-                        <div class="text-center">
-                            <h3 class="text-2xl font-bold text-gray-800 mb-2">Direct Spotiplay Link</h3>
-                            <p class="text-gray-500">Paste link track Spotiplay langsung</p>
-                        </div>
-                        
-                        <div class="relative">
-                            <input
-                                type="url"
-                                id="directUrl"
-                                name="directUrl"
-                                class="w-full p-4 pl-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                                placeholder="https://open.spotify.com/track/..."
-                                required
-                            >
-                            <div class="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-                                <i class="fab fa-spotify text-xl"></i>
-                            </div>
-                        </div>
-                        
-                        <button
-                            type="submit"
-                            class="w-full spotify-bg text-white py-3 rounded-lg hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all flex items-center justify-center gap-2"
-                        >
-                            <i class="fas fa-download"></i> Download
-                        </button>
-                    </form>
-                    
-                    <div id="directLoading" class="mt-8 hidden">
-                        <div class="flex flex-col items-center">
-                            <div class="w-12 h-12 border-4 border-green-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-                            <p class="text-gray-600 font-medium">Processing your link...</p>
-                        </div>
-                    </div>
+            <!-- Library View -->
+            <div id="libraryView" class="hidden space-y-6 animate-fade-in fade-in-section pt-4">
+                 <div class="flex items-center justify-between">
+                     <div class="flex items-center gap-3">
+                         <div class="w-8 h-8 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-black font-bold">L</div>
+                         <h2 class="text-2xl font-bold text-white">Your Library</h2>
+                     </div>
+                     <button onclick="createNewPlaylistUI()" class="text-white text-2xl"><i class="fas fa-plus"></i></button>
+                 </div>
+
+                 <!-- Segmented Control -->
+                 <div class="bg-dark-surface p-1 rounded-lg flex relative">
+                     <div id="tabIndicator" class="absolute top-1 bottom-1 left-1 w-1/3 bg-gray-700 rounded-md transition-all duration-300"></div>
+                     <button onclick="switchLibraryTab('favorites')" id="tabFavorites" class="flex-1 relative z-10 py-1.5 text-sm font-medium text-white transition-colors text-center">Favorites</button>
+                     <button onclick="switchLibraryTab('playlists')" id="tabPlaylists" class="flex-1 relative z-10 py-1.5 text-sm font-medium text-gray-400 transition-colors text-center">Playlists</button>
+                     <button onclick="switchLibraryTab('downloads')" id="tabDownloads" class="flex-1 relative z-10 py-1.5 text-sm font-medium text-gray-400 transition-colors text-center">Downloads</button>
+                 </div>
+
+                 <div id="favoritesList" class="space-y-1">
+                     <!-- Favorites injected here -->
+                 </div>
+                 <div id="playlistsList" class="hidden space-y-1">
+                    <div id="playlistsContainer" class="grid grid-cols-2 gap-4"></div>
+                 </div>
+                 <div id="downloadsList" class="hidden space-y-1">
+                     <!-- Downloads injected here -->
+                 </div>
+
+                 <div class="mt-8 border-t border-white/5 pt-4 flex justify-between items-center text-xs text-gray-500">
+                     <span>Storage Used: Local</span>
+                     <button onclick="clearHistory()" class="text-red-400 hover:text-red-300 transition-colors hover:underline flex items-center gap-1">
+                         <i class="fas fa-trash"></i> Clear History
+                     </button>
+                 </div>
+            </div>
+
+            <!-- Playlist Detail View -->
+            <div id="playlistDetailView" class="hidden space-y-0 animate-fade-in fade-in-section min-h-full">
+                <!-- Playlist Header -->
+                <div class="relative h-[30vh] -mx-4 -mt-4 mb-6 bg-gradient-to-b from-brand-900 to-black p-6 flex flex-col justify-end">
+                     <button onclick="showLibrary(); switchLibraryTab('playlists')" class="absolute top-8 left-4 p-2 bg-black/20 backdrop-blur rounded-full text-white hover:bg-white/10 transition"><i class="fas fa-arrow-left text-xl"></i></button>
+
+                     <h1 id="playlistDetailTitle" class="text-3xl md:text-5xl font-bold text-white mb-2 truncate">Playlist Name</h1>
+                     <div class="flex items-center gap-2 text-sm text-gray-300">
+                         <span id="playlistDetailCount">0 Songs</span> • <span>Playlist</span>
+                     </div>
                 </div>
 
-                <!-- Direct Download Results -->
-                <div id="directResultContainer" class="mt-12 hidden slide-in">
-                    <div class="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-lg">
-                        <div class="spotify-bg p-4 text-white">
-                            <h3 class="text-xl font-bold flex items-center gap-2">
-                                <i class="fas fa-download"></i> Download Ready!
-                            </h3>
-                        </div>
-                        
-                        <div id="directDownloadDetails" class="p-6">
-                            <!-- Download details will be inserted here -->
-                        </div>
-                    </div>
+                <div class="flex items-center justify-between mb-6 px-2">
+                     <div class="flex gap-4">
+                         <button id="playlistPlayBtn" onclick="playCurrentPlaylist()" class="w-14 h-14 rounded-full bg-brand-500 text-black flex items-center justify-center shadow-lg hover:scale-105 transition active:scale-95"><i class="fas fa-play text-xl ml-1"></i></button>
+                         <button onclick="toggleShuffle()" class="w-10 h-10 rounded-full text-gray-400 hover:text-white flex items-center justify-center"><i class="fas fa-shuffle text-xl"></i></button>
+                     </div>
+                     <button id="playlistDeleteBtn" onclick="confirmDeletePlaylist()" class="p-3 text-red-400 hover:bg-red-500/10 rounded-full transition"><i class="fas fa-trash"></i></button>
+                </div>
+
+                <div id="playlistTracksList" class="space-y-1 pb-20">
+                    <!-- Playlist tracks -->
                 </div>
             </div>
-        </section>
 
-        <!-- Favorites Section -->
-        <section id="favorites" class="py-16 bg-white favorites-container">
-            <div class="container mx-auto px-4 max-w-4xl">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold text-gray-800">Lagu Favorit</h2>
-                    <p class="text-gray-600">Koleksi lagu favorit kamu</p>
-                </div>
-
-                <div id="favoritesList" class="divide-y divide-gray-100">
-                    <!-- Favorites will be loaded here -->
-                </div>
-                
-                <div id="noFavoritesMessage" class="no-favorites-message">
-                    <i class="fas fa-heart text-4xl text-gray-300 mb-4"></i>
-                    <p class="text-gray-500">Belum ada lagu favorit</p>
-                    <p class="text-sm text-gray-400 mt-2">Tambahkan lagu favorit dengan menekan tombol hati</p>
-                </div>
-
-                <div class="mt-8 flex justify-center gap-4">
-                    <button id="playFavoritesSequential" class="spotify-bg text-white px-4 py-2 rounded-lg">
-                        <i class="fas fa-play mr-2"></i> Putar Berurutan
-                    </button>
-                    <button id="playFavoritesRandom" class="bg-gray-800 text-white px-4 py-2 rounded-lg">
-                        <i class="fas fa-random mr-2"></i> Putar Acak
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- Top Global Section -->
-        <section id="trending" class="py-16 bg-gray-50 trending-container">
-            <div class="container mx-auto px-4 max-w-4xl">
-                <div class="text-center mb-8">
-                    <h2 class="text-3xl font-bold text-gray-800">🌍 Top Global</h2>
-                    <p class="text-gray-600">Lagu paling populer di dunia sekarang</p>
-                </div>
-
-                <div id="trendingList" class="grid grid-cols-2 md:grid-cols-3 gap-4">
-                    <!-- Data akan dimuat via JS -->
-                </div>
-
-                <div class="mt-8 text-center">
-                    <button id="loadTopGlobal" class="spotify-bg text-white px-6 py-2 rounded-full">
-                        <i class="fas fa-sync-alt mr-2"></i> Muat Chart
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- About Section -->
-        <section id="about" class="py-16 bg-gray-50">
-            <div class="container mx-auto px-4 max-w-4xl">
-                <div class="about-container">
-                    <h2 class="about-title">Tentang Spotiplay</h2>
-                    <div class="about-content">
-                        <p class="mb-4">
-                            Spotiplay adalah aplikasi untuk streaming dan download lagu dari Spotiplay secara gratis. Aplikasi ini dibuat untuk memudahkan pengguna menikmati musik favorit mereka tanpa batasan.
-                        </p>
-                        <p class="mb-4">
-                            Versi saat ini: <strong>V1.0</strong>
-                        </p>
-                        <p class="mb-4">
-                            Dukung pengembangan aplikasi ini melalui:
-                        </p>
-                        <div class="mb-4">
-                            <a href="https://github.com/farelmods" target="_blank" class="about-link">
-                                <i class="fas fa-heart mr-1"></i> Githab farel
-                            </a>
-                        </div>
-                        <p class="mb-4">
-                            Hubungi saya di Telegram:
-                        </p>
-                        <div>
-                            <a href="https://t.me/EXCITED505" target="_blank" class="about-link">
-                                <i class="fab fa-telegram mr-1"></i> @farel
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </section>
+        </div>
     </main>
 
-    <!-- Player Baru (di atas bottom nav) -->
-    <div id="player" class="player-container">
-        <div class="progress-bar" id="miniProgressBar">
-            <div class="progress" id="miniProgress"></div>
+
+    <!-- Mini Player (Fixed Bottom) -->
+    <div id="miniPlayer" class="fixed bottom-[60px] md:bottom-0 left-0 right-0 z-50 transform translate-y-[120%] transition-transform duration-300 ease-out will-change-transform">
+        <div class="container mx-auto max-w-screen-xl md:px-4 md:mb-4">
+            <div class="bg-dark-surface/95 backdrop-blur-xl border border-white/10 rounded-none md:rounded-2xl p-3 shadow-2xl flex items-center justify-between gap-4 relative overflow-hidden">
+
+                <!-- Progress Bar -->
+                <div class="absolute bottom-0 left-0 right-0 h-1 bg-gray-800 cursor-pointer" id="miniProgressBarContainer">
+                    <div id="miniProgressBar" class="h-full bg-brand-500 w-0 transition-all duration-100 ease-linear"></div>
+                </div>
+
+                <!-- Track Info -->
+                <div class="flex items-center gap-3 flex-1 min-w-0 cursor-pointer group" onclick="openFullPlayer()">
+                    <img id="miniCover" src="https://via.placeholder.com/50" class="w-12 h-12 rounded-lg object-cover bg-gray-800 shadow-lg group-hover:scale-105 transition-transform duration-300" loading="lazy">
+                    <div class="flex flex-col justify-center overflow-hidden">
+                        <h4 id="miniTitle" class="font-bold text-sm text-white truncate group-hover:text-brand-400 transition-colors">Select a song</h4>
+                        <p id="miniArtist" class="text-xs text-gray-400 truncate">Spotiplay</p>
+                    </div>
+                </div>
+
+                <!-- Controls -->
+                <div class="flex items-center gap-4 mb-1">
+                    <button id="miniLikeBtn" class="text-gray-400 hover:text-brand-500 transition-colors hidden sm:block p-2 active:scale-95">
+                        <i class="far fa-heart"></i>
+                    </button>
+                    <button onclick="playPrev()" class="text-gray-300 hover:text-white transition-colors hidden sm:block p-2 active:scale-95">
+                        <i class="fas fa-step-backward text-lg"></i>
+                    </button>
+                    <button id="miniPlayBtn" class="w-10 h-10 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-lg">
+                        <i class="fas fa-play ml-1"></i>
+                    </button>
+                    <button onclick="playNext()" class="text-gray-300 hover:text-white transition-colors p-2 active:scale-95">
+                        <i class="fas fa-step-forward text-lg"></i>
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="container mx-auto px-4 py-2 flex items-center">
-            <div class="flex-shrink-0 mr-3">
-                <img id="playerThumbnail" src="https://via.placeholder.com/40x40" alt="Track" class="w-10 h-10 rounded">
+    </div>
+
+    <!-- Mobile Bottom Navigation -->
+    <nav id="mobileNav" class="md:hidden fixed bottom-0 w-full z-50 bg-black/90 backdrop-blur-lg border-t border-white/5 pb-safe transition-all duration-300 hidden">
+        <div class="flex justify-around items-center h-[60px]">
+            <button onclick="showHome()" class="nav-item active flex flex-col items-center gap-1 text-xs text-brand-500 w-full h-full justify-center active:scale-95 transition-transform">
+                <i class="fas fa-home text-xl mb-0.5"></i>
+                Home
+            </button>
+            <button onclick="toggleSearchMobile()" class="nav-item flex flex-col items-center gap-1 text-xs text-gray-500 w-full h-full justify-center active:scale-95 transition-transform">
+                <i class="fas fa-search text-xl mb-0.5"></i>
+                Search
+            </button>
+            <button onclick="showLibrary()" class="nav-item flex flex-col items-center gap-1 text-xs text-gray-500 w-full h-full justify-center active:scale-95 transition-transform">
+                <i class="fas fa-book text-xl mb-0.5"></i>
+                Library
+            </button>
+        </div>
+    </nav>
+
+    <!-- Full Screen Player Overlay -->
+    <div id="fullPlayer" class="fixed inset-0 z-[60] bg-black/95 backdrop-blur-3xl transform translate-y-full transition-transform duration-500 flex flex-col will-change-transform">
+        <!-- Background Blur Image -->
+        <div class="absolute inset-0 z-[-1] opacity-30">
+            <img id="playerBgImage" src="" class="w-full h-full object-cover filter blur-3xl transform scale-110">
+            <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-black/80 to-black"></div>
+        </div>
+
+        <!-- Header -->
+        <div class="flex-none flex items-center justify-between p-6">
+            <button onclick="closeFullPlayer()" class="text-white hover:text-gray-300 p-2 active:scale-90 transition-transform">
+                <i class="fas fa-chevron-down text-2xl"></i>
+            </button>
+            <span class="text-xs font-bold tracking-widest uppercase text-gray-400">Now Playing</span>
+            <button onclick="toggleQueue()" class="text-white hover:text-gray-300 p-2 active:scale-90 transition-transform">
+                <i class="fas fa-list text-xl"></i>
+            </button>
+        </div>
+
+        <!-- Main Player Content (Scrollable if needed, Flex for spacing) -->
+        <div class="flex-1 flex flex-col items-center justify-evenly px-4 md:px-8 relative min-h-0 overflow-y-auto app-scroll pb-4">
+            <!-- Artwork -->
+            <div class="w-auto h-auto max-w-[80vw] max-h-[40vh] md:max-w-sm aspect-square relative mb-4 md:mb-8 group flex-shrink-0">
+                <div class="absolute inset-0 bg-brand-500/20 rounded-2xl blur-xl group-hover:blur-2xl transition-all duration-500 opacity-50"></div>
+                <img id="fullCover" src="https://via.placeholder.com/400"
+                     class="relative w-full h-full object-cover rounded-2xl shadow-2xl transform transition-transform duration-500 scale-100 player-disk" loading="lazy">
+
+                <!-- Visualizer Overlay -->
+                <div class="absolute bottom-4 right-4 flex gap-1 items-end h-8">
+                    <div class="bar h-full paused" id="vis1"></div>
+                    <div class="bar h-full paused" id="vis2"></div>
+                    <div class="bar h-full paused" id="vis3"></div>
+                    <div class="bar h-full paused" id="vis4"></div>
+                </div>
             </div>
-            <div class="flex-grow min-w-0">
-                <h4 id="playerTitle" class="text-sm font-bold truncate">No track selected</h4>
-                <p id="playerArtist" class="text-xs text-gray-600 truncate">Select a track</p>
-            </div>
-            <div class="flex-shrink-0 ml-3 flex items-center gap-2">
-                <button id="playPauseBtn" class="w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center text-xs">
-                    <i class="fas fa-play"></i>
+
+            <!-- Meta -->
+            <div class="w-full max-w-md flex items-end justify-between mb-4 md:mb-8 flex-shrink-0">
+                <div class="overflow-hidden">
+                    <h2 id="fullTitle" class="text-xl md:text-2xl font-bold text-white leading-tight truncate">No Track Selected</h2>
+                    <p id="fullArtist" class="text-base md:text-lg text-gray-400 truncate">Spotiplay</p>
+                </div>
+                <button id="fullLikeBtn" class="text-2xl text-gray-400 hover:text-brand-500 transition-colors p-2 active:scale-110 transform">
+                    <i class="far fa-heart"></i>
                 </button>
-                <button id="expandPlayerBtn" class="text-gray-500 hover:text-gray-700 text-sm">
-                    <i class="fas fa-expand"></i>
+            </div>
+
+            <!-- Progress -->
+            <div class="w-full max-w-md mb-4 md:mb-8 flex-shrink-0">
+                <input type="range" id="progressBar" min="0" max="100" value="0" class="w-full mb-2 cursor-pointer">
+                <div class="flex justify-between text-xs text-gray-400 font-medium">
+                    <span id="currentTime">0:00</span>
+                    <span id="duration">0:00</span>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="w-full max-w-md flex items-center justify-between flex-shrink-0">
+                <button onclick="toggleShuffle()" id="shuffleBtn" class="text-gray-400 hover:text-white transition-colors p-2 active:scale-95">
+                    <i class="fas fa-shuffle text-lg md:text-xl"></i>
+                </button>
+                <button onclick="playPrev()" class="text-white hover:text-brand-400 transition-colors p-2 active:scale-90 transform">
+                    <i class="fas fa-backward-step text-2xl md:text-3xl"></i>
+                </button>
+                <button id="fullPlayBtn" class="w-14 h-14 md:w-16 md:h-16 rounded-full bg-white text-black flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-[0_0_20px_rgba(255,255,255,0.3)]">
+                    <i class="fas fa-play text-xl md:text-2xl ml-1"></i>
+                </button>
+                <button onclick="playNext()" class="text-white hover:text-brand-400 transition-colors p-2 active:scale-90 transform">
+                    <i class="fas fa-forward-step text-2xl md:text-3xl"></i>
+                </button>
+                <button onclick="toggleRepeat()" id="repeatBtn" class="text-gray-400 hover:text-white transition-colors p-2 active:scale-95">
+                    <i class="fas fa-repeat text-lg md:text-xl"></i>
                 </button>
             </div>
         </div>
-    </div>
 
-    <!-- Full Player -->
-    <div id="fullPlayer" class="full-player">
-        <div class="full-player-header">
-            <button id="closeFullPlayerBtn" class="full-player-btn">
-                <i class="fas fa-chevron-down"></i>
-            </button>
-            <h3 class="full-player-title">Now Playing</h3>
-            <button id="favoriteBtn" class="full-player-btn favorite-btn">
-                <i class="far fa-heart"></i>
-            </button>
-        </div>
-        
-        <div class="full-player-cover">
-            <img id="fullPlayerThumbnail" src="https://via.placeholder.com/300x300" alt="Track Cover">
-        </div>
-        
-        <div class="full-player-info">
-            <h2 id="fullPlayerTitle" class="full-player-title">No track selected</h2>
-            <p id="fullPlayerArtist" class="full-player-artist">Select a track to play</p>
-        </div>
-        
-        <div class="full-player-progress">
-            <div class="progress-bar" id="fullProgressBar">
-                <div class="progress" id="fullProgress"></div>
-            </div>
-            <div class="full-player-time">
-                <span id="currentTime">0:00</span>
-                <span id="duration">0:00</span>
-            </div>
-        </div>
-        
-        <div class="full-player-controls">
-            <button id="prevTrackBtn" class="full-player-btn">
-                <i class="fas fa-step-backward"></i>
-            </button>
-            <button id="fullPlayPauseBtn" class="full-player-btn play">
-                <i class="fas fa-play"></i>
-            </button>
-            <button id="nextTrackBtn" class="full-player-btn">
-                <i class="fas fa-step-forward"></i>
-            </button>
-        </div>
-        
-        <div class="mt-auto flex justify-center gap-4">
-            <button id="repeatBtn" class="play-mode-btn" title="Repeat">
-                <i class="fas fa-redo"></i>
-            </button>
-            <button id="downloadFromPlayerBtn" class="full-player-btn">
-                <i class="fas fa-download"></i>
+        <!-- Footer Actions -->
+        <div class="flex-none p-6 md:p-8 flex justify-center gap-6 pb-8 md:pb-8">
+            <button onclick="downloadCurrentTrack()" class="flex items-center gap-2 text-sm font-bold text-brand-500 hover:text-white transition-colors active:scale-95 transform bg-white/5 px-6 py-3 rounded-full border border-white/5 shadow-lg">
+                <i class="fas fa-download"></i> Save Offline (MP3)
             </button>
         </div>
     </div>
 
-    <!-- Bottom Navigation -->
-    <div class="bottom-nav">
-        <a href="#home" class="nav-item active" data-section="home">
-            <i class="fas fa-home"></i>
-            <span>Home</span>
-            <div class="nav-circle"></div>
-        </a>
-        <a href="#search" class="nav-item" data-section="search">
-            <i class="fas fa-search"></i>
-            <span>Search</span>
-            <div class="nav-circle"></div>
-        </a>
-        <a href="#favorites" class="nav-item" data-section="favorites">
-            <i class="fas fa-heart"></i>
-            <span>Favorites</span>
-            <div class="nav-circle"></div>
-        </a>
-        <a href="#trending" class="nav-item" data-section="trending">
-            <i class="fas fa-fire"></i>
-            <span>Top Global</span>
-            <div class="nav-circle"></div>
-        </a>
-        <a href="#about" class="nav-item" data-section="about">
-            <i class="fas fa-info-circle"></i>
-            <span>About</span>
-            <div class="nav-circle"></div>
-        </a>
-    </div>
-
-    <!-- Audio Element -->
+    <!-- Hidden Audio Element -->
     <audio id="audioPlayer" preload="auto"></audio>
 
-    <script>
-// DOM Elements
-const searchForm = document.getElementById("searchForm");
-const directForm = document.getElementById("directForm");
-const searchResultsContainer = document.getElementById("searchResultsContainer");
-const searchResultsList = document.getElementById("searchResultsList");
-const loading = document.getElementById("loading");
-const directLoading = document.getElementById("directLoading");
-const directResultContainer = document.getElementById("directResultContainer");
-const directDownloadDetails = document.getElementById("directDownloadDetails");
-const prevPageBtn = document.getElementById("prevPage");
-const nextPageBtn = document.getElementById("nextPage");
-const pageInfo = document.getElementById("pageInfo");
-const paginationControls = document.getElementById("paginationControls");
-const favoritesList = document.getElementById("favoritesList");
-const noFavoritesMessage = document.getElementById("noFavoritesMessage");
-const playFavoritesSequential = document.getElementById("playFavoritesSequential");
-const playFavoritesRandom = document.getElementById("playFavoritesRandom");
-const player = document.getElementById("player");
-const playerThumbnail = document.getElementById("playerThumbnail");
-const playerTitle = document.getElementById("playerTitle");
-const playerArtist = document.getElementById("playerArtist");
-const playPauseBtn = document.getElementById("playPauseBtn");
-const expandPlayerBtn = document.getElementById("expandPlayerBtn");
-const miniProgress = document.getElementById("miniProgress");
-const fullPlayer = document.getElementById("fullPlayer");
-const fullPlayerThumbnail = document.getElementById("fullPlayerThumbnail");
-const fullPlayerTitle = document.getElementById("fullPlayerTitle");
-const fullPlayerArtist = document.getElementById("fullPlayerArtist");
-const fullPlayPauseBtn = document.getElementById("fullPlayPauseBtn");
-const closeFullPlayerBtn = document.getElementById("closeFullPlayerBtn");
-const favoriteBtn = document.getElementById("favoriteBtn");
-const prevTrackBtn = document.getElementById("prevTrackBtn");
-const nextTrackBtn = document.getElementById("nextTrackBtn");
-const repeatBtn = document.getElementById("repeatBtn");
-const downloadFromPlayerBtn = document.getElementById("downloadFromPlayerBtn");
-const audioPlayer = document.getElementById("audioPlayer");
-const navItems = document.querySelectorAll('.nav-item');
-const recentlyPlayedContainer = document.getElementById("recentlyPlayedContainer");
-const searchSection = document.getElementById("search");
-const directSection = document.getElementById("direct");
-const favoritesSection = document.getElementById("favorites");
-const trendingSection = document.getElementById("trending");
-const aboutSection = document.getElementById("about");
-const aboutContainer = document.querySelector('.about-container');
-const currentTimeEl = document.getElementById("currentTime");
-const durationEl = document.getElementById("duration");
-const fullProgress = document.getElementById("fullProgress");
-const trendingList = document.getElementById("trendingList");
-const loadTopGlobalBtn = document.getElementById("loadTopGlobal");
-
-// State variables
-let currentPage = 1;
-let totalResults = 0;
-let currentQuery = '';
-let hasMorePages = false;
-let allResults = [];
-const itemsPerPage = 10;
-let currentTrack = null;
-let isPlaying = false;
-let currentSection = 'home';
-let recentlyPlayed = [];
-let currentQueue = [];
-let currentQueueIndex = 0;
-let historyQueue = [];
-let repeatMode = false;
-
-// Initialize Intersection Observer for lazy effect
-const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-        if (entry.isIntersecting) {
-            entry.target.classList.add("lazy-show");
-            observer.unobserve(entry.target);
-        }
-    });
-}, { threshold: 0.1 });
-
-// Search form submission
-searchForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const query = document.getElementById("query").value.trim();
-    currentQuery = query;
-    currentPage = 1;
-    allResults = [];
-    
-    if (!query) {
-        alert("Masukkan pencarian dulu dong!");
-        return;
-    }
-    
-    try {
-        loading.classList.remove("hidden");
-        searchResultsContainer.classList.remove("active");
-        searchResultsList.innerHTML = '';
-        
-        const searchUrl = `https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}&page=${currentPage}&limit=${itemsPerPage}`;
-        const response = await fetch(searchUrl);
-        const data = await response.json();
-        
-        if (data.status && data.data && data.data.length > 0) {
-            totalResults = data.total_results || data.data.length;
-            hasMorePages = data.has_more || false;
-            allResults = data.data;
-            
-            displaySearchResults(allResults);
-            updatePaginationControls();
-            
-            searchResultsContainer.classList.add("active");
-            
-            // Scroll to results
-            setTimeout(() => {
-                searchSection.scrollIntoView({ behavior: 'smooth' });
-            }, 300);
-        } else {
-            throw new Error("No results found");
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Gak ketemu nih, coba kata kunci lain mungkin?");
-    } finally {
-        loading.classList.add("hidden");
-    }
-});
-
-// Display search results
-function displaySearchResults(results) {
-    searchResultsList.innerHTML = '';
-    
-    results.forEach((track, index) => {
-        const isFavorited = isTrackFavorited(track.track_url);
-        
-        const trackElement = document.createElement('div');
-        trackElement.className = 'search-result-item track-card';
-        trackElement.innerHTML = `
-            <img src="${track.thumbnail}" alt="${track.title}" 
-                 class="search-result-img lazy-load"
-                 data-src="${track.thumbnail}"
-                 onerror="this.src='https://via.placeholder.com/50x50?text=No+Image'">
-            <div class="search-result-info">
-                <div class="search-result-title">${track.title}</div>
-                <div class="search-result-artist">${track.artist}</div>
+    <!-- Add to Playlist Modal -->
+    <div id="addToPlaylistModal" class="fixed inset-0 z-[80] bg-black/80 backdrop-blur-sm hidden flex items-center justify-center p-4 transition-opacity duration-300 opacity-0 pointer-events-none">
+        <div class="bg-dark-surface border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl transform scale-95 transition-all duration-300" id="addToPlaylistContent">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold">Add to Playlist</h3>
+                <button onclick="closeAddToPlaylistModal()" class="text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
             </div>
-            <div class="search-result-actions">
-                <button class="search-result-btn" onclick="playTrackFromSearch('${track.track_url}', '${track.title}', '${track.artist}', '${track.thumbnail}', ${index})">
-                    <i class="fas fa-play"></i>
-                </button>
-                <button class="favorite-btn ${isFavorited ? 'active' : ''}" 
-                        onclick="toggleFavorite(event, '${track.track_url}', '${track.title}', '${track.artist}', '${track.thumbnail}')">
-                    <i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>
-                </button>
-            </div>
-        `;
-        
-        searchResultsList.appendChild(trackElement);
-        observer.observe(trackElement);
-    });
-    
-    // Lazy load images
-    document.querySelectorAll('.lazy-load').forEach(img => {
-        img.src = img.getAttribute('data-src');
-    });
-}
 
-// Play track from search results
-window.playTrackFromSearch = function(trackUrl, title, artist, thumbnail, index) {
-    currentQueue = [...allResults];
-    currentQueueIndex = index;
-    playTrack(trackUrl, title, artist, thumbnail, index, true);
-};
+            <button onclick="createNewPlaylistUI()" class="w-full py-3 mb-4 rounded-xl border border-dashed border-gray-600 hover:border-brand-500 text-gray-400 hover:text-brand-500 transition-all flex items-center justify-center gap-2">
+                <i class="fas fa-plus"></i> Create New Playlist
+            </button>
 
-// Update pagination controls
-function updatePaginationControls() {
-    pageInfo.textContent = `Page ${currentPage}`;
-    prevPageBtn.disabled = currentPage <= 1;
-    nextPageBtn.disabled = !hasMorePages;
-    
-    if (totalResults > 0) {
-        paginationControls.classList.remove("hidden");
-    } else {
-        paginationControls.classList.add("hidden");
-    }
-}
-
-// Load next page
-nextPageBtn.addEventListener("click", async () => {
-    if (!currentQuery || !hasMorePages) return;
-    
-    try {
-        loading.classList.remove("hidden");
-        currentPage++;
-        
-        searchResultsList.innerHTML = '';
-        
-        const searchUrl = `https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(currentQuery)}&page=${currentPage}&limit=${itemsPerPage}`;
-        const response = await fetch(searchUrl);
-        const data = await response.json();
-        
-        if (data.status && data.data && data.data.length > 0) {
-            hasMorePages = data.has_more || false;
-            allResults = [...allResults, ...data.data];
-            
-            displaySearchResults(data.data);
-            updatePaginationControls();
-        } else {
-            throw new Error("No more results");
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        currentPage--;
-        alert("Gagal memuat halaman berikutnya");
-    } finally {
-        loading.classList.add("hidden");
-    }
-});
-
-// Load previous page
-prevPageBtn.addEventListener("click", async () => {
-    if (!currentQuery || currentPage <= 1) return;
-    
-    try {
-        loading.classList.remove("hidden");
-        currentPage--;
-        
-        searchResultsList.innerHTML = '';
-        
-        const searchUrl = `https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(currentQuery)}&page=${currentPage}&limit=${itemsPerPage}`;
-        const response = await fetch(searchUrl);
-        const data = await response.json();
-        
-        if (data.status && data.data && data.data.length > 0) {
-            hasMorePages = data.has_more || false;
-            
-            // Calculate which results to show
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const resultsToShow = allResults.slice(startIndex, endIndex);
-            
-            displaySearchResults(resultsToShow);
-            updatePaginationControls();
-        } else {
-            throw new Error("No results found");
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        currentPage++;
-        alert("Gagal memuat halaman sebelumnya");
-    } finally {
-        loading.classList.add("hidden");
-    }
-});
-
-// Direct download form submission
-directForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const trackUrl = document.getElementById("directUrl").value.trim();
-    
-    if (!trackUrl || !trackUrl.includes("spotify.com")) {
-        alert("Masukkan link Spotify yang valid dong!");
-        return;
-    }
-    
-    try {
-        directLoading.classList.remove("hidden");
-        directResultContainer.classList.add("hidden");
-        
-        const downloadUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(trackUrl)}`;
-        const response = await fetch(downloadUrl);
-        const data = await response.json();
-        
-        if (data.status && data.data) {
-            displayDownloadDetails(data.data, directDownloadDetails);
-            directResultContainer.classList.remove("hidden");
-            
-            setTimeout(() => {
-                directSection.scrollIntoView({ behavior: 'smooth' });
-            }, 300);
-        } else {
-            throw new Error("Download failed");
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Yah gagal download nih, coba lagi ya!");
-    } finally {
-        directLoading.classList.add("hidden");
-    }
-});
-
-// Global function to show track details
-window.showTrackDetails = async (trackUrl, targetElementId) => {
-    try {
-        loading.classList.remove("hidden");
-        
-        const downloadUrl = `https://api.siputzx.my.id/api/d/spotify?url=${trackUrl}`;
-        const response = await fetch(downloadUrl);
-        const data = await response.json();
-        
-        if (data.status && data.data) {
-            const targetElement = document.getElementById(targetElementId);
-            displayDownloadDetails(data.data, targetElement);
-            
-            if (targetElementId === 'directDownloadDetails') {
-                directResultContainer.classList.remove("hidden");
-                directSection.scrollIntoView({ behavior: 'smooth' });
-            }
-        } else {
-            throw new Error("Download failed");
-        }
-    } catch (error) {
-        console.error("Error:", error);
-        alert("Yah gagal download nih, coba lagi ya!");
-    } finally {
-        loading.classList.add("hidden");
-    }
-};
-
-// Display download details
-function displayDownloadDetails(track, container) {
-    const isFavorited = isTrackFavorited(track.track_url);
-    
-    container.innerHTML = `
-        <div class="flex flex-col md:flex-row gap-6">
-            <div class="flex-shrink-0">
-                <img src="${track.image}" alt="${track.title}" 
-                     class="w-48 h-48 rounded-lg object-cover shadow-md"
-                     onerror="this.src='https://via.placeholder.com/300x300?text=No+Image'">
-            </div>
-            <div class="flex-grow">
-                <div class="flex justify-between items-start">
-                    <h3 class="text-2xl font-bold">${track.title}</h3>
-                    <button class="favorite-btn ${isFavorited ? 'active' : ''}" 
-                            onclick="toggleFavorite(event, '${track.track_url}', '${track.title}', '${track.artis}', '${track.image}')">
-                        <i class="${isFavorited ? 'fas' : 'far'} fa-heart text-2xl"></i>
-                    </button>
-                </div>
-                <p class="text-lg text-gray-600">${track.artis}</p>
-                <div class="mt-4 space-y-2">
-                    <p><strong>Type:</strong> ${track.type}</p>
-                    <p><strong>Duration:</strong> ${track.durasi}</p>
-                </div>
-                <div class="mt-6 flex flex-wrap gap-3">
-                    <button onclick="playTrackFromDetails('${track.track_url}', '${track.title}', '${track.artis}', '${track.image}')" 
-                        class="spotify-bg text-white py-2 px-4 rounded-lg font-medium inline-flex items-center gap-2 hover:opacity-90 transition">
-                        <i class="fas fa-play"></i> Play Now
-                    </button>
-                    <a href="${track.download}" download="${track.title} - ${track.artis}.mp3" 
-                       class="bg-gray-800 text-white py-2 px-4 rounded-lg font-medium inline-flex items-center gap-2 hover:opacity-90 transition">
-                       <i class="fas fa-download"></i> Download
-                    </a>
-                </div>
+            <div class="text-xs font-bold text-gray-500 uppercase mb-2">Your Playlists</div>
+            <div id="modalPlaylistsList" class="max-h-[300px] overflow-y-auto space-y-2 pr-1 custom-scrollbar">
+                <!-- Playlists injected here -->
             </div>
         </div>
-    `;
-}
+    </div>
 
-// Play track from details page
-window.playTrackFromDetails = function(trackUrl, title, artist, thumbnail) {
-    // Create a temporary track object
-    const tempTrack = {
-        track_url: trackUrl,
-        title: title,
-        artist: artist,
-        thumbnail: thumbnail
-    };
-    currentQueue = [tempTrack];
-    playTrack(trackUrl, title, artist, thumbnail, 0, true);
-};
-
-// Favorite Tracks Management
-function getFavorites() {
-    return JSON.parse(localStorage.getItem('favoriteTracks') || '[]');
-}
-
-function saveFavorites(favorites) {
-    localStorage.setItem('favoriteTracks', JSON.stringify(favorites));
-}
-
-function isTrackFavorited(trackUrl) {
-    const favorites = getFavorites();
-    return favorites.some(track => track.track_url === trackUrl);
-}
-
-window.toggleFavorite = function(event, trackUrl, title, artist, thumbnail) {
-    event.stopPropagation();
-    
-    const favorites = getFavorites();
-    const existingIndex = favorites.findIndex(track => track.track_url === trackUrl);
-    
-    if (existingIndex >= 0) {
-        // Remove from favorites
-        favorites.splice(existingIndex, 1);
-        event.target.classList.remove('active');
-        event.target.innerHTML = '<i class="far fa-heart"></i>';
-        showToast('Removed from favorites', 'success');
-    } else {
-        // Add to favorites
-        favorites.push({
-            track_url: trackUrl,
-            title: title,
-            artist: artist,
-            thumbnail: thumbnail,
-            addedAt: new Date().toISOString()
-        });
-        event.target.classList.add('active');
-        event.target.innerHTML = '<i class="fas fa-heart"></i>';
-        showToast('Added to favorites', 'success');
-    }
-    
-    saveFavorites(favorites);
-    renderFavorites();
-    
-    // Update favorite button in full player if current track is this one
-    if (currentTrack && currentTrack.track_url === trackUrl) {
-        const isFavorited = existingIndex < 0; // If it was not favorited before
-        favoriteBtn.innerHTML = `<i class="${isFavorited ? 'fas' : 'far'} fa-heart"></i>`;
-        favoriteBtn.classList.toggle('active', isFavorited);
-    }
-};
-
-function renderFavorites() {
-    const favorites = getFavorites();
-    
-    if (favorites.length === 0) {
-        noFavoritesMessage.classList.remove('hidden');
-        favoritesList.innerHTML = '';
-        return;
-    }
-    
-    noFavoritesMessage.classList.add('hidden');
-    favoritesList.innerHTML = '';
-    
-    favorites.forEach((track, index) => {
-        const trackElement = document.createElement('div');
-        trackElement.className = 'favorite-track';
-        trackElement.innerHTML = `
-            <img src="${track.thumbnail}" alt="${track.title}" 
-                 class="favorite-track-img"
-                 onerror="this.src='https://via.placeholder.com/50x50?text=No+Image'">
-            <div class="favorite-track-info">
-                <div class="favorite-track-title">${track.title}</div>
-                <div class="favorite-track-artist">${track.artist}</div>
-                <div class="favorite-track-date">${new Date(track.addedAt).toLocaleDateString()}</div>
+    <!-- Create Playlist Modal -->
+    <div id="createPlaylistModal" class="fixed inset-0 z-[90] bg-black/90 hidden flex items-center justify-center p-4">
+        <div class="bg-dark-surface border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl">
+            <h3 class="text-xl font-bold mb-4">New Playlist</h3>
+            <input type="text" id="newPlaylistName" placeholder="Playlist Name" class="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-brand-500 focus:outline-none mb-6">
+            <div class="flex justify-end gap-3">
+                <button onclick="closeCreatePlaylistModal()" class="px-4 py-2 text-gray-400 hover:text-white">Cancel</button>
+                <button onclick="submitCreatePlaylist()" class="px-6 py-2 bg-brand-500 hover:bg-brand-400 text-black font-bold rounded-lg">Create</button>
             </div>
-            <div class="favorite-track-actions">
-                <button class="search-result-btn" onclick="playFavoriteTrack('${track.track_url}', ${index})">
-                    <i class="fas fa-play"></i>
-                </button>
-                <button class="search-result-btn" onclick="removeFavorite('${track.track_url}')">
-                    <i class="fas fa-trash"></i>
-                </button>
+        </div>
+    </div>
+
+    <!-- Queue Modal -->
+    <div id="queueModal" class="fixed inset-0 z-[70] bg-black/95 backdrop-blur-xl transform translate-y-full transition-transform duration-300 will-change-transform flex flex-col">
+        <div class="flex items-center justify-between p-6 border-b border-white/10">
+            <h3 class="text-xl font-bold">Current Queue</h3>
+            <button onclick="toggleQueue()" class="p-2 text-gray-400 hover:text-white"><i class="fas fa-times text-xl"></i></button>
+        </div>
+        <div id="queueList" class="flex-1 overflow-y-auto p-4 space-y-2">
+            <!-- Queue items injected here -->
+        </div>
+        <div class="p-4 border-t border-white/10 text-center">
+            <button onclick="clearQueue()" class="text-xs text-red-400 hover:text-red-300">Clear Queue</button>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed top-24 right-4 z-[100] transform translate-x-full transition-transform duration-300 will-change-transform">
+        <div class="bg-dark-surface border border-white/10 text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3 min-w-[300px]">
+            <div id="toastIcon" class="text-brand-500 text-xl">
+                <i class="fas fa-info-circle"></i>
             </div>
-        `;
-        
-        favoritesList.appendChild(trackElement);
-    });
-}
-
-window.playFavoriteTrack = function(trackUrl, index) {
-    const favorites = getFavorites();
-    const track = favorites[index];
-    
-    if (track) {
-        currentQueue = [...favorites];
-        currentQueueIndex = index;
-        playTrack(track.track_url, track.title, track.artist, track.thumbnail, index, true);
-        showToast(`Playing: ${track.title}`, 'success');
-    }
-};
-
-window.removeFavorite = function(trackUrl) {
-    if (confirm('Remove this track from favorites?')) {
-        const favorites = getFavorites();
-        const updatedFavorites = favorites.filter(track => track.track_url !== trackUrl);
-        saveFavorites(updatedFavorites);
-        renderFavorites();
-        showToast('Removed from favorites', 'success');
-        
-        // Update favorite button if current track is this one
-        if (currentTrack && currentTrack.track_url === trackUrl) {
-            favoriteBtn.innerHTML = '<i class="far fa-heart"></i>';
-            favoriteBtn.classList.remove('active');
-        }
-    }
-};
-
-playFavoritesSequential.addEventListener('click', () => {
-    const favorites = getFavorites();
-    if (favorites.length === 0) {
-        showToast('No favorite tracks', 'error');
-        return;
-    }
-    
-    currentQueue = [...favorites];
-    currentQueueIndex = 0;
-    const firstTrack = favorites[0];
-    playTrack(firstTrack.track_url, firstTrack.title, firstTrack.artist, firstTrack.thumbnail, 0, true);
-    showToast('Playing favorites sequentially', 'success');
-});
-
-playFavoritesRandom.addEventListener('click', () => {
-    const favorites = getFavorites();
-    if (favorites.length === 0) {
-        showToast('No favorite tracks', 'error');
-        return;
-    }
-    
-    // Shuffle favorites
-    const shuffled = [...favorites];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-    }
-    
-    currentQueue = shuffled;
-    currentQueueIndex = 0;
-    const firstTrack = shuffled[0];
-    playTrack(firstTrack.track_url, firstTrack.title, firstTrack.artist, firstTrack.thumbnail, 0, true);
-    showToast('Playing favorites randomly', 'success');
-});
-
-// Load Top Global Tracks
-async function loadTopGlobal() {
-    trendingList.innerHTML = '<div class="col-span-3 text-center py-10"><i class="fas fa-spinner fa-spin text-2xl text-gray-400"></i></div>';
-    
-    try {
-        // Try popular queries that might return trending tracks
-        const queries = ['top global', 'viral 2024', 'pop hits', 'trending now'];
-        const randomQuery = queries[Math.floor(Math.random() * queries.length)];
-        
-        const response = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(randomQuery)}&limit=6`);
-        const data = await response.json();
-        
-        if (data.status && data.data.length > 0) {
-            renderTrendingTracks(data.data);
-        } else {
-            throw new Error("No results");
-        }
-    } catch (error) {
-        trendingList.innerHTML = `
-            <div class="col-span-3 text-center py-10 text-red-500">
-                <i class="fas fa-exclamation-circle"></i> Gagal muat chart. Coba lagi nanti.
+            <div>
+                <h4 id="toastTitle" class="font-bold text-sm">Notification</h4>
+                <p id="toastMessage" class="text-xs text-gray-400">This is a message</p>
             </div>
-        `;
-    }
-}
+        </div>
+    </div>
 
-function renderTrendingTracks(tracks) {
-    trendingList.innerHTML = '';
-    
-    tracks.forEach(track => {
-        const trackEl = document.createElement('div');
-        trackEl.className = 'trending-track';
-        trackEl.innerHTML = `
-            <img src="${track.thumbnail}" alt="${track.title}" 
-                 onerror="this.src='https://via.placeholder.com/150x150?text=No+Image'">
-            <div class="trending-track-info">
-                <div class="trending-track-title">${track.title}</div>
-                <div class="trending-track-artist">${track.artist}</div>
-            </div>
-        `;
-        
-        trackEl.addEventListener('click', () => {
-            playTrack(track.track_url, track.title, track.artist, track.thumbnail, 0, true);
-        });
-        
-        trendingList.appendChild(trackEl);
-    });
-}
+    <script>
+        // --- Service Worker Registration (Offline App Shell) ---
+        if ('serviceWorker' in navigator) {
+            const swContent = `
+                const CACHE_NAME = 'spotiplay-v4-cache';
+                const urlsToCache = [
+                    './',
+                    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
+                    'https://cdn.tailwindcss.com',
+                    'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap'
+                ];
 
-// Audio Player Functions
-function playTrack(trackUrl, title, artist, thumbnail, index = 0, isManual = false) {
-    // Jika dipanggil manual (bukan dari next/prev), reset history
-    if (isManual) {
-        historyQueue = [];
-    }
-
-    // Update current track
-    currentTrack = {
-        track_url: trackUrl,
-        title: title,
-        artist: artist,
-        thumbnail: thumbnail
-    };
-
-    // Update player UI
-    updatePlayerUI(title, artist, thumbnail);
-    
-    // Update favorite button
-    favoriteBtn.innerHTML = `<i class="${isTrackFavorited(trackUrl) ? 'fas' : 'far'} fa-heart"></i>`;
-    favoriteBtn.classList.toggle('active', isTrackFavorited(trackUrl));
-    
-    // Set audio source (using the download URL as the stream source)
-    const downloadUrl = `https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(trackUrl)}`;
-    
-    // First fetch the download details to get the actual download URL
-    fetch(downloadUrl)
-        .then(response => response.json())
-        .then(data => {
-            if (data.status && data.data) {
-                audioPlayer.src = data.data.download;
-                audioPlayer.play();
-                
-                isPlaying = true;
-                player.classList.add('active');
-                playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                fullPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-                
-                // Add to recently played
-                addToRecentlyPlayed(currentTrack);
-                
-                showToast(`Now playing: ${title}`, 'success');
-            } else {
-                throw new Error("Failed to get download URL");
-            }
-        })
-        .catch(error => {
-            console.error("Error:", error);
-            showToast("Failed to play track", 'error');
-        });
-}
-
-function updatePlayerUI(title, artist, thumbnail) {
-    // Update mini player
-    playerThumbnail.src = thumbnail || 'https://via.placeholder.com/40x40';
-    playerThumbnail.alt = title;
-    playerTitle.textContent = title;
-    playerArtist.textContent = artist;
-    
-    // Update full player
-    fullPlayerThumbnail.src = thumbnail || 'https://via.placeholder.com/300x300';
-    fullPlayerTitle.textContent = title;
-    fullPlayerArtist.textContent = artist;
-}
-
-function addToRecentlyPlayed(track) {
-    // Get current recently played from localStorage
-    let recentlyPlayed = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
-    if (typeof recentlyPlayed === 'string') {
-        recentlyPlayed = JSON.parse(recentlyPlayed);
-    }
-    
-    // Remove if already exists
-    recentlyPlayed = recentlyPlayed.filter(t => t.track_url !== track.track_url);
-    
-    // Add to beginning
-    recentlyPlayed.unshift(track);
-    
-    // Keep only last 5 items
-    if (recentlyPlayed.length > 5) {
-        recentlyPlayed = recentlyPlayed.slice(0, 5);
-    }
-    
-    // Save to localStorage
-    localStorage.setItem('recentlyPlayed', JSON.stringify(recentlyPlayed));
-    
-    // Update UI
-    renderRecentlyPlayed();
-}
-
-function renderRecentlyPlayed() {
-    let recentlyPlayed = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
-    if (typeof recentlyPlayed === 'string') {
-        recentlyPlayed = JSON.parse(recentlyPlayed);
-    }
-    
-    recentlyPlayedContainer.innerHTML = '';
-    
-    if (recentlyPlayed.length === 0) {
-        recentlyPlayedContainer.innerHTML = '<p class="text-gray-400">No recently played tracks</p>';
-        return;
-    }
-    
-    recentlyPlayed.forEach(track => {
-        const item = document.createElement('div');
-        item.className = 'recently-played-item';
-        item.innerHTML = `
-            <img src="${track.thumbnail}" alt="${track.title}" class="w-full h-32 object-cover">
-            <div class="recently-played-info">
-                <p class="recently-played-name">${track.title}</p>
-                <p class="recently-played-artist">${track.artist}</p>
-            </div>
-        `;
-        
-        item.addEventListener('click', () => {
-            // Find the track in currentQueue or add it
-            const trackIndex = currentQueue.findIndex(t => t.track_url === track.track_url);
-            if (trackIndex !== -1) {
-                playTrack(track.track_url, track.title, track.artist, track.thumbnail, trackIndex, true);
-            } else {
-                currentQueue = [track];
-                playTrack(track.track_url, track.title, track.artist, track.thumbnail, 0, true);
-            }
-        });
-        
-        recentlyPlayedContainer.appendChild(item);
-    });
-}
-
-function playNextTrack() {
-    if (currentQueue.length > 0 && currentQueueIndex < currentQueue.length - 1) {
-        // Tambahkan ke history
-        historyQueue.push(currentQueue[currentQueueIndex]);
-        
-        const nextIndex = currentQueueIndex + 1;
-        const nextTrack = currentQueue[nextIndex];
-        playTrack(nextTrack.track_url, nextTrack.title, nextTrack.artist, nextTrack.thumbnail, nextIndex);
-    } else if (repeatMode) {
-        // Jika repeat mode aktif, mulai dari awal
-        currentQueueIndex = 0;
-        const nextTrack = currentQueue[0];
-        playTrack(nextTrack.track_url, nextTrack.title, nextTrack.artist, nextTrack.thumbnail, 0);
-    } else {
-        showToast("No more tracks in queue", 'info');
-    }
-}
-
-function playPrevTrack() {
-    if (historyQueue.length > 0) {
-        const prevTrack = historyQueue.pop();
-        const prevIndex = currentQueue.findIndex(t => t.track_url === prevTrack.track_url);
-        
-        if (prevIndex >= 0) {
-            playTrack(prevTrack.track_url, prevTrack.title, prevTrack.artist, prevTrack.thumbnail, prevIndex);
-        } else {
-            // Jika tidak ada di queue saat ini, tambahkan
-            currentQueue.unshift(prevTrack);
-            playTrack(prevTrack.track_url, prevTrack.title, prevTrack.artist, prevTrack.thumbnail, 0);
-        }
-    } else {
-        showToast("No previous tracks", 'info');
-    }
-}
-
-// Player controls
-playPauseBtn.addEventListener('click', () => {
-    if (!currentTrack) return;
-    
-    if (isPlaying) {
-        audioPlayer.pause();
-        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-        fullPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-    } else {
-        audioPlayer.play();
-        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-        fullPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-    }
-    
-    isPlaying = !isPlaying;
-});
-
-fullPlayPauseBtn.addEventListener('click', () => {
-    if (!currentTrack) return;
-    
-    if (isPlaying) {
-        audioPlayer.pause();
-        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-        fullPlayPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
-    } else {
-        audioPlayer.play();
-        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-        fullPlayPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
-    }
-    
-    isPlaying = !isPlaying;
-});
-
-expandPlayerBtn.addEventListener('click', () => {
-    fullPlayer.classList.add('active');
-});
-
-closeFullPlayerBtn.addEventListener('click', () => {
-    fullPlayer.classList.remove('active');
-});
-
-favoriteBtn.addEventListener('click', () => {
-    if (!currentTrack) return;
-    
-    const isFavorited = isTrackFavorited(currentTrack.track_url);
-    const favorites = getFavorites();
-    
-    if (isFavorited) {
-        // Remove from favorites
-        const updatedFavorites = favorites.filter(track => track.track_url !== currentTrack.track_url);
-        saveFavorites(updatedFavorites);
-        favoriteBtn.innerHTML = '<i class="far fa-heart"></i>';
-        favoriteBtn.classList.remove('active');
-        showToast('Removed from favorites', 'success');
-    } else {
-        // Add to favorites
-        favorites.push({
-            track_url: currentTrack.track_url,
-            title: currentTrack.title,
-            artist: currentTrack.artist,
-            thumbnail: currentTrack.thumbnail,
-            addedAt: new Date().toISOString()
-        });
-        saveFavorites(favorites);
-        favoriteBtn.innerHTML = '<i class="fas fa-heart"></i>';
-        favoriteBtn.classList.add('active');
-        showToast('Added to favorites', 'success');
-    }
-    
-    renderFavorites();
-});
-
-prevTrackBtn.addEventListener('click', playPrevTrack);
-nextTrackBtn.addEventListener('click', playNextTrack);
-
-repeatBtn.addEventListener('click', () => {
-    repeatMode = !repeatMode;
-    repeatBtn.classList.toggle('active', repeatMode);
-    showToast(`Repeat ${repeatMode ? 'ON' : 'OFF'}`, 'info');
-});
-
-downloadFromPlayerBtn.addEventListener('click', () => {
-    if (currentTrack) {
-        showTrackDetails(currentTrack.track_url, 'directDownloadDetails');
-        fullPlayer.classList.remove('active');
-    }
-});
-
-// Audio progress updates
-audioPlayer.addEventListener('timeupdate', () => {
-    const progressPercent = (audioPlayer.currentTime / audioPlayer.duration) * 100;
-    miniProgress.style.width = `${progressPercent}%`;
-    fullProgress.style.width = `${progressPercent}%`;
-    
-    // Update time displays
-    currentTimeEl.textContent = formatTime(audioPlayer.currentTime);
-    durationEl.textContent = formatTime(audioPlayer.duration);
-});
-
-function formatTime(seconds) {
-    const minutes = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
-}
-
-// Progress bar click
-document.querySelectorAll('.progress-bar').forEach(progressBar => {
-    progressBar.addEventListener('click', (e) => {
-        if (!currentTrack) return;
-        
-        const clickPosition = e.clientX - progressBar.getBoundingClientRect().left;
-        const progressBarWidth = progressBar.clientWidth;
-        const clickPercentage = clickPosition / progressBarWidth;
-        audioPlayer.currentTime = clickPercentage * audioPlayer.duration;
-    });
-});
-
-// Audio ended event
-audioPlayer.addEventListener('ended', () => {
-    if (repeatMode) {
-        // Jika repeat mode aktif, ulangi lagu yang sama
-        audioPlayer.currentTime = 0;
-        audioPlayer.play();
-    } else {
-        // Auto play next track if available
-        playNextTrack();
-    }
-});
-
-// Bottom Navigation
-navItems.forEach(item => {
-    item.addEventListener('click', (e) => {
-        e.preventDefault();
-        const section = item.getAttribute('data-section');
-        currentSection = section;
-        
-        // Hide all sections
-        searchResultsContainer.classList.remove('active');
-        directSection.classList.remove('active');
-        favoritesSection.classList.remove('active');
-        trendingSection.classList.remove('active');
-        aboutContainer.classList.remove('active');
-        
-        // Show active section
-        if (section === 'home') {
-            document.getElementById('home').scrollIntoView({ behavior: 'smooth' });
-        } else if (section === 'search') {
-            searchResultsContainer.classList.add('active');
-            document.getElementById('search').scrollIntoView({ behavior: 'smooth' });
-        } else if (section === 'favorites') {
-            favoritesSection.classList.add('active');
-            document.getElementById('favorites').scrollIntoView({ behavior: 'smooth' });
-            renderFavorites();
-        } else if (section === 'trending') {
-            trendingSection.classList.add('active');
-            document.getElementById('trending').scrollIntoView({ behavior: 'smooth' });
-            loadTopGlobal();
-        } else if (section === 'about') {
-            aboutContainer.classList.add('active');
-            document.getElementById('about').scrollIntoView({ behavior: 'smooth' });
-        }
-        
-        // Update active nav item
-        navItems.forEach(navItem => {
-            if (navItem.getAttribute('data-section') === section) {
-                navItem.classList.add('active');
-            } else {
-                navItem.classList.remove('active');
-            }
-        });
-    });
-});
-
-// Load Top Global on button click
-loadTopGlobalBtn?.addEventListener('click', loadTopGlobal);
-
-// Toast notification
-function showToast(message, type = 'info') {
-    const toast = document.createElement('div');
-    toast.className = `fixed bottom-20 right-4 px-4 py-2 rounded shadow-lg text-white ${
-        type === 'success' ? 'bg-green-500' : 
-        type === 'error' ? 'bg-red-500' : 'bg-blue-500'
-    }`;
-    toast.textContent = message;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-        toast.remove();
-    }, 3000);
-}
-
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', function() {
-    renderFavorites();
-    renderRecentlyPlayed();
-    
-    // Hide all sections except home initially
-    searchResultsContainer.classList.remove('active');
-    directSection.classList.remove('active');
-    favoritesSection.classList.remove('active');
-    trendingSection.classList.remove('active');
-    aboutContainer.classList.remove('active');
-    
-    // Add smooth scrolling for all anchor links
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            
-            const targetId = this.getAttribute('href');
-            if (targetId === '#') return;
-            
-            const targetElement = document.querySelector(targetId);
-            if (targetElement) {
-                targetElement.scrollIntoView({
-                    behavior: 'smooth'
+                self.addEventListener('install', event => {
+                    event.waitUntil(
+                        caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+                    );
                 });
-                
-                // Update navigation
-                const section = targetId.substring(1);
-                if (['home', 'search', 'favorites', 'trending', 'about'].includes(section)) {
-                    currentSection = section;
-                    
-                    // Hide all sections
-                    searchResultsContainer.classList.remove('active');
-                    directSection.classList.remove('active');
-                    favoritesSection.classList.remove('active');
-                    trendingSection.classList.remove('active');
-                    aboutContainer.classList.remove('active');
-                    
-                    // Show active section
-                    if (section === 'search') {
-                        searchResultsContainer.classList.add('active');
-                    } else if (section === 'favorites') {
-                        favoritesSection.classList.add('active');
-                        renderFavorites();
-                    } else if (section === 'trending') {
-                        trendingSection.classList.add('active');
-                        loadTopGlobal();
-                    } else if (section === 'about') {
-                        aboutContainer.classList.add('active');
-                    }
-                    
-                    // Update active nav item
-                    navItems.forEach(navItem => {
-                        if (navItem.getAttribute('data-section') === section) {
-                            navItem.classList.add('active');
-                        } else {
-                            navItem.classList.remove('active');
+
+                self.addEventListener('fetch', event => {
+                    event.respondWith(
+                        caches.match(event.request).then(response => response || fetch(event.request))
+                    );
+                });
+            `;
+            const blob = new Blob([swContent], { type: 'text/javascript' });
+            const swUrl = URL.createObjectURL(blob);
+            navigator.serviceWorker.register(swUrl).catch(err => console.log('SW Fail:', err));
+        }
+
+        // --- Utility to debounce functions ---
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        // --- State Management ---
+        const state = {
+            currentUser: null, // { username: string }
+            queue: [],
+            originalQueue: [],
+            currentIndex: -1,
+            searchResults: [],
+            trendingResults: [],
+            isPlaying: false,
+            isShuffled: false,
+            repeatMode: 0,
+            currentSection: 'home',
+            activeLibraryTab: 'favorites',
+            // User Data (Loaded on Login)
+            favorites: [],
+            recent: [],
+            downloads: [],
+            playlists: [],
+            activePlaylistId: null,
+            trackToAdd: null,
+            retryCount: 0,
+            abortController: null
+        };
+
+        const audio = document.getElementById('audioPlayer');
+
+        // --- DOM Elements ---
+        const els = {
+            miniPlayer: document.getElementById('miniPlayer'),
+            fullPlayer: document.getElementById('fullPlayer'),
+            playBtns: [document.getElementById('miniPlayBtn'), document.getElementById('fullPlayBtn')],
+            likeBtns: [document.getElementById('miniLikeBtn'), document.getElementById('fullLikeBtn')],
+            progressBar: document.getElementById('progressBar'),
+            miniProgressBar: document.getElementById('miniProgressBar'),
+            currentTime: document.getElementById('currentTime'),
+            duration: document.getElementById('duration'),
+            titles: [document.getElementById('miniTitle'), document.getElementById('fullTitle')],
+            artists: [document.getElementById('miniArtist'), document.getElementById('fullArtist')],
+            covers: [document.getElementById('miniCover'), document.getElementById('fullCover')],
+            bgImage: document.getElementById('playerBgImage'),
+            views: {
+                home: document.getElementById('homeView'),
+                search: document.getElementById('searchResultsView'),
+                library: document.getElementById('libraryView')
+            },
+            searchBarContainer: document.getElementById('searchBarContainer'),
+            searchForm: document.getElementById('searchForm'),
+            searchInput: document.getElementById('searchInput'),
+            resultsList: document.getElementById('resultsList'),
+            searchLoading: document.getElementById('searchLoading')
+        };
+
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            // Remove Preloader
+            setTimeout(() => {
+                const preloader = document.getElementById('preloader');
+                preloader.style.opacity = '0';
+                setTimeout(() => preloader.remove(), 500);
+            }, 800);
+
+            auth.init(); // Check session
+
+            // Setup audio events
+            audio.addEventListener('timeupdate', updateProgress);
+            audio.addEventListener('ended', handleTrackEnd);
+
+            // Only update state when actually playing to show loading spinner correctly
+            audio.addEventListener('playing', () => updatePlayState(true));
+            audio.addEventListener('pause', () => updatePlayState(false));
+
+            // Show loading when buffering
+            audio.addEventListener('waiting', () => {
+                els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
+            });
+
+            audio.addEventListener('error', handleAudioError);
+            audio.addEventListener('loadedmetadata', () => {
+                els.duration.textContent = formatTime(audio.duration);
+            });
+
+            // Setup input events
+            els.searchForm.addEventListener('submit', handleSearch);
+            els.progressBar.addEventListener('input', seek);
+
+            // Play buttons
+            els.playBtns.forEach(btn => btn.addEventListener('click', togglePlay));
+
+            // Like buttons
+            els.likeBtns.forEach(btn => btn.addEventListener('click', toggleLike));
+
+            // Mobile toggle
+            document.getElementById('searchToggleBtn')?.addEventListener('click', toggleSearchMobile);
+
+            // Auth Forms
+            document.getElementById('loginForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                auth.login(document.getElementById('loginUser').value, document.getElementById('loginPass').value);
+            });
+            document.getElementById('registerForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                auth.register(document.getElementById('regUser').value, document.getElementById('regPass').value);
+            });
+
+            // Window resize handler (debounced)
+            window.addEventListener('resize', debounce(() => {
+                if(state.currentUser) showSection(state.currentSection);
+            }, 100));
+        });
+
+        // --- Authentication & Persistence ---
+        const auth = {
+            init: () => {
+                const sessionUser = localStorage.getItem('spotiplay_session');
+                if (sessionUser) {
+                    try {
+                        const user = JSON.parse(sessionUser);
+                        if (user && user.username) {
+                            // Valid session
+                            state.currentUser = user;
+                            auth.loadUserData(user.username);
+                            auth.showApp();
+                            return;
                         }
-                    });
+                    } catch (e) {
+                        localStorage.removeItem('spotiplay_session');
+                    }
+                }
+                // No session
+                auth.showLogin();
+            },
+
+            register: (username, password) => {
+                if (!username || !password) return showToast('Error', 'error', 'Please fill all fields');
+
+                const users = JSON.parse(localStorage.getItem('spotiplay_users') || '{}');
+                if (users[username]) {
+                    showToast('Error', 'error', 'Username already taken');
+                    return;
+                }
+
+                users[username] = { password: password }; // In real app, hash this!
+                localStorage.setItem('spotiplay_users', JSON.stringify(users));
+
+                // Init empty data for new user
+                const userData = { favorites: [], recent: [], downloads: [], playlists: [] };
+                localStorage.setItem(`spotiplay_data_${username}`, JSON.stringify(userData));
+
+                showToast('Success', 'success', 'Account created! Please login.');
+                switchAuthTab('login');
+                document.getElementById('loginUser').value = username;
+                document.getElementById('loginPass').value = '';
+            },
+
+            login: (username, password) => {
+                const users = JSON.parse(localStorage.getItem('spotiplay_users') || '{}');
+                if (!users[username] || users[username].password !== password) {
+                    showToast('Error', 'error', 'Invalid credentials');
+                    return;
+                }
+
+                const user = { username };
+                localStorage.setItem('spotiplay_session', JSON.stringify(user));
+                state.currentUser = user;
+
+                auth.loadUserData(username);
+                auth.showApp();
+                showToast('Welcome', 'success', `Logged in as ${username}`);
+            },
+
+            logout: () => {
+                localStorage.removeItem('spotiplay_session');
+                state.currentUser = null;
+                // Clear state
+                state.favorites = [];
+                state.recent = [];
+                state.downloads = [];
+                state.playlists = [];
+
+                auth.showLogin();
+                showToast('Bye', 'info', 'Logged out successfully');
+            },
+
+            loadUserData: (username) => {
+                const raw = localStorage.getItem(`spotiplay_data_${username}`);
+                const data = raw ? JSON.parse(raw) : { favorites: [], recent: [], downloads: [], playlists: [] };
+
+                state.favorites = data.favorites || [];
+                state.recent = data.recent || [];
+                state.downloads = data.downloads || [];
+                state.playlists = data.playlists || [];
+
+                // Update UI Profile
+                document.getElementById('userProfileBtn').textContent = username.charAt(0).toUpperCase();
+                document.getElementById('userProfileName').textContent = username;
+            },
+
+            saveUserData: () => {
+                if (!state.currentUser) return;
+                const data = {
+                    favorites: state.favorites,
+                    recent: state.recent,
+                    downloads: state.downloads,
+                    playlists: state.playlists
+                };
+                localStorage.setItem(`spotiplay_data_${state.currentUser.username}`, JSON.stringify(data));
+            },
+
+            showApp: () => {
+                document.getElementById('authView').classList.add('hidden');
+                document.getElementById('app-container').classList.remove('hidden');
+                if(window.innerWidth >= 768) document.getElementById('desktopSidebar').classList.remove('hidden');
+                else document.getElementById('mobileNav').classList.remove('hidden');
+
+                document.getElementById('miniPlayer').classList.remove('hidden');
+
+                // Initialize App Views
+                showHome();
+                loadRecentlyPlayed();
+                loadTopGlobal();
+                renderSidebarPlaylists();
+            },
+
+            showLogin: () => {
+                document.getElementById('authView').classList.remove('hidden');
+                document.getElementById('app-container').classList.add('hidden');
+                document.getElementById('desktopSidebar').classList.add('hidden');
+                document.getElementById('mobileNav').classList.add('hidden');
+
+                document.getElementById('miniPlayer').classList.add('hidden');
+
+                // Reset inputs
+                document.getElementById('loginUser').value = '';
+                document.getElementById('loginPass').value = '';
+            }
+        };
+
+        function switchAuthTab(tab) {
+            const loginForm = document.getElementById('loginForm');
+            const regForm = document.getElementById('registerForm');
+            const tabLogin = document.getElementById('tabLogin');
+            const tabReg = document.getElementById('tabRegister');
+
+            if (tab === 'login') {
+                loginForm.classList.remove('hidden');
+                regForm.classList.add('hidden');
+                tabLogin.classList.replace('text-gray-400', 'text-brand-500');
+                tabLogin.classList.replace('border-transparent', 'border-brand-500');
+                tabReg.classList.replace('text-brand-500', 'text-gray-400'); // Assuming reverse
+                tabReg.classList.remove('text-white'); // Fix hover state logic issues
+                tabReg.classList.replace('border-brand-500', 'border-transparent');
+                // Re-add hover/color classes carefully
+                tabReg.className = "flex-1 text-center font-bold text-gray-400 hover:text-white pb-2 border-b-2 border-transparent transition-colors";
+                tabLogin.className = "flex-1 text-center font-bold text-brand-500 pb-2 border-b-2 border-brand-500 transition-colors";
+            } else {
+                loginForm.classList.add('hidden');
+                regForm.classList.remove('hidden');
+
+                tabReg.className = "flex-1 text-center font-bold text-brand-500 pb-2 border-b-2 border-brand-500 transition-colors";
+                tabLogin.className = "flex-1 text-center font-bold text-gray-400 hover:text-white pb-2 border-b-2 border-transparent transition-colors";
+            }
+        }
+
+        function logout() {
+            auth.logout();
+        }
+
+        // --- Core Audio Logic ---
+
+        /**
+         * Playback Strategy: Parallel/Fallback Race
+         * ----------------------------------------
+         * This system uses a "Race" strategy to ensure the fastest and most reliable playback.
+         * It calls multiple APIs simultaneously:
+         * 1. Siputzx V1 (Spotify) - Usually fast.
+         * 2. Vreden V1 (Spotify) - Reliable backup.
+         * 3. Siputzx V2 (Spotify) - Alternative fallback.
+         *
+         * Logic:
+         * - Promise.any() waits for the FIRST successful response.
+         * - If a source is blacklisted (due to previous error), it is skipped.
+         * - If one API is down, others are used automatically.
+         * - 'AbortController' ensures only the latest request consumes bandwidth.
+         */
+        async function playTrack(track, queue = null, index = 0, blacklist = []) {
+            try {
+                // Cancel previous pending requests
+                if (state.abortController) {
+                    state.abortController.abort();
+                    console.log('Aborted previous request');
+                }
+                state.abortController = new AbortController();
+                const signal = state.abortController.signal;
+
+                // If starting a new track (not a retry), reset retry count
+                if (queue || (index !== state.currentIndex)) {
+                    state.retryCount = 0;
+                }
+
+                if (queue) {
+                    state.queue = queue;
+                    state.originalQueue = [...queue];
+                    state.currentIndex = index;
+                }
+
+                const currentTrack = normalizeTrack(state.queue[state.currentIndex]);
+                if (!currentTrack) return;
+
+                // UI Loading State
+                updatePlayerInfo(currentTrack);
+                if (state.retryCount === 0) showToast('Memuat lagu...', 'info', 'Mohon tunggu sebentar...');
+                else showToast('Mencoba lagi...', 'info', 'Mengalihkan sumber audio...');
+
+                els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
+
+                // Show Mini Player immediately
+                els.miniPlayer.style.transform = 'translateY(0)';
+
+                // Check if track object already has a direct download link (optimization)
+                // BUT if that link is in blacklist, we must fetch new one
+                let streamUrl = currentTrack.download;
+                if (blacklist.includes(streamUrl)) streamUrl = null;
+
+                // If not, fetch it
+                if (!streamUrl) {
+                    // Multi-API Race Strategy: Try all valid endpoints simultaneously and take the first success
+                    showToast('Mengunduh...', 'info', 'Mencari sumber audio tercepat...');
+
+                    const validate = (url) => {
+                        if (blacklist.includes(url)) return Promise.reject('Blacklisted');
+                        return url;
+                    };
+
+                    try {
+                         const fetchV1 = fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(currentTrack.track_url)}`, { signal })
+                            .then(r => r.json())
+                            .then(d => (d.status && d.data && d.data.download) ? validate(d.data.download) : Promise.reject('V1 Fail'));
+
+                         const fetchVreden = fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(currentTrack.track_url)}`, { signal })
+                            .then(r => r.json())
+                            .then(d => (d.status && d.result && d.result.download) ? validate(d.result.download) : Promise.reject('Vreden Fail'));
+
+                         const fetchV2 = fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(currentTrack.track_url)}`, { signal })
+                            .then(r => r.json())
+                            .then(d => (d.status && d.data && d.data.mp3DownloadLink) ? validate(d.data.mp3DownloadLink) : Promise.reject('V2 Fail'));
+
+                         // Race them using Promise.any
+                         streamUrl = await Promise.any([fetchV1, fetchVreden, fetchV2]);
+                         console.log('Got stream url from fastest source:', streamUrl);
+
+                         // Cache (only if not blacklisted, but we validated)
+                         state.queue[state.currentIndex].download = streamUrl;
+
+                    } catch (e) {
+                         // Check for AbortError inside AggregateError (Promise.any behavior)
+                         if (e instanceof AggregateError && e.errors.some(err => err.name === 'AbortError')) {
+                             console.log('Fetch aborted (Aggregate)');
+                             const abortErr = new Error('Aborted');
+                             abortErr.name = 'AbortError';
+                             throw abortErr;
+                         }
+                         if (e.name === 'AbortError') {
+                             console.log('Fetch aborted');
+                             throw e;
+                         }
+                         console.error("All sources failed or blacklisted", e);
+                         throw new Error('FAILED');
+                    }
+                }
+
+                // Re-update info
+                updatePlayerInfo(normalizeTrack(state.queue[state.currentIndex]));
+
+                // Play
+                audio.src = streamUrl;
+                audio.play().catch(e => {
+                    console.error("Playback failed:", e);
+                    // handleAudioError will be triggered by the error event on audio element or manually here?
+                    // audio.play() returning rejected promise usually means auto-play policy or not supported.
+                    // The 'error' event on the audio element handles source errors (404, etc).
+                    // If play() fails immediately, we should trigger error logic manually if it's a source issue.
+                    // But usually 404 triggers the 'error' event.
+                });
+
+                // Add to recent
+                addToRecent(currentTrack);
+
+                // Update Like Button state
+                updateLikeButtonState(currentTrack.track_url);
+
+            } catch (error) {
+                if (error.name === 'AbortError') {
+                    console.log('Playback cancelled due to new request.');
+                    return; // Ignore
+                }
+                console.error("Play error:", error);
+                let msg = 'Gagal memutar lagu. Silakan coba lagu lain.';
+                if (error.message === 'RESTRICTED') {
+                    msg = 'Maaf, lagu ini bermasalah dari server pusat. Silakan cari versi lain.';
+                }
+                showToast('Gagal Memutar', 'error', msg);
+                updatePlayState(false);
+            }
+        }
+
+        function normalizeTrack(track) {
+            if (!track) return null;
+            let duration = track.duration;
+            if (!duration && track.durasi) {
+                duration = formatTime(track.durasi / 1000);
+            }
+            return {
+                ...track,
+                title: track.title || track.songTitle,
+                artist: track.artist || track.artis || 'Unknown Artist',
+                thumbnail: track.thumbnail || track.image || track.coverImage || 'https://via.placeholder.com/400',
+                track_url: track.track_url || track.url,
+                duration: duration
+            };
+        }
+
+        function togglePlay(e) {
+            e?.stopPropagation();
+            if (state.queue.length === 0) return;
+
+            if (audio.paused) {
+                // Show loading immediately
+                els.playBtns.forEach(btn => btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>');
+                audio.play();
+            } else {
+                audio.pause();
+            }
+        }
+
+        function playNext() {
+            if (state.queue.length === 0) return;
+
+            let nextIndex = state.currentIndex + 1;
+            if (nextIndex >= state.queue.length) {
+                if (state.repeatMode === 1) { // Loop All
+                    nextIndex = 0;
+                } else {
+                    return; // Stop at end
                 }
             }
-        });
-    });
-});
+
+            state.currentIndex = nextIndex;
+            playTrack(null);
+        }
+
+        function playPrev() {
+            if (state.queue.length === 0) return;
+
+            if (audio.currentTime > 3) {
+                audio.currentTime = 0;
+                return;
+            }
+
+            let prevIndex = state.currentIndex - 1;
+            if (prevIndex < 0) {
+                prevIndex = 0;
+            }
+
+            state.currentIndex = prevIndex;
+            playTrack(null);
+        }
+
+        function handleTrackEnd() {
+            if (state.repeatMode === 2) { // Loop One
+                audio.currentTime = 0;
+                audio.play();
+            } else {
+                playNext();
+            }
+        }
+
+        function handleAudioError() {
+            if (audio.error && audio.error.code) {
+                console.error("Audio Error Code:", audio.error.code);
+            }
+
+            // Smart Fallback Strategy
+            if (state.retryCount < 3) {
+                state.retryCount++;
+                const currentSrc = audio.src;
+                console.log(`Audio error on ${currentSrc}, retrying (${state.retryCount}/3)...`);
+
+                // Add bad URL to blacklist
+                const track = state.queue[state.currentIndex];
+                if (!track) return;
+
+                const blacklist = track._blacklist || [];
+                if (currentSrc) blacklist.push(currentSrc);
+                track._blacklist = blacklist;
+
+                // Retry
+                playTrack(null, null, state.currentIndex, blacklist);
+            } else {
+                showToast('Stream Error', 'error', 'Gagal memutar lagu dari semua sumber.');
+                updatePlayState(false);
+                state.retryCount = 0; // Reset
+            }
+        }
+
+        function updatePlayState(playing) {
+            state.isPlaying = playing;
+            const icon = playing ? '<i class="fas fa-pause"></i>' : '<i class="fas fa-play ml-1"></i>';
+            els.playBtns.forEach(btn => {
+                btn.innerHTML = icon;
+                if(playing) btn.classList.remove('animate-pulse');
+            });
+
+            const disk = document.querySelector('.player-disk');
+            if(disk) {
+                if(playing) disk.classList.add('playing');
+                else disk.classList.remove('playing');
+            }
+
+            // Visualizer
+            const bars = document.querySelectorAll('.bar');
+            bars.forEach(bar => {
+                if(playing) bar.classList.remove('paused');
+                else bar.classList.add('paused');
+            });
+        }
+
+        function updateProgress() {
+            if (!audio.duration) return;
+            const percent = (audio.currentTime / audio.duration) * 100;
+
+            els.progressBar.value = percent;
+            els.miniProgressBar.style.width = `${percent}%`;
+
+            els.currentTime.textContent = formatTime(audio.currentTime);
+
+            els.progressBar.style.background = `linear-gradient(to right, #22c55e 0%, #22c55e ${percent}%, #404040 ${percent}%, #404040 100%)`;
+        }
+
+        function seek(e) {
+            const percent = e.target.value;
+            const time = (percent / 100) * audio.duration;
+            audio.currentTime = time;
+        }
+
+        function updatePlayerInfo(track) {
+            if (!track) return;
+            const title = track.title;
+            const artist = track.artist || track.artis || 'Unknown Artist';
+            const cover = track.thumbnail || track.image || 'https://via.placeholder.com/400';
+
+            els.titles.forEach(el => el.textContent = title);
+            els.artists.forEach(el => el.textContent = artist);
+            els.covers.forEach(el => el.src = cover);
+            els.bgImage.src = cover;
+
+            if ('mediaSession' in navigator) {
+                navigator.mediaSession.metadata = new MediaMetadata({
+                    title: title,
+                    artist: artist,
+                    artwork: [{ src: cover, sizes: '512x512', type: 'image/jpeg' }]
+                });
+
+                navigator.mediaSession.setActionHandler('play', () => audio.play());
+                navigator.mediaSession.setActionHandler('pause', () => audio.pause());
+                navigator.mediaSession.setActionHandler('previoustrack', playPrev);
+                navigator.mediaSession.setActionHandler('nexttrack', playNext);
+            }
+        }
+
+        // --- Search & Data Logic ---
+
+        async function handleSearch(e) {
+            e.preventDefault();
+            const query = els.searchInput.value.trim();
+            if (!query) return;
+
+            showSection('search');
+            els.resultsList.innerHTML = '';
+            els.searchLoading.classList.remove('hidden');
+
+            try {
+                // Parallel Execution: Fetch from multiple APIs simultaneously
+                const [siputzxRes, vredenRes, vredenPlayRes, nexrayRes] = await Promise.allSettled([
+                    fetch(`https://api.siputzx.my.id/api/s/spotify?query=${encodeURIComponent(query)}`).then(r => r.json()),
+                    fetch(`https://api.vreden.my.id/api/v2/search/spotify?query=${encodeURIComponent(query)}`, { signal: state.abortController?.signal }).then(r => r.json()),
+                    fetch(`https://api.vreden.my.id/api/v1/download/play/audio?query=${encodeURIComponent(query)}`, { signal: state.abortController?.signal }).then(r => r.json()),
+                    fetch(`https://api.nexray.web.id/search/applemusic?q=${encodeURIComponent(query)}`, { signal: state.abortController?.signal }).then(r => r.json())
+                ]);
+
+                let combinedResults = [];
+
+                // Process Nexray (Apple Music)
+                if (nexrayRes.status === 'fulfilled' && nexrayRes.value.status && Array.isArray(nexrayRes.value.result)) {
+                    const nexrayNorm = nexrayRes.value.result.map(item => {
+                        let artist = item.subtitle || 'Unknown Artist';
+                        if (artist.includes('·')) {
+                            const parts = artist.split('·');
+                            if (parts.length > 1) artist = parts[1].trim();
+                        }
+                        return {
+                            title: item.title,
+                            artist: artist,
+                            thumbnail: item.image,
+                            track_url: item.link,
+                            duration: '' // API doesn't provide duration in list
+                        };
+                    });
+                    combinedResults.push(...nexrayNorm);
+                }
+
+                // Process Vreden Play Audio (Single Result with Direct Download)
+                if (vredenPlayRes.status === 'fulfilled' && vredenPlayRes.value.status && vredenPlayRes.value.result) {
+                    const res = vredenPlayRes.value.result;
+                    if (res.metadata && res.download) {
+                        combinedResults.push({
+                            title: res.metadata.title,
+                            artist: res.metadata.author ? res.metadata.author.name : 'Unknown',
+                            thumbnail: res.metadata.thumbnail,
+                            track_url: res.metadata.url,
+                            duration: res.metadata.timestamp,
+                            download: res.download.url // Pre-filled download link
+                        });
+                    }
+                }
+
+                // Process Siputzx
+                if (siputzxRes.status === 'fulfilled' && siputzxRes.value.status && siputzxRes.value.data) {
+                    combinedResults.push(...siputzxRes.value.data);
+                }
+
+                // Process Vreden Spotify Search (List)
+                if (vredenRes.status === 'fulfilled' && vredenRes.value.status && vredenRes.value.result && vredenRes.value.result.search_data) {
+                    const vredenNorm = vredenRes.value.result.search_data.map(item => ({
+                        title: item.name,
+                        artist: item.artist,
+                        thumbnail: item.cover_img,
+                        track_url: item.song_link,
+                        duration: item.duration
+                    }));
+                    combinedResults.push(...vredenNorm);
+                }
+
+                // Deduplicate based on URL or Title+Artist
+                const uniqueResults = [];
+                const seen = new Set();
+
+                for (const track of combinedResults) {
+                    const key = track.track_url || (track.title + track.artist).toLowerCase();
+                    if (!seen.has(key)) {
+                        seen.add(key);
+                        uniqueResults.push(track);
+                    }
+                }
+
+                els.searchLoading.classList.add('hidden');
+
+                if (uniqueResults.length > 0) {
+                    state.searchResults = uniqueResults;
+                    renderResults(uniqueResults);
+                    showToast('Pencarian Selesai', 'success', `Ditemukan ${uniqueResults.length} lagu dari multi-sumber.`);
+                } else {
+                    els.resultsList.innerHTML = `
+                        <div class="text-center py-10 text-gray-500">
+                            <i class="fas fa-ghost text-4xl mb-4 opacity-50"></i>
+                            <p>Tidak ada hasil untuk "${query}"</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error(error);
+                els.searchLoading.classList.add('hidden');
+                showToast('Gagal Mencari', 'error', 'Semua server sibuk.');
+            }
+        }
+
+        function renderResults(tracks) {
+            const html = tracks.map((track, index) => {
+                return `
+                <div class="glass-card p-3 rounded-xl flex items-center gap-4 cursor-pointer group" onclick="playFromSearch(${index})">
+                    <div class="relative w-16 h-16 flex-shrink-0">
+                        <img src="${track.thumbnail}" class="w-full h-full object-cover rounded-md shadow-sm" loading="lazy">
+                        <div class="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md">
+                            <i class="fas fa-play text-white"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-white truncate text-base">${track.title}</h4>
+                        <p class="text-gray-400 text-sm truncate">${track.artist}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-gray-500">${track.duration || ''}</span>
+                        <button onclick="event.stopPropagation(); toggleLikeData('${track.track_url}', '${track.title.replace(/'/g, "\\'")}', '${track.artist.replace(/'/g, "\\'")}', '${track.thumbnail}')"
+                                class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-brand-500 transition-colors active:scale-90">
+                            <i class="${isFavorited(track.track_url) ? 'fas text-brand-500' : 'far'} fa-heart"></i>
+                        </button>
+                        <button onclick="event.stopPropagation(); openAddToPlaylistModal(${JSON.stringify(track).replace(/"/g, '&quot;')})"
+                                class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-colors active:scale-90">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+                `;
+            }).join('');
+
+            els.resultsList.innerHTML = html;
+        }
+
+        function playFromSearch(index) {
+            if (state.searchResults && state.searchResults.length > 0) {
+                playTrack(null, state.searchResults, index);
+            }
+        }
+
+        function playFromTrending(index) {
+            if (state.trendingResults && state.trendingResults.length > 0) {
+                playTrack(null, state.trendingResults, index);
+            }
+        }
+
+        async function loadTopGlobal() {
+            const grid = document.getElementById('trendingGrid');
+            try {
+                const res = await fetch(`https://api.siputzx.my.id/api/s/spotify?query=top%20hits%20global`);
+                const data = await res.json();
+
+                if (data.status && data.data) {
+                    const tracks = data.data.slice(0, 8); // Show more
+                    state.trendingResults = tracks;
+                    grid.innerHTML = tracks.map((track, idx) => `
+                        <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition cursor-pointer group" onclick='playFromTrending(${idx})'>
+                             <span class="text-sm font-bold text-gray-600 w-6 text-center group-hover:text-white transition-colors">${idx + 1}</span>
+                             <img src="${track.thumbnail}" class="w-10 h-10 rounded bg-gray-800 object-cover" loading="lazy">
+                             <div class="flex-1 overflow-hidden">
+                                 <h4 class="font-bold text-sm truncate text-white group-hover:text-brand-400 transition-colors">${track.title}</h4>
+                                 <p class="text-xs text-gray-400 truncate">${track.artist}</p>
+                             </div>
+                             <div class="text-xs text-gray-500">${track.duration || ''}</div>
+                             <button class="text-gray-400 hover:text-white px-2"><i class="fas fa-ellipsis-v"></i></button>
+                        </div>
+                    `).join('');
+                }
+            } catch (e) {
+                grid.innerHTML = '<p class="text-red-400 text-sm">Gagal memuat trending.</p>';
+            }
+        }
+
+        // --- View Navigation ---
+
+        function showSection(sectionId) {
+            state.currentSection = sectionId;
+
+            Object.values(els.views).forEach(el => el.classList.add('hidden'));
+
+            if (sectionId === 'home') els.views.home.classList.remove('hidden');
+            if (sectionId === 'search') els.views.search.classList.remove('hidden');
+            if (sectionId === 'library') {
+                els.views.library.classList.remove('hidden');
+                // Default to favorites if no tab active or previously active
+                if (!state.activeLibraryTab) switchLibraryTab('favorites');
+                else switchLibraryTab(state.activeLibraryTab);
+            }
+
+            // Mobile Nav Updates
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active', 'text-brand-500'));
+            const navIndex = sectionId === 'home' ? 0 : sectionId === 'search' ? 1 : 2;
+            const navItems = document.querySelectorAll('.nav-item');
+            if(navItems[navIndex]) {
+                 navItems[navIndex].classList.add('active', 'text-brand-500');
+                 navItems[navIndex].classList.remove('text-gray-500');
+            }
+
+            // Desktop Nav Updates
+            document.querySelectorAll('.nav-item-desktop').forEach(el => el.classList.remove('active', 'bg-white/5', 'text-white'));
+            const dNavIndex = sectionId === 'home' ? 0 : sectionId === 'search' ? 1 : 2;
+            const dNavItems = document.querySelectorAll('.nav-item-desktop');
+            if(dNavItems[dNavIndex]) {
+                dNavItems[dNavIndex].classList.add('active', 'bg-white/5', 'text-white');
+                dNavItems[dNavIndex].classList.remove('text-gray-400');
+            }
+
+            // Reset scroll
+            const scrollContainer = document.getElementById('contentScroll');
+            if(scrollContainer) scrollContainer.scrollTo(0,0);
+        }
+
+        function showHome() { showSection('home'); }
+        function showLibrary() { showSection('library'); }
+
+        function toggleSearchMobile() {
+            showSection('search');
+            setTimeout(() => els.searchInput.focus(), 100);
+        }
+
+        // --- Player UI Toggle ---
+
+        function openFullPlayer() {
+            els.fullPlayer.classList.remove('translate-y-full');
+        }
+
+        function closeFullPlayer() {
+            els.fullPlayer.classList.add('translate-y-full');
+        }
+
+        function toggleQueue() {
+            const modal = document.getElementById('queueModal');
+            if (modal.classList.contains('translate-y-full')) {
+                renderQueue();
+                modal.classList.remove('translate-y-full');
+            } else {
+                modal.classList.add('translate-y-full');
+            }
+        }
+
+        function renderQueue() {
+            const list = document.getElementById('queueList');
+            if (state.queue.length === 0) {
+                list.innerHTML = `<div class="text-center py-20 text-gray-500">Queue is empty.</div>`;
+                return;
+            }
+
+            list.innerHTML = state.queue.map((track, idx) => {
+                const isCurrent = idx === state.currentIndex;
+                const norm = normalizeTrack(track);
+                return `
+                <div class="p-3 rounded-xl flex items-center gap-4 ${isCurrent ? 'bg-brand-500/10 border border-brand-500/30' : 'hover:bg-white/5'} transition-colors cursor-pointer group" onclick="playFromQueue(${idx})">
+                    <div class="w-8 text-center text-xs font-bold ${isCurrent ? 'text-brand-500' : 'text-gray-600'}">
+                        ${isCurrent ? '<i class="fas fa-play"></i>' : idx + 1}
+                    </div>
+                    <img src="${norm.thumbnail}" class="w-10 h-10 rounded bg-gray-800 object-cover">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-sm ${isCurrent ? 'text-brand-500' : 'text-white'} truncate">${norm.title}</h4>
+                        <p class="text-xs text-gray-400 truncate">${norm.artist}</p>
+                    </div>
+                    ${isCurrent ? '<div class="w-2 h-2 rounded-full bg-brand-500 animate-pulse"></div>' : ''}
+                </div>
+            `}).join('');
+        }
+
+        function playFromQueue(index) {
+            if (index === state.currentIndex) return;
+            state.currentIndex = index;
+            playTrack(null);
+            renderQueue(); // Update UI
+        }
+
+        function clearQueue() {
+            if (state.queue.length <= 1) return;
+            // Keep current track
+            const current = state.queue[state.currentIndex];
+            state.queue = [current];
+            state.originalQueue = [current];
+            state.currentIndex = 0;
+            renderQueue();
+            showToast('Queue Cleared', 'success');
+        }
+
+        // --- Favorites & Recent ---
+
+        function toggleLikeData(url, title, artist, img) {
+            const idx = state.favorites.findIndex(t => (t.url || t.track_url) === url);
+            if (idx > -1) {
+                state.favorites.splice(idx, 1);
+                showToast('Dihapus', 'info', 'Lagu dihapus dari favorit');
+            } else {
+                state.favorites.push({ url, track_url: url, title, artist, thumbnail: img, image: img });
+                showToast('Disukai', 'success', 'Lagu ditambahkan ke favorit');
+            }
+            auth.saveUserData();
+
+            if (!els.views.library.classList.contains('hidden')) {
+                if (document.getElementById('tabFavorites').classList.contains('bg-brand-600')) {
+                    renderFavorites();
+                }
+            }
+            handleSearchLikeUpdate(url);
+
+            const current = normalizeTrack(state.queue[state.currentIndex]);
+            if (current && (current.track_url === url)) {
+                updateLikeButtonState(url);
+            }
+        }
+
+        function toggleLike() {
+            const track = normalizeTrack(state.queue[state.currentIndex]);
+            if (!track) return;
+            toggleLikeData(track.track_url, track.title, track.artist, track.thumbnail);
+        }
+
+        function isFavorited(url) {
+            return state.favorites.some(t => (t.url || t.track_url) === url);
+        }
+
+        function updateLikeButtonState(url) {
+            const isLiked = isFavorited(url);
+            els.likeBtns.forEach(btn => {
+                if (isLiked) {
+                    btn.innerHTML = '<i class="fas fa-heart text-brand-500"></i>';
+                    btn.classList.add('text-brand-500');
+                } else {
+                    btn.innerHTML = '<i class="far fa-heart"></i>';
+                    btn.classList.remove('text-brand-500');
+                }
+            });
+        }
+
+        function handleSearchLikeUpdate(url) {
+             const btns = document.querySelectorAll(`button[onclick*="${url}"] i`);
+             btns.forEach(icon => {
+                 if (isFavorited(url)) {
+                     icon.className = 'fas fa-heart text-brand-500';
+                 } else {
+                     icon.className = 'far fa-heart';
+                 }
+             });
+        }
+
+        function renderFavorites() {
+            const list = document.getElementById('favoritesList');
+            if (state.favorites.length === 0) {
+                list.innerHTML = '<div class="text-center py-10 text-gray-500">Belum ada favorit.</div>';
+                return;
+            }
+
+            list.innerHTML = state.favorites.map((track, idx) => `
+                <div class="glass-card p-3 rounded-xl flex items-center gap-4 group" onclick='playTrack(null, ${JSON.stringify(state.favorites).replace(/'/g, "&#39;")}, ${idx})'>
+                    <img src="${track.thumbnail || track.image}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-white truncate text-base">${track.title}</h4>
+                        <p class="text-gray-400 text-sm truncate">${track.artist}</p>
+                    </div>
+                    <button class="p-2 text-brand-500" onclick="event.stopPropagation(); toggleLikeData('${track.url || track.track_url}')">
+                        <i class="fas fa-heart"></i>
+                    </button>
+                    <button onclick="event.stopPropagation(); openAddToPlaylistModal(${JSON.stringify(track).replace(/"/g, '&quot;')})"
+                            class="p-2 text-gray-400 hover:text-white">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            `).join('');
+        }
+
+        async function downloadCurrentTrack() {
+             const track = normalizeTrack(state.queue[state.currentIndex]);
+             if (!track) return;
+
+             addToDownloads(track);
+             showToast('Menyiapkan...', 'info', 'Mengunduh lagu ke perangkat...');
+
+             let downloadUrl = track.download;
+
+             if (!downloadUrl) {
+                 try {
+                     const fetchV1 = fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(track.track_url)}`)
+                        .then(r => r.json())
+                        .then(d => (d.status && d.data && d.data.download) ? d.data.download : Promise.reject());
+
+                     const fetchVreden = fetch(`https://api.vreden.my.id/api/v1/download/spotify?url=${encodeURIComponent(track.track_url)}`)
+                        .then(r => r.json())
+                        .then(d => (d.status && d.result && d.result.download) ? d.result.download : Promise.reject());
+
+                     const fetchV2 = fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(track.track_url)}`)
+                        .then(r => r.json())
+                        .then(d => (d.status && d.data && d.data.mp3DownloadLink) ? d.data.mp3DownloadLink : Promise.reject());
+
+                     downloadUrl = await Promise.any([fetchV1, fetchVreden, fetchV2]);
+                     if(state.queue[state.currentIndex]) state.queue[state.currentIndex].download = downloadUrl;
+                 } catch (e) {
+                     showToast('Gagal', 'error', 'Tidak dapat mengambil link download.');
+                     return;
+                 }
+             }
+
+             // Trigger System Download via Blob Fetch
+             try {
+                 const response = await fetch(downloadUrl);
+                 if(!response.ok) throw new Error('Fetch failed');
+                 const blob = await response.blob();
+                 const url = window.URL.createObjectURL(blob);
+                 const a = document.createElement('a');
+                 a.style.display = 'none';
+                 a.href = url;
+                 a.download = `${track.title} - ${track.artist}.mp3`;
+                 document.body.appendChild(a);
+                 a.click();
+                 window.URL.revokeObjectURL(url);
+                 document.body.removeChild(a);
+                 showToast('Berhasil', 'success', 'Lagu tersimpan di perangkat.');
+             } catch(e) {
+                 // Fallback to direct window open if CORS fails
+                 console.log("Blob fetch failed, falling back to window.open", e);
+                 window.open(downloadUrl, '_blank');
+             }
+        }
+
+        function renderDownloads() {
+            const list = document.getElementById('downloadsList');
+            if (state.downloads.length === 0) {
+                list.innerHTML = `
+                    <div class="text-center py-10 text-gray-500">
+                        <i class="fas fa-download text-4xl mb-4 opacity-50"></i>
+                        <p>Belum ada riwayat download.</p>
+                    </div>`;
+                return;
+            }
+
+            list.innerHTML = state.downloads.map((track, idx) => {
+                const norm = normalizeTrack(track);
+                const dlLink = norm.download || '#';
+
+                return `
+                <div class="glass-card p-3 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-white/10 active:scale-98 transition-all" onclick="openExternalPlayer('${dlLink}', '${norm.track_url}')">
+                    <div class="relative w-12 h-12 flex-shrink-0">
+                        <img src="${norm.thumbnail}" class="w-full h-full rounded-lg object-cover bg-gray-800" loading="lazy">
+                        <div class="absolute inset-0 flex items-center justify-center bg-black/40 rounded-lg">
+                            <i class="fas fa-external-link-alt text-white text-xs"></i>
+                        </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <h4 class="font-bold text-white truncate text-base">${norm.title}</h4>
+                        <p class="text-gray-400 text-sm truncate">${norm.artist}</p>
+                        <p class="text-[10px] text-brand-400 mt-0.5">Ketuk untuk putar di aplikasi HP</p>
+                    </div>
+                    <button class="p-2 text-gray-400 hover:text-white">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+                `;
+            }).join('');
+        }
+
+        async function openExternalPlayer(directLink, trackUrl) {
+            showToast('Membuka...', 'info', 'Mengarahkan ke pemutar eksternal...');
+
+            let targetUrl = directLink;
+
+            // If link is invalid or hash, try to fetch fresh link
+            if (!targetUrl || targetUrl === '#' || targetUrl.includes('undefined')) {
+                 try {
+                     // Try V1
+                     let res = await fetch(`https://api.siputzx.my.id/api/d/spotify?url=${encodeURIComponent(trackUrl)}`);
+                     let data = await res.json();
+                     if (data.status && data.data && data.data.download) {
+                         targetUrl = data.data.download;
+                     } else {
+                         // Fallback V2
+                         res = await fetch(`https://api.siputzx.my.id/api/d/spotifyv2?url=${encodeURIComponent(trackUrl)}`);
+                         data = await res.json();
+                         if (data.status && data.data && data.data.mp3DownloadLink) {
+                             targetUrl = data.data.mp3DownloadLink;
+                         }
+                     }
+
+                     // Update local cache if possible
+                     if(targetUrl) {
+                         const idx = state.downloads.findIndex(t => (t.track_url || t.url) === trackUrl);
+                         if(idx > -1) {
+                             state.downloads[idx].download = targetUrl;
+                             auth.saveUserData();
+                         }
+                     }
+                 } catch(e) {
+                     showToast('Gagal', 'error', 'Link kadaluarsa & offline.');
+                     return;
+                 }
+            }
+
+            if(targetUrl && targetUrl !== '#') {
+                window.open(targetUrl, '_blank');
+            } else {
+                showToast('Error', 'error', 'Link tidak tersedia.');
+            }
+        }
+
+        function clearHistory() {
+            if(confirm('Hapus riwayat download?')) {
+                state.downloads = [];
+                auth.saveUserData();
+                renderDownloads();
+                showToast('Riwayat Dihapus', 'success');
+            }
+        }
+
+        function switchLibraryTab(tab) {
+            state.activeLibraryTab = tab;
+
+            // Hide all lists first
+            document.getElementById('favoritesList').classList.add('hidden');
+            document.getElementById('downloadsList').classList.add('hidden');
+            document.getElementById('playlistsList').classList.add('hidden');
+            document.getElementById('playlistDetailView').classList.add('hidden');
+
+            // Update Segmented Control
+            const indicator = document.getElementById('tabIndicator');
+            const btns = {
+                'favorites': document.getElementById('tabFavorites'),
+                'playlists': document.getElementById('tabPlaylists'),
+                'downloads': document.getElementById('tabDownloads')
+            };
+
+            // Reset text colors
+            Object.values(btns).forEach(btn => btn.classList.replace('text-white', 'text-gray-400'));
+
+            if (btns[tab]) {
+                btns[tab].classList.replace('text-gray-400', 'text-white');
+                // Move indicator
+                if (tab === 'favorites') indicator.style.transform = 'translateX(0%)';
+                if (tab === 'playlists') indicator.style.transform = 'translateX(100%)';
+                if (tab === 'downloads') indicator.style.transform = 'translateX(200%)';
+            }
+
+            // Show Content
+            if (tab === 'favorites') {
+                document.getElementById('favoritesList').classList.remove('hidden');
+                renderFavorites();
+            } else if (tab === 'downloads') {
+                document.getElementById('downloadsList').classList.remove('hidden');
+                renderDownloads();
+            } else if (tab === 'playlists') {
+                document.getElementById('playlistsList').classList.remove('hidden');
+                renderPlaylists();
+            }
+        }
+
+        function addToRecent(track) {
+            const trackUrl = track.track_url || track.url;
+            state.recent = state.recent.filter(t => (t.url || t.track_url) !== trackUrl);
+            state.recent.unshift(track);
+            if (state.recent.length > 10) state.recent.pop();
+            auth.saveUserData();
+            loadRecentlyPlayed();
+        }
+
+        function loadRecentlyPlayed() {
+            const grid = document.getElementById('recentlyPlayedGrid');
+            if (state.recent.length === 0) return;
+
+            grid.innerHTML = state.recent.map((track, idx) => `
+                <div class="shrink-0 w-32 cursor-pointer group" onclick='playTrack(null, ${JSON.stringify(state.recent).replace(/'/g, "&#39;")}, ${idx})'>
+                    <div class="relative w-32 h-32 mb-2 overflow-hidden rounded-lg shadow-lg">
+                        <img src="${track.thumbnail || track.image}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" loading="lazy">
+                        <button class="absolute bottom-2 right-2 w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transform translate-y-4 group-hover:translate-y-0 transition-all shadow-lg text-black">
+                            <i class="fas fa-play text-xs ml-0.5"></i>
+                        </button>
+                    </div>
+                    <h4 class="font-bold text-xs text-white truncate">${track.title}</h4>
+                    <p class="text-[10px] text-gray-400 truncate">${track.artist}</p>
+                </div>
+            `).join('');
+        }
+
+        // --- Utility ---
+
+        function formatTime(seconds) {
+            if (typeof seconds === 'string' && seconds.includes(':')) return seconds;
+            if (!seconds || isNaN(seconds)) return '0:00';
+            const m = Math.floor(seconds / 60);
+            const s = Math.floor(seconds % 60);
+            return `${m}:${s < 10 ? '0' : ''}${s}`;
+        }
+
+        function showToast(title, type, message) {
+            const toast = document.getElementById('toast');
+            const icon = document.getElementById('toastIcon');
+
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMessage').textContent = message || '';
+
+            icon.className = `text-xl ${type === 'success' ? 'text-green-500' : type === 'error' ? 'text-red-500' : 'text-blue-500'}`;
+            icon.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>`;
+
+            toast.classList.remove('translate-x-full');
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 4000);
+        }
+
+        function toggleShuffle() {
+            state.isShuffled = !state.isShuffled;
+            const btn = document.getElementById('shuffleBtn');
+            btn.classList.toggle('text-brand-500', state.isShuffled);
+            btn.classList.toggle('text-gray-400', !state.isShuffled);
+
+            if (state.isShuffled) {
+                const currentTrack = state.queue[state.currentIndex];
+                const rest = state.queue.filter((_, i) => i !== state.currentIndex);
+
+                for (let i = rest.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [rest[i], rest[j]] = [rest[j], rest[i]];
+                }
+
+                state.queue = [currentTrack, ...rest];
+                state.currentIndex = 0;
+            } else {
+                const currentTrack = state.queue[state.currentIndex];
+                const indexInOriginal = state.originalQueue.findIndex(t => (t.url || t.track_url) === (currentTrack.url || currentTrack.track_url));
+                if (indexInOriginal > -1) {
+                    state.queue = [...state.originalQueue];
+                    state.currentIndex = indexInOriginal;
+                }
+            }
+            showToast('Shuffle ' + (state.isShuffled ? 'Aktif' : 'Mati'), 'info');
+        }
+
+        function toggleRepeat() {
+            state.repeatMode = (state.repeatMode + 1) % 3;
+            const btn = document.getElementById('repeatBtn');
+            const icon = btn.querySelector('i');
+
+            if (state.repeatMode === 0) {
+                btn.classList.remove('text-brand-500');
+                btn.classList.add('text-gray-400');
+                icon.className = 'fas fa-repeat text-xl';
+                showToast('Repeat Mati', 'info');
+            } else if (state.repeatMode === 1) {
+                btn.classList.add('text-brand-500');
+                btn.classList.remove('text-gray-400');
+                icon.className = 'fas fa-repeat text-xl';
+                showToast('Repeat Semua', 'info');
+            } else {
+                btn.classList.add('text-brand-500');
+                icon.className = 'fas fa-1 text-xl';
+                icon.innerHTML = '<span class="text-xs absolute -top-1 -right-1 font-bold">1</span>';
+                showToast('Repeat Satu', 'info');
+            }
+        }
+
+        // --- Playlist Logic ---
+
+        function renderPlaylists() {
+            renderSidebarPlaylists(); // Update Sidebar too
+
+            const container = document.getElementById('playlistsContainer');
+            if (!container) return; // Might be hidden/not applicable
+
+            if (state.playlists.length === 0) {
+                container.innerHTML = `<div class="col-span-full text-center text-gray-500 py-4 text-sm">No playlists yet.</div>`;
+                return;
+            }
+
+            container.innerHTML = state.playlists.map(pl => `
+                <div class="glass-card p-4 rounded-xl flex flex-col gap-3 cursor-pointer hover:bg-white/5 transition group relative overflow-hidden" onclick="openPlaylistDetail('${pl.id}')">
+                    <div class="w-full aspect-square rounded-lg bg-gradient-to-br from-brand-600 to-purple-700 flex items-center justify-center shadow-lg mb-2">
+                        <i class="fas fa-music text-4xl text-white/50 group-hover:scale-110 transition-transform"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white truncate">${pl.name}</h4>
+                        <p class="text-xs text-gray-400">${pl.tracks.length} Songs</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderSidebarPlaylists() {
+            const sidebar = document.getElementById('desktopPlaylistSidebar');
+            if (!sidebar) return;
+
+            if (state.playlists.length === 0) {
+                sidebar.innerHTML = `<div class="text-gray-600 text-xs px-2">No playlists</div>`;
+                return;
+            }
+
+            sidebar.innerHTML = state.playlists.map(pl => `
+                <div class="px-3 py-2 rounded-md hover:bg-white/5 cursor-pointer text-sm text-gray-400 hover:text-white transition truncate" onclick="openPlaylistDetail('${pl.id}')">
+                    ${pl.name}
+                </div>
+            `).join('');
+        }
+
+        function createNewPlaylistUI() {
+            document.getElementById('createPlaylistModal').classList.remove('hidden');
+            document.getElementById('newPlaylistName').focus();
+        }
+
+        function closeCreatePlaylistModal() {
+            document.getElementById('createPlaylistModal').classList.add('hidden');
+            document.getElementById('newPlaylistName').value = '';
+        }
+
+        function submitCreatePlaylist() {
+            const name = document.getElementById('newPlaylistName').value.trim();
+            if (!name) return;
+
+            const newPlaylist = {
+                id: Date.now().toString(),
+                name: name,
+                tracks: []
+            };
+
+            state.playlists.push(newPlaylist);
+            auth.saveUserData();
+
+            closeCreatePlaylistModal();
+
+            // If we are in "Add to Playlist" mode, refresh that list too
+            if (!document.getElementById('addToPlaylistModal').classList.contains('hidden')) {
+                renderAddToPlaylistModal();
+            }
+
+            // If we are in Library, refresh
+            if (!document.getElementById('libraryView').classList.contains('hidden')) {
+                renderPlaylists();
+            }
+
+            showToast('Playlist Dibuat', 'success', name);
+        }
+
+        function openPlaylistDetail(id) {
+            const playlist = state.playlists.find(p => p.id === id);
+            if (!playlist) return;
+
+            state.activePlaylistId = id;
+
+            document.getElementById('playlistsList').classList.add('hidden');
+            document.getElementById('playlistDetailView').classList.remove('hidden');
+
+            document.getElementById('playlistDetailTitle').textContent = playlist.name;
+            document.getElementById('playlistDetailCount').textContent = `${playlist.tracks.length} Songs`;
+
+            const list = document.getElementById('playlistTracksList');
+            if (playlist.tracks.length === 0) {
+                list.innerHTML = `<div class="text-center py-10 text-gray-500">Playlist kosong.</div>`;
+            } else {
+                list.innerHTML = playlist.tracks.map((track, idx) => `
+                    <div class="glass-card p-3 rounded-xl flex items-center gap-4 group" onclick='playTrack(null, ${JSON.stringify(playlist.tracks).replace(/'/g, "&#39;")}, ${idx})'>
+                        <img src="${track.thumbnail}" class="w-12 h-12 rounded bg-gray-800 object-cover" loading="lazy">
+                        <div class="flex-1 min-w-0">
+                            <h4 class="font-bold text-white truncate text-base">${track.title}</h4>
+                            <p class="text-gray-400 text-sm truncate">${track.artist}</p>
+                        </div>
+                        <button onclick="event.stopPropagation(); removeTrackFromPlaylist('${id}', ${idx})" class="p-2 text-gray-500 hover:text-red-400 transition">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `).join('');
+            }
+        }
+
+        function playCurrentPlaylist() {
+            const playlist = state.playlists.find(p => p.id === state.activePlaylistId);
+            if (!playlist || playlist.tracks.length === 0) {
+                showToast('Playlist Kosong', 'error');
+                return;
+            }
+            playTrack(null, playlist.tracks, 0);
+        }
+
+        function confirmDeletePlaylist() {
+            if (confirm('Hapus playlist ini secara permanen?')) {
+                state.playlists = state.playlists.filter(p => p.id !== state.activePlaylistId);
+                auth.saveUserData();
+                showLibrary();
+                switchLibraryTab('playlists');
+                showToast('Playlist Dihapus', 'success');
+            }
+        }
+
+        function removeTrackFromPlaylist(playlistId, trackIndex) {
+            const playlist = state.playlists.find(p => p.id === playlistId);
+            if (!playlist) return;
+
+            playlist.tracks.splice(trackIndex, 1);
+            auth.saveUserData();
+
+            // Re-render
+            openPlaylistDetail(playlistId);
+            showToast('Dihapus dari Playlist', 'info');
+        }
+
+        // --- Add to Playlist Modal Logic ---
+
+        function openAddToPlaylistModal(track) {
+            // Need to handle track objects differently if coming from strings or objects
+            // The JSON.stringify in HTML attributes might be tricky with quotes
+            // So we rely on the object passed.
+            state.trackToAdd = normalizeTrack(track);
+
+            const modal = document.getElementById('addToPlaylistModal');
+            const content = document.getElementById('addToPlaylistContent');
+
+            modal.classList.remove('hidden', 'pointer-events-none', 'opacity-0');
+            modal.classList.add('opacity-100');
+            content.classList.remove('scale-95');
+            content.classList.add('scale-100');
+
+            renderAddToPlaylistModal();
+        }
+
+        function closeAddToPlaylistModal() {
+            const modal = document.getElementById('addToPlaylistModal');
+            const content = document.getElementById('addToPlaylistContent');
+
+            modal.classList.add('opacity-0', 'pointer-events-none');
+            content.classList.remove('scale-100');
+            content.classList.add('scale-95');
+
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                state.trackToAdd = null;
+            }, 300);
+        }
+
+        function renderAddToPlaylistModal() {
+            const container = document.getElementById('modalPlaylistsList');
+            if (state.playlists.length === 0) {
+                container.innerHTML = `<div class="text-center text-gray-500 py-4 text-xs">No playlists found. Create one!</div>`;
+                return;
+            }
+
+            container.innerHTML = state.playlists.map(pl => {
+                const alreadyIn = pl.tracks.some(t => (t.track_url || t.url) === (state.trackToAdd.track_url || state.trackToAdd.url));
+                return `
+                <div class="p-3 rounded-xl border border-white/5 bg-white/5 hover:bg-white/10 flex items-center justify-between cursor-pointer transition-colors" onclick="addTrackToPlaylist('${pl.id}')">
+                    <div class="flex items-center gap-3 overflow-hidden">
+                        <div class="w-8 h-8 rounded bg-gradient-to-br from-brand-600 to-purple-700 flex items-center justify-center shrink-0">
+                            <i class="fas fa-music text-[10px] text-white/50"></i>
+                        </div>
+                        <span class="font-bold text-sm truncate">${pl.name}</span>
+                        <span class="text-xs text-gray-500 shrink-0">(${pl.tracks.length})</span>
+                    </div>
+                    ${alreadyIn ? '<i class="fas fa-check text-brand-500"></i>' : '<i class="fas fa-plus text-gray-400"></i>'}
+                </div>
+            `}).join('');
+        }
+
+        function addTrackToPlaylist(playlistId) {
+            if (!state.trackToAdd) return;
+
+            const playlist = state.playlists.find(p => p.id === playlistId);
+            if (!playlist) return;
+
+            // Check duplicate
+            if (playlist.tracks.some(t => (t.track_url || t.url) === (state.trackToAdd.track_url || state.trackToAdd.url))) {
+                showToast('Sudah ada', 'info', 'Lagu sudah ada di playlist ini.');
+                return;
+            }
+
+            playlist.tracks.push(state.trackToAdd);
+            auth.saveUserData();
+
+            showToast('Berhasil', 'success', `Ditambahkan ke ${playlist.name}`);
+            closeAddToPlaylistModal();
+
+            // Update library if visible
+            if (!document.getElementById('libraryView').classList.contains('hidden') &&
+                document.getElementById('tabPlaylists').classList.contains('bg-brand-600')) {
+                renderPlaylists();
+            }
+        }
     </script>
 </body>
 </html>
